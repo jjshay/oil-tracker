@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Oil Radar - Leveraged Oil Options Tracker</title>
-    <meta name="description" content="Oil Radar - Track oil ETFs, stocks, and futures. Find the best call options for maximum leverage on your bullish oil bet.">
+    <title>Crypto Radar - AI-Powered Blockchain Intelligence</title>
+    <meta name="description" content="Crypto Radar - AI-powered crypto market intelligence with multi-model analysis, technical indicators, on-chain data, and portfolio modeling.">
     <meta name="theme-color" content="#10b981">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -2165,9 +2165,9 @@
     <div class="app">
         <!-- HEADER -->
         <div class="header">
-            <div class="logo" onclick="showView('cards')">
-                <div class="logo-icon">OR</div>
-                <div class="logo-text"><span>OIL</span> RADAR</div>
+            <div class="logo" onclick="showView('crypto')">
+                <div class="logo-icon">CR</div>
+                <div class="logo-text"><span>CRYPTO</span> RADAR</div>
             </div>
             <div class="header-search">
                 <span class="search-icon">&#128269;</span>
@@ -2182,7 +2182,7 @@
         <!-- MAIN CONTENT -->
         <div class="main-content">
             <!-- CARDS VIEW -->
-            <div class="view active" id="cardsView">
+            <div class="view" id="cardsView">
                 <div class="card-stack" id="cardStack"></div>
                 <div class="card-actions" id="cardActions">
                     <button class="card-action-btn pass-btn" onclick="swipeCard('left')" title="Pass">&#10005;</button>
@@ -2409,7 +2409,7 @@
                             <table class="scenario-table" id="scenarioTable">
                                 <thead>
                                     <tr>
-                                        <th>Oil Move</th>
+                                        <th>Price Move</th>
                                         <th>Price at Expiry</th>
                                         <th>Option Value</th>
                                         <th>P/L per Contract</th>
@@ -2466,7 +2466,7 @@
                         <div class="calc-row">
                             <div class="calc-field" style="grid-column: span 2;">
                                 <label>Notes</label>
-                                <input type="text" id="posNotes" placeholder="e.g. Bullish oil bet, targeting $100 WTI">
+                                <input type="text" id="posNotes" placeholder="e.g. Bullish BTC bet, targeting $200K">
                             </div>
                         </div>
                         <button class="calc-btn" onclick="addPosition()">Add Position</button>
@@ -2511,7 +2511,7 @@
             </div>
 
             <!-- CRYPTO VIEW -->
-            <div class="view" id="cryptoView">
+            <div class="view active" id="cryptoView">
                 <div class="scenario-container">
                     <!-- Asset Profiles -->
                     <div class="scenario-card">
@@ -2703,12 +2703,12 @@
                             <div class="calc-field">
                                 <label>Asset</label>
                                 <select id="mcAsset" onchange="updateMCDefaults()">
-                                    <option value="WTI">WTI Crude Oil</option>
-                                    <option value="BTC">Bitcoin</option>
+                                    <option value="BTC">Bitcoin (BTC)</option>
+                                    <option value="ETH">Ethereum (ETH)</option>
+                                    <option value="SOL">Solana (SOL)</option>
                                     <option value="POL">Polygon (POL)</option>
                                     <option value="RNDR">Render (RNDR)</option>
-                                    <option value="UCO">UCO (2x Oil)</option>
-                                    <option value="OXY">Occidental (OXY)</option>
+                                    <option value="LINK">Chainlink (LINK)</option>
                                 </select>
                             </div>
                             <div class="calc-field">
@@ -2760,19 +2760,18 @@
                         <p class="subtitle">Historical correlations between asset classes. Green = positive, red = negative. Critical for portfolio diversification.</p>
                         <div id="corrHeatmap"></div>
                         <div class="scenario-note" style="margin-top:12px;">
-                            High positive correlation means assets move together. Negative correlation provides hedging. BTC-Oil correlation (~0.25) is moderate, meaning they partially diversify each other. DXY (dollar) is negatively correlated with both oil and crypto.
+                            High positive correlation means assets move together. Negative correlation provides hedging. DXY (dollar) is negatively correlated with crypto. BTC-ETH correlation is high (~0.85), while BTC-SOL is moderate (~0.65).
                         </div>
                     </div>
 
                     <!-- Historical Backtesting -->
                     <div class="research-card">
                         <h3>Historical Event Analysis</h3>
-                        <p class="subtitle">How did oil and crypto actually behave during major events? Real data from 7 oil events and 6 crypto events.</p>
+                        <p class="subtitle">How did crypto actually behave during major events? Real data from historical crypto events.</p>
                         <div class="calc-row">
                             <div class="calc-field">
                                 <label>Category</label>
                                 <select id="backtestCategory" onchange="renderBacktestList()">
-                                    <option value="oil">Oil Events</option>
                                     <option value="crypto">Crypto Events</option>
                                 </select>
                             </div>
@@ -3020,7 +3019,7 @@
             <div class="view" id="dashboardView">
                 <div class="dashboard-container">
                     <div class="dashboard-card">
-                        <h3>WTI Crude Oil</h3>
+                        <h3>Market Overview</h3>
                         <div class="chart-container" id="chartContainer"></div>
                     </div>
                     <div class="dashboard-card">
@@ -3058,19 +3057,7 @@
 
         <!-- BOTTOM NAV -->
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="showView('cards')" data-view="cards">
-                <span class="nav-icon">&#9830;</span>
-                Cards
-            </button>
-            <button class="nav-item" onclick="showView('compare')" data-view="compare">
-                <span class="nav-icon">&#9878;</span>
-                Compare
-            </button>
-            <button class="nav-item" onclick="showView('scenarios')" data-view="scenarios">
-                <span class="nav-icon">&#9888;</span>
-                Hormuz
-            </button>
-            <button class="nav-item" onclick="showView('crypto')" data-view="crypto">
+            <button class="nav-item active" onclick="showView('crypto')" data-view="crypto">
                 <span class="nav-icon">&#9830;</span>
                 Crypto
             </button>
@@ -3099,7 +3086,7 @@
                 Dash
             </button>
         </nav>
-        <div class="credit-line">Oil Radar by Greg Miller</div>
+        <div class="credit-line">Crypto Radar by Greg Miller</div>
     </div>
 
     <!-- DETAIL MODAL -->
@@ -3112,15 +3099,15 @@
     <script src="engine.js"></script>
     <script>
     /* ============================================================
-       OIL RADAR - Main Application Script
+       CRYPTO RADAR - Main Application Script
        ============================================================ */
 
     // ---- STATE ----
     let instruments = [];
     let currentIndex = 0;
-    let watchlist = JSON.parse(localStorage.getItem('oilradar_watchlist') || '[]');
-    let positions = JSON.parse(localStorage.getItem('oilradar_positions') || '[]');
-    let passed = JSON.parse(localStorage.getItem('oilradar_passed') || '[]');
+    let watchlist = JSON.parse(localStorage.getItem('cryptoradar_watchlist') || '[]');
+    let positions = JSON.parse(localStorage.getItem('cryptoradar_positions') || '[]');
+    let passed = JSON.parse(localStorage.getItem('cryptoradar_passed') || '[]');
     let currentFilter = 'all';
     let searchTerm = '';
     let isDragging = false;
@@ -3142,8 +3129,6 @@
 
     function init() {
         populateCalcDropdown();
-        renderCards();
-        renderScanner();
         renderPositions();
         updateDashboard();
         updateCounter();
@@ -3367,12 +3352,12 @@
             if (direction === 'right') {
                 if (!watchlist.includes(id)) {
                     watchlist.push(id);
-                    localStorage.setItem('oilradar_watchlist', JSON.stringify(watchlist));
+                    localStorage.setItem('cryptoradar_watchlist', JSON.stringify(watchlist));
                 }
             } else {
                 if (!passed.includes(id)) {
                     passed.push(id);
-                    localStorage.setItem('oilradar_passed', JSON.stringify(passed));
+                    localStorage.setItem('cryptoradar_passed', JSON.stringify(passed));
                 }
             }
             renderCards();
@@ -3390,8 +3375,8 @@
     function resetCards() {
         passed = [];
         watchlist = [];
-        localStorage.setItem('oilradar_passed', '[]');
-        localStorage.setItem('oilradar_watchlist', '[]');
+        localStorage.setItem('cryptoradar_passed', '[]');
+        localStorage.setItem('cryptoradar_watchlist', '[]');
         renderCards();
         updateDashboard();
     }
@@ -3486,7 +3471,7 @@
     function addToWatchlist(id) {
         if (!watchlist.includes(id)) {
             watchlist.push(id);
-            localStorage.setItem('oilradar_watchlist', JSON.stringify(watchlist));
+            localStorage.setItem('cryptoradar_watchlist', JSON.stringify(watchlist));
             renderCards();
             updateDashboard();
         }
@@ -3691,7 +3676,7 @@
         };
 
         positions.push(position);
-        localStorage.setItem('oilradar_positions', JSON.stringify(positions));
+        localStorage.setItem('cryptoradar_positions', JSON.stringify(positions));
 
         // Clear form
         document.getElementById('posTicker').value = '';
@@ -3706,7 +3691,7 @@
 
     function deletePosition(id) {
         positions = positions.filter(p => p.id !== id);
-        localStorage.setItem('oilradar_positions', JSON.stringify(positions));
+        localStorage.setItem('cryptoradar_positions', JSON.stringify(positions));
         renderPositions();
         updateDashboard();
     }
@@ -3797,7 +3782,7 @@
 
     function removeFromWatchlist(id) {
         watchlist = watchlist.filter(w => w !== id);
-        localStorage.setItem('oilradar_watchlist', JSON.stringify(watchlist));
+        localStorage.setItem('cryptoradar_watchlist', JSON.stringify(watchlist));
         renderCards();
         updateDashboard();
     }
@@ -3820,10 +3805,6 @@
     // ---- VIEW SWITCHING ----
     function showView(name) {
         const views = {
-            cards: 'cardsView',
-            compare: 'compareView',
-            scenarios: 'scenariosView',
-            scanner: 'scannerView',
             crypto: 'cryptoView',
             research: 'researchView',
             calc: 'calcView',
@@ -3843,8 +3824,6 @@
             btn.classList.toggle('active', btn.dataset.view === name);
         });
 
-        if (name === 'scanner') renderScanner();
-        if (name === 'compare') renderCompare();
         if (name === 'crypto') initCryptoView();
         if (name === 'research') initResearchView();
         if (name === 'dashboard') updateDashboard();
@@ -5034,14 +5013,14 @@
         const asset = document.getElementById('mcAsset').value;
         const vol = DE.VOLATILITY_DB[asset];
         const defaults = {
-            WTI:  { price: 70,  drift: 10, vol: 35 },
             BTC:  { price: 85000, drift: 30, vol: 65 },
+            ETH:  { price: 3200, drift: 35, vol: 75 },
+            SOL:  { price: 130, drift: 45, vol: 85 },
             POL:  { price: 0.40, drift: 40, vol: 90 },
             RNDR: { price: 6, drift: 50, vol: 100 },
-            UCO:  { price: 30, drift: 20, vol: 70 },
-            OXY:  { price: 50, drift: 15, vol: 45 }
+            LINK: { price: 15, drift: 35, vol: 80 }
         };
-        const d = defaults[asset] || defaults.WTI;
+        const d = defaults[asset] || defaults.BTC;
         document.getElementById('mcPrice').value = d.price;
         document.getElementById('mcDrift').value = d.drift;
         document.getElementById('mcVol').value = vol ? (vol.vol1y * 100).toFixed(0) : d.vol;

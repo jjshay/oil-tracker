@@ -1,5 +1,5 @@
 /* ============================================================
-   OIL RADAR - Data Engine
+   CRYPTO RADAR - Data Engine
    Monte Carlo, Black-Scholes, Correlation, Historical Data,
    Live API Integration, Backtesting
    ============================================================ */
@@ -816,7 +816,7 @@ const AIAnalysis = {
     },
 
     _buildPrompt(headlines) {
-        return `You are a crypto and oil market analyst. Analyze these recent headlines and provide actionable trading insights.
+        return `You are a crypto market analyst. Analyze these recent blockchain/crypto headlines and provide actionable trading insights.
 
 HEADLINES:
 ${headlines.map((h, i) => `${i + 1}. [${h.source}] ${h.title}`).join('\n')}
@@ -827,7 +827,7 @@ Respond in this exact JSON format (no markdown, just raw JSON):
   "confidence": 1-10,
   "summary": "2-3 sentence market summary",
   "actionable": [
-    {"headline_index": 1, "action": "BUY/SELL/WATCH", "asset": "BTC/ETH/OIL/etc", "reasoning": "brief reason", "urgency": "high/medium/low"}
+    {"headline_index": 1, "action": "BUY/SELL/WATCH", "asset": "BTC/ETH/SOL/etc", "reasoning": "brief reason", "urgency": "high/medium/low"}
   ],
   "risks": ["risk 1", "risk 2"],
   "opportunities": ["opportunity 1", "opportunity 2"]
@@ -930,7 +930,7 @@ Respond in this exact JSON format (no markdown, just raw JSON):
     },
 
     _buildBriefingPrompt(headlines) {
-        return `You are a seasoned market analyst delivering a 2-minute audio briefing. Cover: (1) overall market sentiment from today's news, (2) key events that could move oil and crypto markets, (3) historical parallels (reference specific past events), (4) actionable trades with entry points and risk levels, (5) 1-week and 1-month outlook.
+        return `You are a seasoned crypto market analyst delivering a 2-minute audio briefing. Cover: (1) overall crypto market sentiment from today's news, (2) key events that could move blockchain and crypto markets, (3) historical parallels (reference specific past events), (4) actionable trades with entry points and risk levels, (5) 1-week and 1-month outlook.
 
 RECENT HEADLINES:
 ${headlines.map((h, i) => `${i + 1}. [${h.source}] ${h.title}`).join('\n')}
