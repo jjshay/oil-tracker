@@ -1531,6 +1531,118 @@
             cursor: pointer;
         }
 
+        /* ========== RESEARCH VIEW ========== */
+        .research-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .research-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .research-card h3 {
+            color: var(--green);
+            font-size: var(--fs-md);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .research-card .subtitle {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+        .live-price-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+        .live-price-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .live-price-label {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .live-price-value {
+            font-size: var(--fs-lg);
+            font-weight: 800;
+        }
+        .live-price-change {
+            font-size: var(--fs-xs);
+            font-weight: 600;
+        }
+        .mc-fan-canvas {
+            width: 100%;
+            height: 300px;
+        }
+        .mc-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .mc-stat {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .mc-stat-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .mc-stat-value {
+            font-size: var(--fs-base);
+            font-weight: 800;
+        }
+        .corr-heatmap {
+            display: grid;
+            gap: 2px;
+            margin: 12px 0;
+        }
+        .corr-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 4px;
+            padding: 8px 4px;
+            min-height: 36px;
+        }
+        .corr-header {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text);
+            text-align: center;
+        }
+        .backtest-chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            margin-bottom: 12px;
+        }
+        .bs-result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+        }
+        .bs-result-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
         /* ========== CREDIT ========== */
         .credit-line {
             font-size: var(--fs-xs);
@@ -2058,6 +2170,153 @@
                 </div>
             </div>
 
+            <!-- RESEARCH VIEW -->
+            <div class="view" id="researchView">
+                <div class="research-container">
+                    <!-- Live Prices -->
+                    <div class="research-card">
+                        <h3>Live Market Data</h3>
+                        <p class="subtitle">Real-time prices from CoinGecko. Click "Refresh" to update.</p>
+                        <button class="calc-btn" style="max-width:160px;margin-bottom:12px;font-size:12px;padding:8px 16px;" onclick="fetchLivePrices()">Refresh Prices</button>
+                        <div class="live-price-grid" id="livePriceGrid">
+                            <div class="live-price-item"><div class="live-price-label">Loading...</div><div class="live-price-value" style="color:var(--text-dim);">--</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Monte Carlo -->
+                    <div class="research-card">
+                        <h3>Monte Carlo Simulation</h3>
+                        <p class="subtitle">1,000 randomized price paths using Geometric Brownian Motion + jump diffusion. Shows probability distribution of outcomes.</p>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Asset</label>
+                                <select id="mcAsset" onchange="updateMCDefaults()">
+                                    <option value="WTI">WTI Crude Oil</option>
+                                    <option value="BTC">Bitcoin</option>
+                                    <option value="POL">Polygon (POL)</option>
+                                    <option value="RNDR">Render (RNDR)</option>
+                                    <option value="UCO">UCO (2x Oil)</option>
+                                    <option value="OXY">Occidental (OXY)</option>
+                                </select>
+                            </div>
+                            <div class="calc-field">
+                                <label>Current Price ($)</label>
+                                <input type="number" id="mcPrice" value="70" step="0.01">
+                            </div>
+                        </div>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Time Horizon (months)</label>
+                                <input type="number" id="mcMonths" value="12" min="1" max="36">
+                            </div>
+                            <div class="calc-field">
+                                <label>Annualized Drift (%)</label>
+                                <input type="number" id="mcDrift" value="15" step="1">
+                            </div>
+                        </div>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Annualized Volatility (%)</label>
+                                <input type="number" id="mcVol" value="35" step="1">
+                            </div>
+                            <div class="calc-field">
+                                <label>Simulations</label>
+                                <select id="mcPaths">
+                                    <option value="500">500 (fast)</option>
+                                    <option value="1000" selected>1,000</option>
+                                    <option value="5000">5,000 (slow)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="calc-btn" onclick="runMonteCarlo()">Run Monte Carlo</button>
+                        <div id="mcResults" style="display:none;">
+                            <div class="chart-canvas-wrap" style="height:300px;margin-top:16px;">
+                                <canvas id="mcChart"></canvas>
+                            </div>
+                            <div class="chart-legend" style="margin-top:8px;">
+                                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--amber);"></div> Median</div>
+                                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:rgba(245,158,11,0.3);"></div> 25th-75th</div>
+                                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:rgba(245,158,11,0.1);"></div> 5th-95th</div>
+                            </div>
+                            <div class="mc-stats-grid" id="mcStatsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Correlation Matrix -->
+                    <div class="research-card">
+                        <h3>Correlation Matrix</h3>
+                        <p class="subtitle">Historical correlations between asset classes. Green = positive, red = negative. Critical for portfolio diversification.</p>
+                        <div id="corrHeatmap"></div>
+                        <div class="scenario-note" style="margin-top:12px;">
+                            High positive correlation means assets move together. Negative correlation provides hedging. BTC-Oil correlation (~0.25) is moderate, meaning they partially diversify each other. DXY (dollar) is negatively correlated with both oil and crypto.
+                        </div>
+                    </div>
+
+                    <!-- Historical Backtesting -->
+                    <div class="research-card">
+                        <h3>Historical Event Analysis</h3>
+                        <p class="subtitle">How did oil and crypto actually behave during major events? Real data from 7 oil events and 6 crypto events.</p>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Category</label>
+                                <select id="backtestCategory" onchange="renderBacktestList()">
+                                    <option value="oil">Oil Events</option>
+                                    <option value="crypto">Crypto Events</option>
+                                </select>
+                            </div>
+                            <div class="calc-field">
+                                <label>Event</label>
+                                <select id="backtestEvent" onchange="renderBacktestDetail()"></select>
+                            </div>
+                        </div>
+                        <div id="backtestDetail"></div>
+                    </div>
+
+                    <!-- Black-Scholes Calculator -->
+                    <div class="research-card">
+                        <h3>Black-Scholes Options Lab</h3>
+                        <p class="subtitle">Full options pricing with Greeks. More accurate than the simplified calculator.</p>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Underlying Price ($)</label>
+                                <input type="number" id="bsSpot" value="70" step="0.01">
+                            </div>
+                            <div class="calc-field">
+                                <label>Strike Price ($)</label>
+                                <input type="number" id="bsStrike" value="80" step="0.01">
+                            </div>
+                        </div>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Days to Expiry</label>
+                                <input type="number" id="bsDTE" value="90" min="1">
+                            </div>
+                            <div class="calc-field">
+                                <label>Volatility (% annual)</label>
+                                <input type="number" id="bsVol" value="35" step="1">
+                            </div>
+                        </div>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Risk-Free Rate (%)</label>
+                                <input type="number" id="bsRate" value="4.5" step="0.1">
+                            </div>
+                            <div class="calc-field">
+                                <label>Option Type</label>
+                                <select id="bsType">
+                                    <option value="call">Call</option>
+                                    <option value="put">Put</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="calc-btn" onclick="runBlackScholes()">Calculate</button>
+                        <div id="bsResults" style="display:none;margin-top:16px;">
+                            <div class="bs-result-grid" id="bsResultGrid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- DASHBOARD VIEW -->
             <div class="view" id="dashboardView">
                 <div class="dashboard-container">
@@ -2116,9 +2375,9 @@
                 <span class="nav-icon">&#9830;</span>
                 Crypto
             </button>
-            <button class="nav-item" onclick="showView('calc')" data-view="calc">
-                <span class="nav-icon">&#128200;</span>
-                Calc
+            <button class="nav-item" onclick="showView('research')" data-view="research">
+                <span class="nav-icon">&#128300;</span>
+                Research
             </button>
             <button class="nav-item" onclick="showView('tracker')" data-view="tracker">
                 <span class="nav-icon">&#128176;</span>
@@ -2139,6 +2398,7 @@
         </div>
     </div>
 
+    <script src="engine.js"></script>
     <script>
     /* ============================================================
        OIL RADAR - Main Application Script
@@ -2854,6 +3114,7 @@
             scenarios: 'scenariosView',
             scanner: 'scannerView',
             crypto: 'cryptoView',
+            research: 'researchView',
             calc: 'calcView',
             tracker: 'trackerView',
             dashboard: 'dashboardView'
@@ -2871,6 +3132,7 @@
         if (name === 'scanner') renderScanner();
         if (name === 'compare') renderCompare();
         if (name === 'crypto') initCryptoView();
+        if (name === 'research') initResearchView();
         if (name === 'dashboard') updateDashboard();
         if (name === 'tracker') renderPositions();
     }
@@ -4032,6 +4294,400 @@
     // Compare filter/column change listeners
     document.getElementById('compareFilter').addEventListener('change', renderCompare);
     document.getElementById('compareColumns').addEventListener('change', renderCompare);
+
+    // ---- RESEARCH VIEW ----
+    let researchInitialized = false;
+
+    function initResearchView() {
+        if (!researchInitialized) {
+            researchInitialized = true;
+            renderCorrelationMatrix();
+            renderBacktestList();
+        }
+        fetchLivePrices();
+    }
+
+    // -- Live Prices --
+    async function fetchLivePrices() {
+        const grid = document.getElementById('livePriceGrid');
+        grid.innerHTML = '<div class="live-price-item"><div class="live-price-label">Fetching...</div></div>';
+
+        const DE = window.DataEngine;
+        const data = await DE.LiveData.getCryptoPrices();
+        const fng = await DE.LiveData.getFearGreed();
+
+        const items = [];
+        const coinMap = {
+            'bitcoin': { label: 'BTC', color: '#f7931a' },
+            'matic-network': { label: 'POL', color: '#8247e5' },
+            'render-token': { label: 'RNDR', color: '#06b6d4' },
+            'chainlink': { label: 'LINK', color: '#2a5ada' },
+            'kaspa': { label: 'KAS', color: '#49eacb' }
+        };
+
+        if (data) {
+            for (const [id, info] of Object.entries(coinMap)) {
+                const d = data[id];
+                if (d) {
+                    const change = d.usd_24h_change || 0;
+                    const color = change >= 0 ? 'var(--green)' : 'var(--red)';
+                    items.push(`<div class="live-price-item">
+                        <div class="live-price-label" style="color:${info.color};">${info.label}</div>
+                        <div class="live-price-value" style="color:${info.color};">$${d.usd < 1 ? d.usd.toFixed(4) : d.usd.toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+                        <div class="live-price-change" style="color:${color};">${change >= 0 ? '+' : ''}${change.toFixed(1)}% 24h</div>
+                        <div style="font-size:9px;color:var(--text-dim);">MCap: $${(d.usd_market_cap / 1e9).toFixed(1)}B</div>
+                    </div>`);
+                }
+            }
+        }
+
+        if (fng && fng.data && fng.data[0]) {
+            const fg = fng.data[0];
+            const fgColor = fg.value > 60 ? 'var(--green)' : fg.value < 40 ? 'var(--red)' : 'var(--amber)';
+            items.push(`<div class="live-price-item">
+                <div class="live-price-label">Fear & Greed</div>
+                <div class="live-price-value" style="color:${fgColor};">${fg.value}</div>
+                <div class="live-price-change" style="color:${fgColor};">${fg.value_classification}</div>
+            </div>`);
+        }
+
+        if (items.length === 0) {
+            items.push('<div class="live-price-item"><div class="live-price-label">API unavailable</div><div class="live-price-value" style="color:var(--text-dim);">--</div></div>');
+        }
+
+        grid.innerHTML = items.join('');
+    }
+
+    // -- Monte Carlo defaults by asset --
+    function updateMCDefaults() {
+        const DE = window.DataEngine;
+        const asset = document.getElementById('mcAsset').value;
+        const vol = DE.VOLATILITY_DB[asset];
+        const defaults = {
+            WTI:  { price: 70,  drift: 10, vol: 35 },
+            BTC:  { price: 85000, drift: 30, vol: 65 },
+            POL:  { price: 0.40, drift: 40, vol: 90 },
+            RNDR: { price: 6, drift: 50, vol: 100 },
+            UCO:  { price: 30, drift: 20, vol: 70 },
+            OXY:  { price: 50, drift: 15, vol: 45 }
+        };
+        const d = defaults[asset] || defaults.WTI;
+        document.getElementById('mcPrice').value = d.price;
+        document.getElementById('mcDrift').value = d.drift;
+        document.getElementById('mcVol').value = vol ? (vol.vol1y * 100).toFixed(0) : d.vol;
+    }
+
+    // -- Monte Carlo Run --
+    function runMonteCarlo() {
+        const DE = window.DataEngine;
+        const S0 = parseFloat(document.getElementById('mcPrice').value);
+        const months = parseInt(document.getElementById('mcMonths').value);
+        const drift = parseFloat(document.getElementById('mcDrift').value) / 100;
+        const vol = parseFloat(document.getElementById('mcVol').value) / 100;
+        const nPaths = parseInt(document.getElementById('mcPaths').value);
+
+        const result = DE.MonteCarlo.run({
+            S0, mu: drift, sigma: vol,
+            T: months / 12, steps: months,
+            paths: nPaths,
+            jumpProb: 0.05, jumpMean: -0.03, jumpVol: 0.08
+        });
+
+        document.getElementById('mcResults').style.display = 'block';
+
+        // Stats
+        const s = result.stats;
+        document.getElementById('mcStatsGrid').innerHTML = `
+            <div class="mc-stat"><div class="mc-stat-label">Median Price</div><div class="mc-stat-value" style="color:var(--amber);">$${s.median < 1 ? s.median.toFixed(4) : s.median.toLocaleString(undefined,{maximumFractionDigits:0})}</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">Mean Price</div><div class="mc-stat-value">$${s.mean < 1 ? s.mean.toFixed(4) : s.mean.toLocaleString(undefined,{maximumFractionDigits:0})}</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">5th Percentile</div><div class="mc-stat-value" style="color:var(--red);">$${s.p5 < 1 ? s.p5.toFixed(4) : s.p5.toLocaleString(undefined,{maximumFractionDigits:0})}</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">95th Percentile</div><div class="mc-stat-value" style="color:var(--green);">$${s.p95 < 1 ? s.p95.toFixed(4) : s.p95.toLocaleString(undefined,{maximumFractionDigits:0})}</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">Prob. Profit</div><div class="mc-stat-value" style="color:${s.probProfit > 0.5 ? 'var(--green)' : 'var(--red)'};">${(s.probProfit * 100).toFixed(0)}%</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">Prob. 2x</div><div class="mc-stat-value" style="color:var(--amber);">${(s.probDouble * 100).toFixed(1)}%</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">VaR (95%)</div><div class="mc-stat-value" style="color:var(--red);">$${s.VaR95 < 1 ? s.VaR95.toFixed(4) : s.VaR95.toLocaleString(undefined,{maximumFractionDigits:0})}</div></div>
+            <div class="mc-stat"><div class="mc-stat-label">Sharpe Ratio</div><div class="mc-stat-value">${s.sharpe.toFixed(2)}</div></div>
+        `;
+
+        // Draw fan chart
+        drawMCChart(result.stepStats, S0);
+    }
+
+    function drawMCChart(stepStats, S0) {
+        const canvas = document.getElementById('mcChart');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width, h = rect.height;
+        const pad = { top: 25, right: 55, bottom: 30, left: 60 };
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        ctx.fillStyle = '#0f1520';
+        ctx.fillRect(0, 0, w, h);
+
+        const allMax = Math.max(...stepStats.map(s => s.p95)) * 1.05;
+        const allMin = Math.min(...stepStats.map(s => s.p5)) * 0.95;
+        const xMap = i => pad.left + (plotW * i / (stepStats.length - 1 || 1));
+        const yMap = v => pad.top + plotH - ((v - allMin) / (allMax - allMin)) * plotH;
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        for (let i = 0; i <= 4; i++) {
+            const y = pad.top + (plotH / 4) * i;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+            ctx.fillStyle = '#9ca3af'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+            const val = allMax - (allMax - allMin) * (i / 4);
+            ctx.fillText(val < 1 ? val.toFixed(3) : '$' + val.toLocaleString(undefined,{maximumFractionDigits:0}), pad.left - 6, y + 4);
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        for (let i = 0; i < stepStats.length; i += Math.max(1, Math.floor(stepStats.length / 6))) {
+            ctx.fillText('M' + i, xMap(i), h - pad.bottom + 14);
+        }
+
+        // 5-95 band
+        ctx.fillStyle = 'rgba(245,158,11,0.08)';
+        ctx.beginPath();
+        stepStats.forEach((s, i) => ctx.lineTo(xMap(i), yMap(s.p95)));
+        for (let i = stepStats.length - 1; i >= 0; i--) ctx.lineTo(xMap(i), yMap(stepStats[i].p5));
+        ctx.closePath(); ctx.fill();
+
+        // 25-75 band
+        ctx.fillStyle = 'rgba(245,158,11,0.15)';
+        ctx.beginPath();
+        stepStats.forEach((s, i) => ctx.lineTo(xMap(i), yMap(s.p75)));
+        for (let i = stepStats.length - 1; i >= 0; i--) ctx.lineTo(xMap(i), yMap(stepStats[i].p25));
+        ctx.closePath(); ctx.fill();
+
+        // Median line
+        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        stepStats.forEach((s, i) => { i === 0 ? ctx.moveTo(xMap(i), yMap(s.median)) : ctx.lineTo(xMap(i), yMap(s.median)); });
+        ctx.stroke();
+
+        // Baseline
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(pad.left, yMap(S0)); ctx.lineTo(w - pad.right, yMap(S0)); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // End labels
+        const last = stepStats[stepStats.length - 1];
+        ctx.font = '9px Inter'; ctx.textAlign = 'left';
+        ctx.fillStyle = 'var(--green)'; ctx.fillText('P95: $' + (last.p95 < 1 ? last.p95.toFixed(3) : last.p95.toLocaleString(undefined,{maximumFractionDigits:0})), w - pad.right + 4, yMap(last.p95) + 3);
+        ctx.fillStyle = '#f59e0b'; ctx.fillText('Med: $' + (last.median < 1 ? last.median.toFixed(3) : last.median.toLocaleString(undefined,{maximumFractionDigits:0})), w - pad.right + 4, yMap(last.median) + 3);
+        ctx.fillStyle = 'var(--red)'; ctx.fillText('P5: $' + (last.p5 < 1 ? last.p5.toFixed(3) : last.p5.toLocaleString(undefined,{maximumFractionDigits:0})), w - pad.right + 4, yMap(last.p5) + 3);
+    }
+
+    // -- Correlation Matrix --
+    function renderCorrelationMatrix() {
+        const DE = window.DataEngine;
+        const ref = DE.CORRELATION_REF;
+        const names = ref.names;
+        const n = names.length;
+        const container = document.getElementById('corrHeatmap');
+
+        const gridCols = `60px repeat(${n}, 1fr)`;
+        let html = `<div class="corr-heatmap" style="grid-template-columns:${gridCols};">`;
+
+        // Header row
+        html += '<div></div>';
+        names.forEach(name => { html += `<div class="corr-header">${name}</div>`; });
+
+        // Data rows
+        names.forEach(row => {
+            html += `<div class="corr-header" style="text-align:right;padding-right:8px;">${row}</div>`;
+            names.forEach(col => {
+                const val = ref.matrix[row][col];
+                const intensity = Math.abs(val);
+                let bg, textColor;
+                if (val > 0) {
+                    bg = `rgba(16,185,129,${intensity * 0.6})`;
+                    textColor = intensity > 0.3 ? '#fff' : 'var(--text-dim)';
+                } else if (val < 0) {
+                    bg = `rgba(239,68,68,${intensity * 0.6})`;
+                    textColor = intensity > 0.3 ? '#fff' : 'var(--text-dim)';
+                } else {
+                    bg = 'rgba(255,255,255,0.05)';
+                    textColor = 'var(--text-dim)';
+                }
+                if (row === col) { bg = 'rgba(245,158,11,0.3)'; textColor = 'var(--amber)'; }
+                html += `<div class="corr-cell" style="background:${bg};color:${textColor};">${val.toFixed(2)}</div>`;
+            });
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // -- Backtesting --
+    function renderBacktestList() {
+        const DE = window.DataEngine;
+        const cat = document.getElementById('backtestCategory').value;
+        const events = DE.HISTORICAL_EVENTS[cat];
+        const select = document.getElementById('backtestEvent');
+        select.innerHTML = events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+        renderBacktestDetail();
+    }
+
+    function renderBacktestDetail() {
+        const DE = window.DataEngine;
+        const cat = document.getElementById('backtestCategory').value;
+        const eventId = document.getElementById('backtestEvent').value;
+        const events = DE.HISTORICAL_EVENTS[cat];
+        const event = events.find(e => e.id === eventId);
+        if (!event) return;
+
+        const container = document.getElementById('backtestDetail');
+        const prices = event.dailyPrices || event.monthlyPrices || [];
+        const isMonthly = !!event.monthlyPrices;
+        const timeLabel = isMonthly ? 'Month' : 'Day';
+        const peakPrice = Math.max(...prices);
+        const minPrice = Math.min(...prices);
+
+        // Draw mini chart
+        const chartHTML = prices.length > 0 ? `<div class="backtest-chart-wrap"><canvas id="backtestCanvas"></canvas></div>` : '';
+
+        const changeColor = event.pctToPeak >= 0 ? 'var(--green)' : 'var(--red)';
+
+        container.innerHTML = `
+            <div style="margin-top:12px;">
+                <div class="scenario-results-grid">
+                    <div class="scenario-result-item">
+                        <div class="scenario-result-label">Before</div>
+                        <div class="scenario-result-value" style="color:var(--text);">$${event.priceBefore.toLocaleString()}</div>
+                    </div>
+                    <div class="scenario-result-item">
+                        <div class="scenario-result-label">${event.pctToPeak >= 0 ? 'Peak' : 'Trough'}</div>
+                        <div class="scenario-result-value" style="color:${changeColor};">$${event.pricePeak.toLocaleString()}</div>
+                    </div>
+                    <div class="scenario-result-item">
+                        <div class="scenario-result-label">Change</div>
+                        <div class="scenario-result-value" style="color:${changeColor};">${event.pctToPeak >= 0 ? '+' : ''}${event.pctToPeak.toFixed(1)}%</div>
+                    </div>
+                    <div class="scenario-result-item">
+                        <div class="scenario-result-label">Peak ${timeLabel}</div>
+                        <div class="scenario-result-value" style="color:var(--amber);">${event.peakDays}</div>
+                    </div>
+                    ${event.supplyLost !== undefined ? `<div class="scenario-result-item">
+                        <div class="scenario-result-label">Supply Impact</div>
+                        <div class="scenario-result-value" style="color:var(--red);">${event.supplyLost > 0 ? '-' : '+'}${Math.abs(event.supplyLost)}M</div>
+                        <div class="scenario-result-note">bbl/d</div>
+                    </div>` : ''}
+                </div>
+                <p style="font-size:12px;color:var(--text);line-height:1.6;margin:12px 0;">${event.description}</p>
+                ${chartHTML}
+            </div>
+        `;
+
+        // Draw chart if prices exist
+        if (prices.length > 0) {
+            setTimeout(() => drawBacktestChart(prices, event.priceBefore, isMonthly), 50);
+        }
+    }
+
+    function drawBacktestChart(prices, baseLine, isMonthly) {
+        const canvas = document.getElementById('backtestCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width, h = rect.height;
+        const pad = { top: 20, right: 50, bottom: 25, left: 55 };
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        ctx.fillStyle = '#0f1520';
+        ctx.fillRect(0, 0, w, h);
+
+        const maxP = Math.max(...prices, baseLine) * 1.05;
+        const minP = Math.min(...prices, baseLine) * 0.95;
+        const xMap = i => pad.left + (plotW * i / (prices.length - 1 || 1));
+        const yMap = v => pad.top + plotH - ((v - minP) / (maxP - minP)) * plotH;
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillStyle = '#9ca3af'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+        for (let i = 0; i <= 3; i++) {
+            const y = pad.top + (plotH / 3) * i;
+            const val = maxP - (maxP - minP) * (i / 3);
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+            ctx.fillText('$' + val.toFixed(val < 10 ? 2 : 0), pad.left - 6, y + 4);
+        }
+
+        // Baseline
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(pad.left, yMap(baseLine)); ctx.lineTo(w - pad.right, yMap(baseLine)); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Price line
+        const goesUp = prices[prices.length - 1] > prices[0];
+        ctx.strokeStyle = goesUp ? 'var(--green)' : 'var(--red)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        prices.forEach((p, i) => { i === 0 ? ctx.moveTo(xMap(i), yMap(p)) : ctx.lineTo(xMap(i), yMap(p)); });
+        ctx.stroke();
+
+        // Fill
+        ctx.fillStyle = goesUp ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+        ctx.beginPath();
+        ctx.moveTo(xMap(0), yMap(baseLine));
+        prices.forEach((p, i) => ctx.lineTo(xMap(i), yMap(p)));
+        ctx.lineTo(xMap(prices.length - 1), yMap(baseLine));
+        ctx.closePath(); ctx.fill();
+
+        // Labels
+        ctx.textAlign = 'center'; ctx.fillStyle = '#9ca3af'; ctx.font = '10px Inter';
+        const label = isMonthly ? 'M' : 'D';
+        const step = Math.max(1, Math.floor(prices.length / 6));
+        for (let i = 0; i < prices.length; i += step) {
+            ctx.fillText(label + i, xMap(i), h - pad.bottom + 14);
+        }
+    }
+
+    // -- Black-Scholes --
+    function runBlackScholes() {
+        const DE = window.DataEngine;
+        const S = parseFloat(document.getElementById('bsSpot').value);
+        const K = parseFloat(document.getElementById('bsStrike').value);
+        const dte = parseInt(document.getElementById('bsDTE').value);
+        const vol = parseFloat(document.getElementById('bsVol').value) / 100;
+        const r = parseFloat(document.getElementById('bsRate').value) / 100;
+        const type = document.getElementById('bsType').value;
+        const T = dte / 365;
+
+        const price = type === 'call' ? DE.BlackScholes.call(S, K, T, r, vol) : DE.BlackScholes.put(S, K, T, r, vol);
+        const g = DE.BlackScholes.greeks(S, K, T, r, vol, type);
+        const leverage = (g.delta * S) / price;
+
+        document.getElementById('bsResults').style.display = 'block';
+        document.getElementById('bsResultGrid').innerHTML = `
+            <div class="bs-result-item"><div class="mc-stat-label">Fair Value</div><div class="mc-stat-value" style="color:var(--amber);">$${price.toFixed(2)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Per Contract</div><div class="mc-stat-value">$${(price * 100).toFixed(0)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Delta</div><div class="mc-stat-value" style="color:var(--green);">${g.delta.toFixed(4)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Gamma</div><div class="mc-stat-value">${g.gamma.toFixed(4)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Theta</div><div class="mc-stat-value" style="color:var(--red);">${g.theta.toFixed(4)}</div><div style="font-size:9px;color:var(--text-dim);">$/day decay</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Vega</div><div class="mc-stat-value">${g.vega.toFixed(4)}</div><div style="font-size:9px;color:var(--text-dim);">$/1% vol</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Rho</div><div class="mc-stat-value">${g.rho.toFixed(4)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Leverage</div><div class="mc-stat-value" style="color:var(--amber);">${leverage.toFixed(1)}x</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Breakeven</div><div class="mc-stat-value">$${type === 'call' ? (K + price).toFixed(2) : (K - price).toFixed(2)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Intrinsic</div><div class="mc-stat-value">$${(type === 'call' ? Math.max(0, S - K) : Math.max(0, K - S)).toFixed(2)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Time Value</div><div class="mc-stat-value" style="color:var(--amber);">$${(price - (type === 'call' ? Math.max(0, S - K) : Math.max(0, K - S))).toFixed(2)}</div></div>
+            <div class="bs-result-item"><div class="mc-stat-label">Moneyness</div><div class="mc-stat-value">${type === 'call' ? (S > K ? 'ITM' : S === K ? 'ATM' : 'OTM') : (K > S ? 'ITM' : K === S ? 'ATM' : 'OTM')}</div></div>
+        `;
+    }
 
     // ---- SEARCH ----
     document.getElementById('searchInput').addEventListener('input', (e) => {
