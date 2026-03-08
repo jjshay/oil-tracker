@@ -934,6 +934,217 @@
             .header-counter { display: none; }
         }
 
+        /* ========== COMPARE VIEW ========== */
+        .compare-container {
+            flex: 1;
+            overflow: auto;
+            padding: 16px;
+        }
+        .compare-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .compare-controls label {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .compare-controls select {
+            font-family: var(--font);
+            font-size: var(--fs-sm);
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-card);
+            color: var(--text);
+        }
+        .compare-controls select:focus {
+            outline: none;
+            border-color: var(--green);
+        }
+        .compare-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+        .compare-table th {
+            font-size: var(--fs-xs);
+            font-weight: 700;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border-bottom: 2px solid var(--border);
+            text-align: left;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+        .compare-table th:hover {
+            color: var(--green-light);
+        }
+        .compare-table th .sort-arrow {
+            margin-left: 4px;
+            font-size: 9px;
+            opacity: 0.4;
+        }
+        .compare-table th .sort-arrow.active {
+            opacity: 1;
+            color: var(--amber);
+        }
+        .compare-table td {
+            font-size: var(--fs-sm);
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            vertical-align: top;
+        }
+        .compare-table tr:hover {
+            background: rgba(16, 185, 129, 0.04);
+        }
+        .compare-table .col-ticker {
+            font-weight: 800;
+            color: var(--green);
+            white-space: nowrap;
+            position: sticky;
+            left: 0;
+            background: var(--bg-card);
+            z-index: 2;
+        }
+        .compare-table th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+        }
+        .compare-table .col-name {
+            color: var(--text);
+            max-width: 180px;
+        }
+        .compare-table .col-type {
+            white-space: nowrap;
+        }
+        .compare-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+        .compare-badge-lev {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--amber);
+        }
+        .compare-badge-type {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+        }
+        .compare-badge-opts-yes {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
+        }
+        .compare-badge-opts-no {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-dim);
+        }
+        .compare-rating {
+            display: flex;
+            gap: 2px;
+        }
+        .compare-rating .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.08);
+        }
+        .compare-rating .dot.filled {
+            background: var(--green);
+        }
+        .compare-bull {
+            color: var(--green-light);
+            font-size: 11px;
+            line-height: 1.4;
+            max-width: 250px;
+        }
+        .compare-bear {
+            color: #fca5a5;
+            font-size: 11px;
+            line-height: 1.4;
+            max-width: 250px;
+        }
+        .compare-strategy {
+            color: var(--amber-light);
+            font-size: 11px;
+            line-height: 1.4;
+            max-width: 250px;
+        }
+        .compare-risks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            max-width: 200px;
+        }
+        .compare-risk-tag {
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 6px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            white-space: nowrap;
+        }
+        .compare-catalysts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            max-width: 200px;
+        }
+        .compare-catalyst-tag {
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 6px;
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--amber-light);
+            white-space: nowrap;
+        }
+        .compare-highlight {
+            background: rgba(16, 185, 129, 0.08) !important;
+        }
+        .compare-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .compare-summary-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .compare-summary-label {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .compare-summary-value {
+            font-size: var(--fs-lg);
+            font-weight: 800;
+            color: var(--green);
+        }
+
         /* ========== CREDIT ========== */
         .credit-line {
             font-size: var(--fs-xs);
@@ -1131,6 +1342,39 @@
                 </div>
             </div>
 
+            <!-- COMPARE VIEW -->
+            <div class="view" id="compareView">
+                <div class="compare-container">
+                    <div class="compare-summary" id="compareSummary"></div>
+                    <div class="compare-controls">
+                        <label>Show:</label>
+                        <select id="compareFilter">
+                            <option value="all">All Instruments</option>
+                            <option value="leveraged">Leveraged ETFs Only</option>
+                            <option value="etf">All ETFs</option>
+                            <option value="stock">Stocks Only</option>
+                            <option value="futures">Futures Only</option>
+                            <option value="options">Options Available</option>
+                            <option value="top">Top Rated (4+)</option>
+                            <option value="watchlist">My Watchlist</option>
+                        </select>
+                        <label>Columns:</label>
+                        <select id="compareColumns">
+                            <option value="key">Key Metrics</option>
+                            <option value="strategy">Strategy Focus</option>
+                            <option value="risk">Risk Analysis</option>
+                            <option value="full">All Columns</option>
+                        </select>
+                    </div>
+                    <div class="compare-wrapper">
+                        <table class="compare-table" id="compareTable">
+                            <thead id="compareHead"></thead>
+                            <tbody id="compareBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- DASHBOARD VIEW -->
             <div class="view" id="dashboardView">
                 <div class="dashboard-container">
@@ -1177,13 +1421,17 @@
                 <span class="nav-icon">&#9830;</span>
                 Cards
             </button>
+            <button class="nav-item" onclick="showView('compare')" data-view="compare">
+                <span class="nav-icon">&#9878;</span>
+                Compare
+            </button>
             <button class="nav-item" onclick="showView('scanner')" data-view="scanner">
                 <span class="nav-icon">&#9776;</span>
                 Scanner
             </button>
             <button class="nav-item" onclick="showView('calc')" data-view="calc">
                 <span class="nav-icon">&#128200;</span>
-                Calculator
+                Calc
             </button>
             <button class="nav-item" onclick="showView('tracker')" data-view="tracker">
                 <span class="nav-icon">&#128176;</span>
@@ -1191,7 +1439,7 @@
             </button>
             <button class="nav-item" onclick="showView('dashboard')" data-view="dashboard">
                 <span class="nav-icon">&#128202;</span>
-                Dashboard
+                Dash
             </button>
         </nav>
         <div class="credit-line">Oil Radar by Greg Miller</div>
@@ -1915,6 +2163,7 @@
     function showView(name) {
         const views = {
             cards: 'cardsView',
+            compare: 'compareView',
             scanner: 'scannerView',
             calc: 'calcView',
             tracker: 'trackerView',
@@ -1931,9 +2180,221 @@
         });
 
         if (name === 'scanner') renderScanner();
+        if (name === 'compare') renderCompare();
         if (name === 'dashboard') updateDashboard();
         if (name === 'tracker') renderPositions();
     }
+
+    // ---- COMPARE ----
+    let compareSortCol = 'rating';
+    let compareSortDir = 'desc';
+
+    function getCompareList() {
+        const filter = document.getElementById('compareFilter').value;
+        let list = [...instruments];
+
+        if (filter === 'leveraged') list = list.filter(i => i.leverage === '2x' || i.leverage === '3x');
+        else if (filter === 'etf') list = list.filter(i => i.type.includes('ETF'));
+        else if (filter === 'stock') list = list.filter(i => i.type === 'Stock');
+        else if (filter === 'futures') list = list.filter(i => i.type === 'Futures');
+        else if (filter === 'options') list = list.filter(i => i.optionsAvailable);
+        else if (filter === 'top') list = list.filter(i => i.rating >= 4);
+        else if (filter === 'watchlist') list = list.filter(i => watchlist.includes(i.id));
+
+        // Sort
+        list.sort((a, b) => {
+            let va, vb;
+            if (compareSortCol === 'ticker') { va = a.ticker; vb = b.ticker; }
+            else if (compareSortCol === 'name') { va = a.name; vb = b.name; }
+            else if (compareSortCol === 'type') { va = a.type; vb = b.type; }
+            else if (compareSortCol === 'sector') { va = a.sector; vb = b.sector; }
+            else if (compareSortCol === 'leverage') {
+                const levVal = l => l === '3x' ? 3 : l === '2x' ? 2 : l === 'Margin-based' ? 10 : 1;
+                va = levVal(a.leverage); vb = levVal(b.leverage);
+            }
+            else if (compareSortCol === 'rating') { va = a.rating; vb = b.rating; }
+            else if (compareSortCol === 'options') { va = a.optionsAvailable ? 1 : 0; vb = b.optionsAvailable ? 1 : 0; }
+            else if (compareSortCol === 'liquidity') {
+                const liqVal = l => l === 'Very High' ? 4 : l === 'High' ? 3 : l === 'Medium' ? 2 : l === 'Low' ? 1 : 0;
+                va = liqVal(a.optionsLiquidity); vb = liqVal(b.optionsLiquidity);
+            }
+            else { va = a.rating; vb = b.rating; }
+
+            if (typeof va === 'string') {
+                return compareSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+            }
+            return compareSortDir === 'asc' ? va - vb : vb - va;
+        });
+
+        return list;
+    }
+
+    function renderCompare() {
+        const list = getCompareList();
+        const colMode = document.getElementById('compareColumns').value;
+
+        // Summary stats
+        const summary = document.getElementById('compareSummary');
+        const avgRating = list.length ? (list.reduce((s, i) => s + i.rating, 0) / list.length).toFixed(1) : '0';
+        const withOptions = list.filter(i => i.optionsAvailable).length;
+        const leveraged = list.filter(i => i.leverage === '2x' || i.leverage === '3x').length;
+        const topRated = list.filter(i => i.rating >= 4).length;
+
+        summary.innerHTML = `
+            <div class="compare-summary-item">
+                <div class="compare-summary-label">Showing</div>
+                <div class="compare-summary-value">${list.length}</div>
+            </div>
+            <div class="compare-summary-item">
+                <div class="compare-summary-label">Avg Rating</div>
+                <div class="compare-summary-value">${avgRating}/5</div>
+            </div>
+            <div class="compare-summary-item">
+                <div class="compare-summary-label">With Options</div>
+                <div class="compare-summary-value">${withOptions}</div>
+            </div>
+            <div class="compare-summary-item">
+                <div class="compare-summary-label">Leveraged</div>
+                <div class="compare-summary-value">${leveraged}</div>
+            </div>
+            <div class="compare-summary-item">
+                <div class="compare-summary-label">Top Rated (4+)</div>
+                <div class="compare-summary-value">${topRated}</div>
+            </div>
+        `;
+
+        // Define columns by mode
+        const colDefs = {
+            key: [
+                { key: 'ticker', label: 'Ticker' },
+                { key: 'name', label: 'Name' },
+                { key: 'type', label: 'Type' },
+                { key: 'sector', label: 'Sector' },
+                { key: 'leverage', label: 'Leverage' },
+                { key: 'rating', label: 'Rating' },
+                { key: 'options', label: 'Options' },
+                { key: 'liquidity', label: 'Opts Liquidity' },
+                { key: 'expense', label: 'Exp. Ratio' },
+                { key: 'marketCap', label: 'Mkt Cap' },
+                { key: 'dividend', label: 'Dividend' }
+            ],
+            strategy: [
+                { key: 'ticker', label: 'Ticker' },
+                { key: 'type', label: 'Type' },
+                { key: 'leverage', label: 'Leverage' },
+                { key: 'rating', label: 'Rating' },
+                { key: 'bullCase', label: 'Bull Case' },
+                { key: 'strategy', label: 'Recommended Strategy' },
+                { key: 'liquidity', label: 'Opts Liquidity' }
+            ],
+            risk: [
+                { key: 'ticker', label: 'Ticker' },
+                { key: 'type', label: 'Type' },
+                { key: 'rating', label: 'Rating' },
+                { key: 'bearCase', label: 'Bear Case' },
+                { key: 'risks', label: 'Risk Factors' },
+                { key: 'catalysts', label: 'Catalysts' }
+            ],
+            full: [
+                { key: 'ticker', label: 'Ticker' },
+                { key: 'name', label: 'Name' },
+                { key: 'type', label: 'Type' },
+                { key: 'sector', label: 'Sector' },
+                { key: 'leverage', label: 'Leverage' },
+                { key: 'rating', label: 'Rating' },
+                { key: 'options', label: 'Options' },
+                { key: 'liquidity', label: 'Opts Liquidity' },
+                { key: 'expense', label: 'Exp. Ratio' },
+                { key: 'marketCap', label: 'Mkt Cap' },
+                { key: 'dividend', label: 'Dividend' },
+                { key: 'bullCase', label: 'Bull Case' },
+                { key: 'bearCase', label: 'Bear Case' },
+                { key: 'strategy', label: 'Strategy' },
+                { key: 'risks', label: 'Risks' },
+                { key: 'catalysts', label: 'Catalysts' }
+            ]
+        };
+
+        const cols = colDefs[colMode] || colDefs.key;
+
+        // Render header
+        const head = document.getElementById('compareHead');
+        head.innerHTML = '<tr>' + cols.map(c => {
+            const isActive = compareSortCol === c.key;
+            const arrow = isActive ? (compareSortDir === 'asc' ? '&#9650;' : '&#9660;') : '&#9660;';
+            return `<th onclick="sortCompare('${c.key}')">${c.label} <span class="sort-arrow ${isActive ? 'active' : ''}">${arrow}</span></th>`;
+        }).join('') + '</tr>';
+
+        // Render rows
+        const body = document.getElementById('compareBody');
+        body.innerHTML = list.map(inst => {
+            const inWatch = watchlist.includes(inst.id);
+            const rowClass = inWatch ? 'compare-highlight' : '';
+
+            return `<tr class="${rowClass}" onclick="showDetail(${inst.id})" style="cursor:pointer;">` +
+                cols.map(c => renderCompareCell(inst, c.key)).join('') +
+                '</tr>';
+        }).join('');
+    }
+
+    function renderCompareCell(inst, key) {
+        switch (key) {
+            case 'ticker':
+                return `<td class="col-ticker">${inst.ticker}</td>`;
+            case 'name':
+                return `<td class="col-name">${inst.name}</td>`;
+            case 'type':
+                return `<td class="col-type"><span class="compare-badge compare-badge-type">${inst.type}</span></td>`;
+            case 'sector':
+                return `<td style="font-size:11px;color:var(--text-dim);">${inst.sector}</td>`;
+            case 'leverage':
+                if (inst.leverage === 'N/A') return `<td style="color:var(--text-dim);">-</td>`;
+                return `<td><span class="compare-badge compare-badge-lev">${inst.leverage}</span></td>`;
+            case 'rating': {
+                const dots = Array.from({length: 5}, (_, i) =>
+                    `<div class="dot ${i < inst.rating ? 'filled' : ''}"></div>`
+                ).join('');
+                return `<td><div class="compare-rating">${dots}</div></td>`;
+            }
+            case 'options':
+                return `<td><span class="compare-badge ${inst.optionsAvailable ? 'compare-badge-opts-yes' : 'compare-badge-opts-no'}">${inst.optionsAvailable ? 'Yes' : 'No'}</span></td>`;
+            case 'liquidity':
+                const liqColor = inst.optionsLiquidity === 'Very High' || inst.optionsLiquidity === 'High' ? 'var(--green)' : 'var(--text-dim)';
+                return `<td style="font-size:11px;color:${liqColor};font-weight:600;">${inst.optionsLiquidity || '-'}</td>`;
+            case 'expense':
+                return `<td style="font-size:11px;">${inst.expenseRatio || '-'}</td>`;
+            case 'marketCap':
+                return `<td style="font-size:11px;">${inst.marketCap || '-'}</td>`;
+            case 'dividend':
+                return `<td style="font-size:11px;">${inst.dividend || '-'}</td>`;
+            case 'bullCase':
+                return `<td><div class="compare-bull">${inst.bullCase}</div></td>`;
+            case 'bearCase':
+                return `<td><div class="compare-bear">${inst.bearCase}</div></td>`;
+            case 'strategy':
+                return `<td><div class="compare-strategy">${inst.strategy}</div></td>`;
+            case 'risks':
+                return `<td><div class="compare-risks">${inst.risks.map(r => `<span class="compare-risk-tag">${r}</span>`).join('')}</div></td>`;
+            case 'catalysts':
+                return `<td><div class="compare-catalysts">${inst.catalysts.map(c => `<span class="compare-catalyst-tag">${c}</span>`).join('')}</div></td>`;
+            default:
+                return `<td>-</td>`;
+        }
+    }
+
+    function sortCompare(col) {
+        if (compareSortCol === col) {
+            compareSortDir = compareSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            compareSortCol = col;
+            compareSortDir = col === 'ticker' || col === 'name' ? 'asc' : 'desc';
+        }
+        renderCompare();
+    }
+
+    // Compare filter/column change listeners
+    document.getElementById('compareFilter').addEventListener('change', renderCompare);
+    document.getElementById('compareColumns').addEventListener('change', renderCompare);
 
     // ---- SEARCH ----
     document.getElementById('searchInput').addEventListener('input', (e) => {
