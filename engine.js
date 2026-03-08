@@ -726,6 +726,327 @@ const Backtester = {
     }
 };
 
+// ========== NEWS FEED AGGREGATOR ==========
+const NewsFeed = {
+    feeds: [
+        { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml', color: '#0052ff' },
+        { name: 'CoinTelegraph', url: 'https://cointelegraph.com/rss', color: '#f7931a' },
+        { name: 'CryptoSlate', url: 'https://cryptoslate.com/feed/', color: '#3861fb' },
+        { name: 'Decrypt', url: 'https://decrypt.co/feed', color: '#2aeaff' },
+        { name: 'Bitcoin Magazine', url: 'https://bitcoinmagazine.com/.rss/full/', color: '#f7931a' },
+        { name: 'CCN', url: 'https://www.ccn.com/news/crypto-news/feeds/', color: '#e91e63' },
+        { name: 'CryptoPanic', url: 'https://cryptopanic.com/feed/', color: '#49eacb' }
+    ],
+    cache: { articles: [], time: 0 },
+    cacheExpiry: 10 * 60 * 1000, // 10 min cache
+
+    async fetchAll() {
+        if (this.cache.articles.length && Date.now() - this.cache.time < this.cacheExpiry) {
+            return this.cache.articles;
+        }
+        const allArticles = [];
+        const results = await Promise.allSettled(
+            this.feeds.map(feed => this._fetchFeed(feed))
+        );
+        for (const r of results) {
+            if (r.status === 'fulfilled' && r.value) {
+                allArticles.push(...r.value);
+            }
+        }
+        // Deduplicate by title similarity and sort by date
+        const seen = new Set();
+        const deduped = allArticles.filter(a => {
+            const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        deduped.sort((a, b) => b.date - a.date);
+        this.cache = { articles: deduped, time: Date.now() };
+        return deduped;
+    },
+
+    async _fetchFeed(feed) {
+        try {
+            const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`;
+            const resp = await fetch(proxyUrl);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            if (data.status !== 'ok' || !data.items) return [];
+            return data.items.slice(0, 15).map(item => ({
+                title: item.title || '',
+                link: item.link || '',
+                description: (item.description || '').replace(/<[^>]*>/g, '').slice(0, 300),
+                date: new Date(item.pubDate || Date.now()),
+                source: feed.name,
+                sourceColor: feed.color,
+                thumbnail: item.thumbnail || item.enclosure?.link || ''
+            }));
+        } catch (e) {
+            console.warn('Feed fetch failed:', feed.name, e.message);
+            return [];
+        }
+    }
+};
+
+// ========== AI ANALYSIS ENGINE ==========
+const AIAnalysis = {
+    // Keys loaded from localStorage (set via Settings in the app)
+    getKeys() {
+        try {
+            return JSON.parse(localStorage.getItem('oilradar_ai_keys') || '{}');
+        } catch { return {}; }
+    },
+    setKeys(keys) {
+        localStorage.setItem('oilradar_ai_keys', JSON.stringify(keys));
+    },
+    get keys() {
+        return this.getKeys();
+    },
+
+    _buildPrompt(headlines) {
+        return `You are a crypto and oil market analyst. Analyze these recent headlines and provide actionable trading insights.
+
+HEADLINES:
+${headlines.map((h, i) => `${i + 1}. [${h.source}] ${h.title}`).join('\n')}
+
+Respond in this exact JSON format (no markdown, just raw JSON):
+{
+  "sentiment": "bullish" | "bearish" | "neutral",
+  "confidence": 1-10,
+  "summary": "2-3 sentence market summary",
+  "actionable": [
+    {"headline_index": 1, "action": "BUY/SELL/WATCH", "asset": "BTC/ETH/OIL/etc", "reasoning": "brief reason", "urgency": "high/medium/low"}
+  ],
+  "risks": ["risk 1", "risk 2"],
+  "opportunities": ["opportunity 1", "opportunity 2"]
+}`;
+    },
+
+    async analyzeWithGemini(headlines) {
+        try {
+            const resp = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.keys.gemini}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: this._buildPrompt(headlines) }] }],
+                        generationConfig: { temperature: 0.3, maxOutputTokens: 1500 }
+                    })
+                }
+            );
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return { model: 'Gemini 2.0 Flash', result: this._parseJSON(text), raw: text, error: null };
+        } catch (e) {
+            return { model: 'Gemini 2.0 Flash', result: null, raw: null, error: e.message };
+        }
+    },
+
+    async analyzeWithOpenAI(headlines) {
+        try {
+            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.keys.openai}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [{ role: 'user', content: this._buildPrompt(headlines) }],
+                    temperature: 0.3,
+                    max_tokens: 1500
+                })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const text = data.choices?.[0]?.message?.content || '';
+            return { model: 'GPT-4o Mini', result: this._parseJSON(text), raw: text, error: null };
+        } catch (e) {
+            return { model: 'GPT-4o Mini', result: null, raw: null, error: e.message };
+        }
+    },
+
+    async analyzeWithClaude(headlines) {
+        try {
+            const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': this.keys.claude,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 1500,
+                    messages: [{ role: 'user', content: this._buildPrompt(headlines) }]
+                })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const text = data.content?.[0]?.text || '';
+            return { model: 'Claude Sonnet', result: this._parseJSON(text), raw: text, error: null };
+        } catch (e) {
+            return { model: 'Claude Sonnet', result: null, raw: null, error: e.message };
+        }
+    },
+
+    async analyzeWithGrok(headlines) {
+        try {
+            const resp = await fetch('https://api.x.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.keys.grok}`
+                },
+                body: JSON.stringify({
+                    model: 'grok-3-mini-fast',
+                    messages: [{ role: 'user', content: this._buildPrompt(headlines) }],
+                    temperature: 0.3,
+                    max_tokens: 1500
+                })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const text = data.choices?.[0]?.message?.content || '';
+            return { model: 'Grok 3 Mini', result: this._parseJSON(text), raw: text, error: null };
+        } catch (e) {
+            return { model: 'Grok 3 Mini', result: null, raw: null, error: e.message };
+        }
+    },
+
+    _buildBriefingPrompt(headlines) {
+        return `You are a seasoned market analyst delivering a 2-minute audio briefing. Cover: (1) overall market sentiment from today's news, (2) key events that could move oil and crypto markets, (3) historical parallels (reference specific past events), (4) actionable trades with entry points and risk levels, (5) 1-week and 1-month outlook.
+
+RECENT HEADLINES:
+${headlines.map((h, i) => `${i + 1}. [${h.source}] ${h.title}`).join('\n')}
+
+Write the briefing as natural spoken text (no JSON, no bullet points, no markdown). Use conversational language suitable for text-to-speech. Start with "Here's your market briefing." and end with a clear recommendation. Keep it under 500 words.`;
+    },
+
+    async getBriefing(headlines) {
+        // Try Gemini first (most reliable for browser CORS), then fallback to others
+        const attempts = [
+            () => this._briefingGemini(headlines),
+            () => this._briefingOpenAI(headlines),
+            () => this._briefingGrok(headlines),
+            () => this._briefingClaude(headlines)
+        ];
+        for (const attempt of attempts) {
+            const result = await attempt();
+            if (result.text) return result;
+        }
+        return { model: 'None', text: null, error: 'All AI models failed to respond.' };
+    },
+
+    async _briefingGemini(headlines) {
+        try {
+            const resp = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.keys.gemini}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: this._buildBriefingPrompt(headlines) }] }],
+                        generationConfig: { temperature: 0.5, maxOutputTokens: 2000 }
+                    })
+                }
+            );
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return { model: 'Gemini 2.0 Flash', text: data.candidates?.[0]?.content?.parts?.[0]?.text || null, error: null };
+        } catch (e) {
+            return { model: 'Gemini 2.0 Flash', text: null, error: e.message };
+        }
+    },
+
+    async _briefingOpenAI(headlines) {
+        try {
+            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.keys.openai}` },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [{ role: 'user', content: this._buildBriefingPrompt(headlines) }],
+                    temperature: 0.5, max_tokens: 2000
+                })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return { model: 'GPT-4o Mini', text: data.choices?.[0]?.message?.content || null, error: null };
+        } catch (e) {
+            return { model: 'GPT-4o Mini', text: null, error: e.message };
+        }
+    },
+
+    async _briefingGrok(headlines) {
+        try {
+            const resp = await fetch('https://api.x.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.keys.grok}` },
+                body: JSON.stringify({
+                    model: 'grok-3-mini-fast',
+                    messages: [{ role: 'user', content: this._buildBriefingPrompt(headlines) }],
+                    temperature: 0.5, max_tokens: 2000
+                })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return { model: 'Grok 3 Mini', text: data.choices?.[0]?.message?.content || null, error: null };
+        } catch (e) {
+            return { model: 'Grok 3 Mini', text: null, error: e.message };
+        }
+    },
+
+    async _briefingClaude(headlines) {
+        try {
+            const resp = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': this.keys.claude,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 2000,
+                    messages: [{ role: 'user', content: this._buildBriefingPrompt(headlines) }]
+                })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            return { model: 'Claude Sonnet', text: data.content?.[0]?.text || null, error: null };
+        } catch (e) {
+            return { model: 'Claude Sonnet', text: null, error: e.message };
+        }
+    },
+
+    async analyzeAll(headlines) {
+        const results = await Promise.allSettled([
+            this.analyzeWithGemini(headlines),
+            this.analyzeWithOpenAI(headlines),
+            this.analyzeWithClaude(headlines),
+            this.analyzeWithGrok(headlines)
+        ]);
+        return results.map(r => r.status === 'fulfilled' ? r.value : { model: 'Unknown', result: null, error: r.reason?.message || 'Failed' });
+    },
+
+    _parseJSON(text) {
+        try {
+            // Try to extract JSON from the response (handle markdown code blocks)
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) return JSON.parse(jsonMatch[0]);
+            return null;
+        } catch (e) {
+            return null;
+        }
+    }
+};
+
 // ========== EXPORT FOR HTML ==========
 window.DataEngine = {
     MathUtil,
@@ -736,5 +1057,7 @@ window.DataEngine = {
     HISTORICAL_EVENTS,
     VOLATILITY_DB,
     CORRELATION_REF,
-    Backtester
+    Backtester,
+    NewsFeed,
+    AIAnalysis
 };

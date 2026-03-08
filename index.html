@@ -803,13 +803,15 @@
         }
         .nav-item {
             flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
-            padding: 6px 0;
+            gap: 1px;
+            padding: 6px 2px;
             cursor: pointer;
             color: var(--text-dim);
+            font-size: var(--fs-xs);
             font-size: var(--fs-xs);
             font-weight: 600;
             transition: color 0.2s;
@@ -1643,6 +1645,275 @@
             text-align: center;
         }
 
+        /* ========== NEWS VIEW ========== */
+        .news-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .news-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .news-header h2 {
+            color: var(--green);
+            font-size: var(--fs-lg);
+            font-weight: 700;
+        }
+        .news-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .news-btn {
+            font-family: var(--font);
+            font-size: var(--fs-xs);
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .news-btn:hover { border-color: var(--green); color: var(--green); }
+        .news-btn.active { background: var(--green); color: var(--bg); border-color: var(--green); }
+        .news-btn.analyzing {
+            background: rgba(245,158,11,0.15);
+            border-color: var(--amber);
+            color: var(--amber);
+            animation: pulse-btn 1.5s infinite;
+        }
+        @keyframes pulse-btn {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* AI Analysis Cards */
+        .ai-analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .ai-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-card.loading {
+            min-height: 120px;
+        }
+        .ai-card.loading::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16,185,129,0.05), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            100% { left: 100%; }
+        }
+        .ai-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .ai-model-name {
+            font-size: var(--fs-sm);
+            font-weight: 700;
+            color: var(--text);
+        }
+        .ai-sentiment {
+            font-size: var(--fs-xs);
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+        .ai-sentiment.bullish { background: rgba(16,185,129,0.15); color: var(--green); }
+        .ai-sentiment.bearish { background: rgba(239,68,68,0.15); color: var(--red); }
+        .ai-sentiment.neutral { background: rgba(245,158,11,0.15); color: var(--amber); }
+        .ai-confidence {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        .ai-confidence-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .ai-confidence-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .ai-summary {
+            font-size: var(--fs-sm);
+            color: var(--text);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .ai-actions-list {
+            list-style: none;
+        }
+        .ai-action-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            font-size: var(--fs-xs);
+        }
+        .ai-action-badge {
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            font-size: 9px;
+        }
+        .ai-action-badge.buy { background: rgba(16,185,129,0.2); color: var(--green); }
+        .ai-action-badge.sell { background: rgba(239,68,68,0.2); color: var(--red); }
+        .ai-action-badge.watch { background: rgba(245,158,11,0.2); color: var(--amber); }
+        .ai-action-text {
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+        .ai-action-text strong { color: var(--text); }
+        .ai-error {
+            color: var(--red);
+            font-size: var(--fs-xs);
+            padding: 8px;
+            background: rgba(239,68,68,0.08);
+            border-radius: 8px;
+        }
+        .ai-risks-opps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: var(--fs-xs);
+        }
+        .ai-risks-opps h5 {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .ai-risks-opps h5.risks { color: var(--red); }
+        .ai-risks-opps h5.opps { color: var(--green); }
+        .ai-risks-opps li {
+            color: var(--text-dim);
+            margin-bottom: 2px;
+            list-style: none;
+        }
+
+        /* Consensus bar */
+        .consensus-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-amber);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .consensus-header {
+            font-size: var(--fs-md);
+            font-weight: 700;
+            color: var(--amber);
+            margin-bottom: 8px;
+        }
+        .consensus-meter {
+            display: flex;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .consensus-meter div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--bg);
+            transition: width 0.5s ease;
+        }
+
+        /* News articles */
+        .news-article {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .news-article:hover { border-color: var(--green); }
+        .news-article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .news-title {
+            font-size: var(--fs-sm);
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.4;
+            flex: 1;
+        }
+        .news-source {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .news-desc {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+        .news-time {
+            font-size: 9px;
+            color: var(--text-dim);
+        }
+        .news-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: var(--fs-sm);
+        }
+        .news-loading .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 8px;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
         /* ========== CREDIT ========== */
         .credit-line {
             font-size: var(--fs-xs);
@@ -2317,6 +2588,77 @@
                 </div>
             </div>
 
+            <!-- NEWS + AI VIEW -->
+            <div class="view" id="newsView">
+                <div class="news-container">
+                    <div class="news-header">
+                        <h2>AI Intel Feed</h2>
+                        <div class="news-actions">
+                            <button class="news-btn" onclick="refreshNews()">Refresh</button>
+                            <button class="news-btn" id="aiAnalyzeBtn" onclick="runAIAnalysis()">AI Analyze</button>
+                            <button class="news-btn" id="aiBriefingBtn" onclick="runAIBriefing()">Audio Brief</button>
+                            <button class="news-btn" onclick="showKeySettings()">Keys</button>
+                        </div>
+                    </div>
+
+                    <!-- API Key Settings (inline, hidden by default) -->
+                    <div id="keySettingsPanel" style="display:none;">
+                        <div class="consensus-card">
+                            <div class="consensus-header" style="color:var(--text);">API Keys <span style="font-size:10px;color:var(--text-dim);">(stored in browser only)</span></div>
+                            <div style="display:grid;gap:8px;margin-top:8px;">
+                                <div>
+                                    <label style="font-size:10px;color:var(--green);font-weight:600;">GEMINI</label>
+                                    <input type="password" id="keyGemini" class="search-input" style="width:100%;margin-top:2px;" placeholder="AIzaSy...">
+                                </div>
+                                <div>
+                                    <label style="font-size:10px;color:var(--green);font-weight:600;">OPENAI</label>
+                                    <input type="password" id="keyOpenAI" class="search-input" style="width:100%;margin-top:2px;" placeholder="sk-proj-...">
+                                </div>
+                                <div>
+                                    <label style="font-size:10px;color:var(--green);font-weight:600;">CLAUDE</label>
+                                    <input type="password" id="keyClaude" class="search-input" style="width:100%;margin-top:2px;" placeholder="sk-ant-...">
+                                </div>
+                                <div>
+                                    <label style="font-size:10px;color:var(--green);font-weight:600;">GROK</label>
+                                    <input type="password" id="keyGrok" class="search-input" style="width:100%;margin-top:2px;" placeholder="xai-...">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:12px;">
+                                <button class="news-btn active" onclick="saveKeys()">Save Keys</button>
+                                <button class="news-btn" onclick="document.getElementById('keySettingsPanel').style.display='none'">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audio Briefing Player -->
+                    <div id="audioBriefingPanel" style="display:none;">
+                        <div class="consensus-card" style="border-color:var(--green);">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                <div class="consensus-header" style="margin-bottom:0;">AI Market Briefing</div>
+                                <div style="display:flex;gap:6px;">
+                                    <button class="news-btn" id="playPauseBtn" onclick="toggleSpeech()" style="font-size:16px;padding:4px 12px;">&#9654;</button>
+                                    <button class="news-btn" onclick="stopSpeech()" style="font-size:14px;padding:4px 12px;">&#9632;</button>
+                                </div>
+                            </div>
+                            <div id="briefingText" style="font-size:12px;color:var(--text);line-height:1.6;max-height:300px;overflow-y:auto;white-space:pre-wrap;"></div>
+                            <div id="briefingStatus" style="font-size:10px;color:var(--text-dim);margin-top:8px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Analysis Section (hidden until triggered) -->
+                    <div id="aiConsensus" style="display:none;"></div>
+                    <div class="ai-analysis-grid" id="aiAnalysisGrid" style="display:none;"></div>
+
+                    <!-- News Articles -->
+                    <div id="newsFeedContainer">
+                        <div class="news-loading">
+                            <div class="spinner"></div>
+                            <div>Loading news feeds...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- DASHBOARD VIEW -->
             <div class="view" id="dashboardView">
                 <div class="dashboard-container">
@@ -2378,6 +2720,10 @@
             <button class="nav-item" onclick="showView('research')" data-view="research">
                 <span class="nav-icon">&#128300;</span>
                 Research
+            </button>
+            <button class="nav-item" onclick="showView('news')" data-view="news">
+                <span class="nav-icon">&#9889;</span>
+                Intel
             </button>
             <button class="nav-item" onclick="showView('tracker')" data-view="tracker">
                 <span class="nav-icon">&#128176;</span>
@@ -3117,6 +3463,7 @@
             research: 'researchView',
             calc: 'calcView',
             tracker: 'trackerView',
+            news: 'newsView',
             dashboard: 'dashboardView'
         };
 
@@ -3135,6 +3482,7 @@
         if (name === 'research') initResearchView();
         if (name === 'dashboard') updateDashboard();
         if (name === 'tracker') renderPositions();
+        if (name === 'news') initNewsView();
     }
 
     // ---- SCENARIOS: STRAIT OF HORMUZ MODEL ----
@@ -4687,6 +5035,350 @@
             <div class="bs-result-item"><div class="mc-stat-label">Time Value</div><div class="mc-stat-value" style="color:var(--amber);">$${(price - (type === 'call' ? Math.max(0, S - K) : Math.max(0, K - S))).toFixed(2)}</div></div>
             <div class="bs-result-item"><div class="mc-stat-label">Moneyness</div><div class="mc-stat-value">${type === 'call' ? (S > K ? 'ITM' : S === K ? 'ATM' : 'OTM') : (K > S ? 'ITM' : K === S ? 'ATM' : 'OTM')}</div></div>
         `;
+    }
+
+    // ---- NEWS + AI INTEL ----
+    let newsInitialized = false;
+    let newsArticles = [];
+
+    async function initNewsView() {
+        if (!newsInitialized) {
+            newsInitialized = true;
+            await refreshNews();
+        }
+    }
+
+    async function refreshNews() {
+        const container = document.getElementById('newsFeedContainer');
+        container.innerHTML = '<div class="news-loading"><div class="spinner"></div><div>Fetching 7 crypto news feeds...</div></div>';
+
+        const DE = window.DataEngine;
+        newsArticles = await DE.NewsFeed.fetchAll();
+
+        if (newsArticles.length === 0) {
+            container.innerHTML = '<div class="news-loading">No articles found. RSS feeds may be unavailable.</div>';
+            return;
+        }
+
+        renderNewsArticles(newsArticles);
+    }
+
+    function renderNewsArticles(articles) {
+        const container = document.getElementById('newsFeedContainer');
+        const html = articles.slice(0, 50).map(a => {
+            const timeAgo = getTimeAgo(a.date);
+            return `<div class="news-article" onclick="window.open('${a.link}', '_blank')">
+                <div class="news-article-header">
+                    <div class="news-title">${escapeHtml(a.title)}</div>
+                    <div class="news-source" style="background:${a.sourceColor}20;color:${a.sourceColor};border:1px solid ${a.sourceColor}40;">${a.source}</div>
+                </div>
+                ${a.description ? `<div class="news-desc">${escapeHtml(a.description.slice(0, 200))}${a.description.length > 200 ? '...' : ''}</div>` : ''}
+                <div class="news-time">${timeAgo}</div>
+            </div>`;
+        }).join('');
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function getTimeAgo(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const mins = Math.floor(diffMs / 60000);
+        if (mins < 60) return `${mins}m ago`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    }
+
+    async function runAIAnalysis() {
+        if (newsArticles.length === 0) {
+            await refreshNews();
+            if (newsArticles.length === 0) return;
+        }
+
+        const btn = document.getElementById('aiAnalyzeBtn');
+        btn.classList.add('analyzing');
+        btn.textContent = 'Analyzing...';
+
+        const grid = document.getElementById('aiAnalysisGrid');
+        const consensus = document.getElementById('aiConsensus');
+        grid.style.display = 'grid';
+        consensus.style.display = 'none';
+
+        // Show loading cards for all 4 models
+        const models = ['Gemini 2.0 Flash', 'GPT-4o Mini', 'Claude Sonnet', 'Grok 3 Mini'];
+        grid.innerHTML = models.map(m => `
+            <div class="ai-card loading">
+                <div class="ai-card-header">
+                    <div class="ai-model-name">${m}</div>
+                    <div class="ai-sentiment neutral">Analyzing...</div>
+                </div>
+                <div style="color:var(--text-dim);font-size:11px;">Processing ${Math.min(newsArticles.length, 20)} headlines...</div>
+            </div>
+        `).join('');
+
+        const DE = window.DataEngine;
+        const top20 = newsArticles.slice(0, 20);
+        const results = await DE.AIAnalysis.analyzeAll(top20);
+
+        // Render each AI card
+        grid.innerHTML = results.map(r => renderAICard(r)).join('');
+
+        // Build consensus
+        const validResults = results.filter(r => r.result);
+        if (validResults.length > 0) {
+            renderConsensus(validResults);
+        }
+
+        btn.classList.remove('analyzing');
+        btn.textContent = 'AI Analyze';
+    }
+
+    function renderAICard(analysis) {
+        if (analysis.error || !analysis.result) {
+            return `<div class="ai-card">
+                <div class="ai-card-header">
+                    <div class="ai-model-name">${analysis.model}</div>
+                </div>
+                <div class="ai-error">${analysis.error || 'Failed to parse response'}</div>
+                ${analysis.raw ? `<details style="margin-top:8px;"><summary style="font-size:10px;color:var(--text-dim);cursor:pointer;">Raw response</summary><pre style="font-size:9px;color:var(--text-dim);white-space:pre-wrap;margin-top:4px;max-height:200px;overflow-y:auto;">${escapeHtml(analysis.raw)}</pre></details>` : ''}
+            </div>`;
+        }
+
+        const r = analysis.result;
+        const sentimentClass = (r.sentiment || 'neutral').toLowerCase();
+        const confColor = sentimentClass === 'bullish' ? 'var(--green)' : sentimentClass === 'bearish' ? 'var(--red)' : 'var(--amber)';
+        const confidence = r.confidence || 5;
+
+        let actionsHtml = '';
+        if (r.actionable && r.actionable.length) {
+            actionsHtml = r.actionable.slice(0, 4).map(a => {
+                const actionClass = (a.action || 'WATCH').toLowerCase();
+                return `<div class="ai-action-item">
+                    <span class="ai-action-badge ${actionClass === 'buy' ? 'buy' : actionClass === 'sell' ? 'sell' : 'watch'}">${a.action}</span>
+                    <div class="ai-action-text"><strong>${a.asset || '?'}</strong> — ${a.reasoning || ''} ${a.urgency ? `(${a.urgency})` : ''}</div>
+                </div>`;
+            }).join('');
+        }
+
+        let risksOppsHtml = '';
+        if ((r.risks && r.risks.length) || (r.opportunities && r.opportunities.length)) {
+            risksOppsHtml = `<div class="ai-risks-opps">
+                <div><h5 class="risks">Risks</h5><ul>${(r.risks || []).slice(0, 3).map(x => `<li>- ${escapeHtml(x)}</li>`).join('')}</ul></div>
+                <div><h5 class="opps">Opportunities</h5><ul>${(r.opportunities || []).slice(0, 3).map(x => `<li>+ ${escapeHtml(x)}</li>`).join('')}</ul></div>
+            </div>`;
+        }
+
+        return `<div class="ai-card">
+            <div class="ai-card-header">
+                <div class="ai-model-name">${analysis.model}</div>
+                <div class="ai-sentiment ${sentimentClass}">${r.sentiment || 'N/A'}</div>
+            </div>
+            <div class="ai-confidence">Confidence: ${confidence}/10</div>
+            <div class="ai-confidence-bar"><div class="ai-confidence-fill" style="width:${confidence * 10}%;background:${confColor};"></div></div>
+            <div class="ai-summary">${escapeHtml(r.summary || 'No summary provided')}</div>
+            <div class="ai-actions-list">${actionsHtml}</div>
+            ${risksOppsHtml}
+        </div>`;
+    }
+
+    function renderConsensus(results) {
+        const container = document.getElementById('aiConsensus');
+        container.style.display = 'block';
+
+        let bullish = 0, bearish = 0, neutral = 0;
+        let totalConf = 0;
+        const allActions = [];
+
+        results.forEach(r => {
+            const s = (r.result.sentiment || 'neutral').toLowerCase();
+            if (s === 'bullish') bullish++;
+            else if (s === 'bearish') bearish++;
+            else neutral++;
+            totalConf += r.result.confidence || 5;
+            if (r.result.actionable) allActions.push(...r.result.actionable);
+        });
+
+        const total = results.length;
+        const avgConf = (totalConf / total).toFixed(1);
+        const bPct = Math.round(bullish / total * 100);
+        const nPct = Math.round(neutral / total * 100);
+        const rPct = Math.round(bearish / total * 100);
+
+        // Count action votes
+        const actionVotes = {};
+        allActions.forEach(a => {
+            const key = `${(a.action || 'WATCH').toUpperCase()} ${(a.asset || '?').toUpperCase()}`;
+            actionVotes[key] = (actionVotes[key] || 0) + 1;
+        });
+        const topActions = Object.entries(actionVotes)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        const overallSentiment = bPct > rPct ? 'BULLISH' : rPct > bPct ? 'BEARISH' : 'NEUTRAL';
+        const sentColor = overallSentiment === 'BULLISH' ? 'var(--green)' : overallSentiment === 'BEARISH' ? 'var(--red)' : 'var(--amber)';
+
+        container.innerHTML = `<div class="consensus-card">
+            <div class="consensus-header">AI Consensus: <span style="color:${sentColor};">${overallSentiment}</span> <span style="font-size:12px;color:var(--text-dim);">(${total} models, avg confidence ${avgConf}/10)</span></div>
+            <div class="consensus-meter">
+                ${bPct > 0 ? `<div style="width:${bPct}%;background:var(--green);">${bPct}% Bull</div>` : ''}
+                ${nPct > 0 ? `<div style="width:${nPct}%;background:var(--amber);">${nPct}% Neutral</div>` : ''}
+                ${rPct > 0 ? `<div style="width:${rPct}%;background:var(--red);">${rPct}% Bear</div>` : ''}
+            </div>
+            ${topActions.length ? `<div style="font-size:11px;color:var(--text-dim);">
+                <strong style="color:var(--text);">Top signals:</strong>
+                ${topActions.map(([action, count]) => {
+                    const parts = action.split(' ');
+                    const actionType = parts[0].toLowerCase();
+                    const color = actionType === 'buy' ? 'var(--green)' : actionType === 'sell' ? 'var(--red)' : 'var(--amber)';
+                    return `<span style="color:${color};font-weight:600;margin-left:8px;">${action}</span> (${count}/${total})`;
+                }).join('')}
+            </div>` : ''}
+        </div>`;
+    }
+
+    // ---- API KEY SETTINGS ----
+    function showKeySettings() {
+        const panel = document.getElementById('keySettingsPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        // Load existing keys
+        const DE = window.DataEngine;
+        const keys = DE.AIAnalysis.getKeys();
+        document.getElementById('keyGemini').value = keys.gemini || '';
+        document.getElementById('keyOpenAI').value = keys.openai || '';
+        document.getElementById('keyClaude').value = keys.claude || '';
+        document.getElementById('keyGrok').value = keys.grok || '';
+    }
+
+    function saveKeys() {
+        const DE = window.DataEngine;
+        DE.AIAnalysis.setKeys({
+            gemini: document.getElementById('keyGemini').value.trim(),
+            openai: document.getElementById('keyOpenAI').value.trim(),
+            claude: document.getElementById('keyClaude').value.trim(),
+            grok: document.getElementById('keyGrok').value.trim()
+        });
+        document.getElementById('keySettingsPanel').style.display = 'none';
+    }
+
+    // ---- AUDIO BRIEFING ----
+    let speechUtterance = null;
+    let isSpeaking = false;
+
+    async function runAIBriefing() {
+        const btn = document.getElementById('aiBriefingBtn');
+        btn.classList.add('analyzing');
+        btn.textContent = 'Generating...';
+
+        // Make sure we have news
+        if (newsArticles.length === 0) {
+            await refreshNews();
+            if (newsArticles.length === 0) {
+                btn.classList.remove('analyzing');
+                btn.textContent = 'Audio Brief';
+                return;
+            }
+        }
+
+        const panel = document.getElementById('audioBriefingPanel');
+        const textEl = document.getElementById('briefingText');
+        const statusEl = document.getElementById('briefingStatus');
+        panel.style.display = 'block';
+        textEl.textContent = 'Generating market briefing from AI...';
+        statusEl.textContent = '';
+
+        const DE = window.DataEngine;
+        const top20 = newsArticles.slice(0, 20);
+        const result = await DE.AIAnalysis.getBriefing(top20);
+
+        btn.classList.remove('analyzing');
+        btn.textContent = 'Audio Brief';
+
+        if (!result.text) {
+            textEl.textContent = 'Failed to generate briefing: ' + (result.error || 'Unknown error');
+            return;
+        }
+
+        textEl.textContent = result.text;
+        statusEl.textContent = `Generated by ${result.model}. Press play to listen.`;
+
+        // Auto-play
+        speakText(result.text);
+    }
+
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            speechUtterance = new SpeechSynthesisUtterance(text);
+            speechUtterance.rate = 1.0;
+            speechUtterance.pitch = 1.0;
+            speechUtterance.volume = 1.0;
+
+            // Pick a good voice
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Google'));
+            if (preferred) speechUtterance.voice = preferred;
+
+            speechUtterance.onstart = () => {
+                isSpeaking = true;
+                document.getElementById('playPauseBtn').innerHTML = '&#10074;&#10074;';
+                document.getElementById('briefingStatus').textContent = 'Speaking...';
+            };
+            speechUtterance.onend = () => {
+                isSpeaking = false;
+                document.getElementById('playPauseBtn').innerHTML = '&#9654;';
+                document.getElementById('briefingStatus').textContent = 'Briefing complete.';
+            };
+            speechUtterance.onerror = () => {
+                isSpeaking = false;
+                document.getElementById('playPauseBtn').innerHTML = '&#9654;';
+            };
+
+            window.speechSynthesis.speak(speechUtterance);
+        } else {
+            document.getElementById('briefingStatus').textContent = 'Speech synthesis not supported in this browser.';
+        }
+    }
+
+    function toggleSpeech() {
+        if (!('speechSynthesis' in window)) return;
+        if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+            window.speechSynthesis.pause();
+            isSpeaking = false;
+            document.getElementById('playPauseBtn').innerHTML = '&#9654;';
+            document.getElementById('briefingStatus').textContent = 'Paused.';
+        } else if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+            isSpeaking = true;
+            document.getElementById('playPauseBtn').innerHTML = '&#10074;&#10074;';
+            document.getElementById('briefingStatus').textContent = 'Speaking...';
+        } else {
+            // Replay
+            const text = document.getElementById('briefingText').textContent;
+            if (text && text !== 'Generating market briefing from AI...') {
+                speakText(text);
+            }
+        }
+    }
+
+    function stopSpeech() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            document.getElementById('playPauseBtn').innerHTML = '&#9654;';
+            document.getElementById('briefingStatus').textContent = 'Stopped.';
+        }
+    }
+
+    // Load voices (some browsers need this event)
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {};
     }
 
     // ---- SEARCH ----
