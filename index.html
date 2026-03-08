@@ -1357,6 +1357,180 @@
             border-left: 3px solid var(--amber);
         }
 
+        /* ========== CRYPTO VIEW ========== */
+        .crypto-assets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .crypto-asset-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            transition: border-color 0.2s;
+            cursor: pointer;
+        }
+        .crypto-asset-card:hover {
+            border-color: #8b5cf6;
+        }
+        .crypto-asset-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .crypto-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 13px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .crypto-asset-ticker {
+            font-size: var(--fs-xl);
+            font-weight: 800;
+            color: #8b5cf6;
+        }
+        .crypto-asset-name {
+            font-size: var(--fs-xs);
+            color: var(--text-dim);
+        }
+        .crypto-asset-desc {
+            font-size: var(--fs-xs);
+            color: var(--text);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .crypto-asset-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .crypto-stat {
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+        .crypto-stat-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .crypto-stat-value {
+            font-size: var(--fs-sm);
+            font-weight: 700;
+            color: var(--text);
+        }
+        .crypto-badges {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .crypto-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+        .crypto-badge-core {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--amber);
+        }
+        .crypto-badge-l2 {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
+        }
+        .crypto-badge-spec {
+            background: rgba(236, 72, 153, 0.15);
+            color: #ec4899;
+        }
+        .crypto-badge-ai {
+            background: rgba(6, 182, 212, 0.15);
+            color: #06b6d4;
+        }
+        .crypto-badge-defi {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+        }
+        .crypto-bull {
+            font-size: var(--fs-xs);
+            color: var(--green-light);
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        .crypto-bear {
+            font-size: var(--fs-xs);
+            color: #fca5a5;
+            line-height: 1.4;
+        }
+        .crypto-alloc-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .crypto-alloc-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 10px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .crypto-alloc-info {
+            flex: 1;
+        }
+        .crypto-alloc-ticker {
+            font-weight: 700;
+            font-size: var(--fs-sm);
+            color: #8b5cf6;
+        }
+        .crypto-alloc-name {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        .crypto-alloc-slider {
+            width: 100px;
+        }
+        .crypto-alloc-pct {
+            font-weight: 800;
+            font-size: var(--fs-base);
+            color: var(--amber);
+            min-width: 40px;
+            text-align: right;
+        }
+        .crypto-alloc-slider input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+        .crypto-alloc-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            cursor: pointer;
+        }
+
         /* ========== CREDIT ========== */
         .credit-line {
             font-size: var(--fs-xs);
@@ -1716,6 +1890,174 @@
                 </div>
             </div>
 
+            <!-- CRYPTO VIEW -->
+            <div class="view" id="cryptoView">
+                <div class="scenario-container">
+                    <!-- Asset Profiles -->
+                    <div class="scenario-card">
+                        <h3 style="color:#8b5cf6;">Crypto Portfolio Modeler</h3>
+                        <p class="subtitle">Model BTC-driven bull/bear scenarios with alt-season dynamics. 2 core holdings + 3 speculative plays.</p>
+                        <div class="crypto-assets-grid" id="cryptoAssetsGrid"></div>
+                    </div>
+
+                    <!-- Scenario Controls -->
+                    <div class="scenario-card">
+                        <h3 style="color:#8b5cf6;">Scenario Variables</h3>
+                        <div class="scenario-presets">
+                            <button class="preset-btn" onclick="applyCryptoPreset('conservative')">Conservative Bull</button>
+                            <button class="preset-btn" onclick="applyCryptoPreset('fullbull')">Full Bull Run</button>
+                            <button class="preset-btn" onclick="applyCryptoPreset('supercycle')">Supercycle</button>
+                            <button class="preset-btn" onclick="applyCryptoPreset('alts')">Alt Season Blowoff</button>
+                            <button class="preset-btn" onclick="applyCryptoPreset('bear')">Bear Market Crash</button>
+                            <button class="preset-btn" onclick="applyCryptoPreset('blackswan')">Black Swan</button>
+                        </div>
+
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Starting Capital ($)</label>
+                                <input type="number" id="cryptoCapital" value="10000" step="100">
+                            </div>
+                            <div class="calc-field">
+                                <label>Current BTC Price ($)</label>
+                                <input type="number" id="cryptoBTCNow" value="85000" step="1000">
+                            </div>
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>BTC Target Price</span>
+                                <span class="slider-value" id="cryptoBTCTargetVal">$200,000</span>
+                            </div>
+                            <input type="range" class="slider-input" id="cryptoBTCTarget" min="10000" max="1000000" value="200000" step="5000" style="accent-color:#8b5cf6;">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Timeline (Months)</span>
+                                <span class="slider-value" id="cryptoTimelineVal">12</span>
+                            </div>
+                            <input type="range" class="slider-input" id="cryptoTimeline" min="1" max="36" value="12" step="1" style="accent-color:#8b5cf6;">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Alt Season Intensity</span>
+                                <span class="slider-value" id="cryptoAltVal">Medium</span>
+                            </div>
+                            <input type="range" class="slider-input" id="cryptoAltIntensity" min="0" max="100" value="50" step="5" style="accent-color:#8b5cf6;">
+                            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">0% = alts track BTC | 50% = moderate outperformance | 100% = extreme alt season (alts 3-5x BTC move)</div>
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Volatility / Drawdown Factor</span>
+                                <span class="slider-value" id="cryptoVolVal">Medium</span>
+                            </div>
+                            <input type="range" class="slider-input" id="cryptoVol" min="0" max="100" value="50" step="5" style="accent-color:#8b5cf6;">
+                            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">How choppy is the path? Higher = deeper interim drawdowns before reaching target.</div>
+                        </div>
+
+                        <div class="scenario-toggle-row">
+                            <div class="scenario-toggle">
+                                <input type="checkbox" id="cryptoETFFlows" checked style="accent-color:#8b5cf6;">
+                                <label for="cryptoETFFlows">BTC ETF inflow tailwind</label>
+                            </div>
+                            <div class="scenario-toggle">
+                                <input type="checkbox" id="cryptoRegRisk" style="accent-color:#8b5cf6;">
+                                <label for="cryptoRegRisk">Regulatory headwind (-15%)</label>
+                            </div>
+                        </div>
+
+                        <!-- Allocation -->
+                        <h3 style="color:#8b5cf6;font-size:14px;margin:16px 0 8px;">Portfolio Allocation</h3>
+                        <div id="cryptoAllocControls"></div>
+                        <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;" id="cryptoAllocTotal">Total: 100%</div>
+
+                        <button class="calc-btn" style="background:#8b5cf6;" onclick="runCryptoScenario()">Run Crypto Scenario</button>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="cryptoResults" style="display:none;">
+                        <div class="scenario-card">
+                            <h3 style="color:#8b5cf6;">Portfolio Trajectory</h3>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="cryptoChart"></canvas>
+                            </div>
+                            <div class="chart-legend">
+                                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#f7931a;"></div> BTC</div>
+                                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#8b5cf6;"></div> Portfolio</div>
+                                <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#ec4899;"></div> Alts Avg</div>
+                            </div>
+                        </div>
+
+                        <div class="scenario-card">
+                            <h3 style="color:#8b5cf6;">Key Outputs</h3>
+                            <div class="scenario-results-grid" id="cryptoOutputs"></div>
+                        </div>
+
+                        <div class="scenario-card">
+                            <h3 style="color:#8b5cf6;">Per-Asset Breakdown</h3>
+                            <div style="overflow-x:auto;">
+                                <table class="impact-table" id="cryptoAssetTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset</th>
+                                            <th>Alloc %</th>
+                                            <th>Invested</th>
+                                            <th>Est. Return</th>
+                                            <th>Final Value</th>
+                                            <th>P/L</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="scenario-card">
+                            <h3 style="color:#8b5cf6;">Monthly Milestones</h3>
+                            <div style="overflow-x:auto;">
+                                <table class="impact-table" id="cryptoMilestoneTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>BTC Price</th>
+                                            <th>BTC Change</th>
+                                            <th>Portfolio Value</th>
+                                            <th>Portfolio Return</th>
+                                            <th>Max Drawdown</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="scenario-card">
+                            <h3 style="color:#8b5cf6;">Risk Scenarios</h3>
+                            <p class="subtitle">What happens if things go wrong at various points during the hold period.</p>
+                            <div style="overflow-x:auto;">
+                                <table class="impact-table" id="cryptoRiskTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Scenario</th>
+                                            <th>BTC Price</th>
+                                            <th>Portfolio Value</th>
+                                            <th>Drawdown</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="scenario-note" style="border-left-color:#8b5cf6;">
+                            <strong>Disclaimer:</strong> Crypto markets are extremely volatile and unpredictable. Alt-season beta multipliers are based on historical cycle patterns but future cycles may differ dramatically. Speculative altcoins can lose 90-99% of value. This model assumes correlation patterns hold, which is not guaranteed. Never invest more than you can afford to lose. Not financial advice.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- DASHBOARD VIEW -->
             <div class="view" id="dashboardView">
                 <div class="dashboard-container">
@@ -1770,13 +2112,17 @@
                 <span class="nav-icon">&#9888;</span>
                 Hormuz
             </button>
+            <button class="nav-item" onclick="showView('crypto')" data-view="crypto">
+                <span class="nav-icon">&#9830;</span>
+                Crypto
+            </button>
             <button class="nav-item" onclick="showView('calc')" data-view="calc">
                 <span class="nav-icon">&#128200;</span>
                 Calc
             </button>
             <button class="nav-item" onclick="showView('tracker')" data-view="tracker">
                 <span class="nav-icon">&#128176;</span>
-                Tracker
+                Track
             </button>
             <button class="nav-item" onclick="showView('dashboard')" data-view="dashboard">
                 <span class="nav-icon">&#128202;</span>
@@ -2507,6 +2853,7 @@
             compare: 'compareView',
             scenarios: 'scenariosView',
             scanner: 'scannerView',
+            crypto: 'cryptoView',
             calc: 'calcView',
             tracker: 'trackerView',
             dashboard: 'dashboardView'
@@ -2523,6 +2870,7 @@
 
         if (name === 'scanner') renderScanner();
         if (name === 'compare') renderCompare();
+        if (name === 'crypto') initCryptoView();
         if (name === 'dashboard') updateDashboard();
         if (name === 'tracker') renderPositions();
     }
@@ -2906,6 +3254,572 @@
             ctx.textAlign = 'center';
             ctx.fillText('$' + days[peakIdx].price.toFixed(0), px, py - 10);
         }
+    }
+
+    // ---- CRYPTO SCENARIO MODELER ----
+    const CRYPTO_ASSETS = [
+        {
+            ticker: 'BTC',
+            name: 'Bitcoin',
+            type: 'Core',
+            badgeClass: 'crypto-badge-core',
+            color: '#f7931a',
+            beta: 1.0,
+            altMultiplier: 1.0,
+            description: 'The original cryptocurrency and digital store of value. Institutional adoption accelerating via spot ETFs. Fixed supply of 21M coins with ~94% already mined.',
+            bullCase: 'Post-halving supply shock, institutional ETF inflows ($30B+ in first year), global macro hedge against inflation and dollar debasement. Could follow gold\'s trajectory as digital equivalent.',
+            bearCase: 'Regulatory crackdowns, quantum computing threats, energy consumption concerns, possible ETF outflows, competition from CBDCs.',
+            strategy: 'Core position (40-60% of crypto allocation). Dollar-cost average on dips. Hold through full cycle. Consider covered calls at cycle peaks.',
+            risks: ['Regulatory ban risk', 'Exchange/custodian failure', 'Correlation to risk assets', 'Post-ETF "sell the news"'],
+            catalysts: ['Halving supply shock', 'ETF inflow acceleration', 'Corporate treasury adoption', 'Sovereign wealth fund buying', 'US strategic reserve'],
+            stats: { 'Supply': '21M fixed', 'Halving': '~2028 next', 'ETF AUM': '$100B+', 'Dominance': '~55-60%' },
+            defaultAlloc: 40
+        },
+        {
+            ticker: 'POL',
+            name: 'Polygon (formerly MATIC)',
+            type: 'L2',
+            badgeClass: 'crypto-badge-l2',
+            color: '#8247e5',
+            beta: 1.8,
+            altMultiplier: 1.5,
+            description: 'Leading Ethereum L2 scaling solution. Migrated from MATIC to POL token. Powers ZK rollups, CDK chains, and AggLayer for cross-chain interoperability.',
+            bullCase: 'Ethereum scaling demand growing. ZK technology leadership with Polygon zkEVM. Enterprise partnerships (Starbucks, Nike, Reddit). AggLayer could become the aggregation standard.',
+            bearCase: 'Intense L2 competition (Arbitrum, Optimism, Base, zkSync). Token migration confusion. Revenue model still maturing. Ethereum L1 scaling could reduce L2 need.',
+            strategy: 'Mid-allocation (15-25%). Accumulate during BTC-dominance phase. Position for alt season when L2 narrative rotates. Stake for yield.',
+            risks: ['L2 competition intensifying', 'Ethereum roadmap changes', 'Token economics uncertainty', 'Developer mindshare loss'],
+            catalysts: ['AggLayer adoption', 'Enterprise chain launches', 'ZK proof cost reduction', 'Alt season rotation into L2s', 'Real-world asset tokenization'],
+            stats: { 'L2 TVL Rank': 'Top 3', 'Chain Type': 'ZK Rollup', 'Staking Yield': '~4-6%', 'Chains Built': '50+' },
+            defaultAlloc: 20
+        },
+        {
+            ticker: 'RNDR',
+            name: 'Render Network',
+            type: 'Spec / AI',
+            badgeClass: 'crypto-badge-ai',
+            color: '#06b6d4',
+            beta: 2.5,
+            altMultiplier: 2.0,
+            description: 'Decentralized GPU rendering and AI compute network. Connects GPU owners with projects needing rendering/AI compute power. Migrated to Solana for throughput.',
+            bullCase: 'AI compute demand explosion. Decentralized GPU market is a massive TAM. Apple partnership rumors. Hollywood and gaming adoption for rendering. AI narrative strongest in crypto.',
+            bearCase: 'Centralized cloud (AWS, Azure) remains dominant. Token utility unclear vs. paying in USD. Solana migration execution risk. Speculative narrative-driven.',
+            strategy: 'Spec allocation (5-15%). Buy during narrative dips. Take partial profits on 3-5x moves. This is the AI x crypto intersection play.',
+            risks: ['Narrative-driven valuation', 'Centralized competition', 'Token utility questioned', 'High beta = deep drawdowns'],
+            catalysts: ['AI compute demand surge', 'Major studio partnerships', 'Apple ecosystem integration', 'AI agent compute market', 'Token burn mechanism'],
+            stats: { 'Sector': 'AI / DePIN', 'Network': 'Solana', 'GPU Providers': '10K+', 'Use Case': 'AI + Rendering' },
+            defaultAlloc: 15
+        },
+        {
+            ticker: 'LINK',
+            name: 'Chainlink',
+            type: 'Spec / DeFi Infra',
+            badgeClass: 'crypto-badge-defi',
+            color: '#2a5ada',
+            beta: 1.6,
+            altMultiplier: 1.3,
+            description: 'Decentralized oracle network providing real-world data to smart contracts. CCIP enables cross-chain interoperability. De facto standard for DeFi price feeds.',
+            bullCase: 'Infrastructure monopoly for DeFi. CCIP cross-chain protocol gaining traction. Bank and institutional partnerships (SWIFT, DTCC). Staking launch creating token sink.',
+            bearCase: 'Token value capture questioned (fees vs token price). Slow staking rollout. Competition from API3, Pyth. Team token unlocks creating supply pressure.',
+            strategy: 'Spec allocation (10-15%). Infrastructure plays tend to lag in alt season but hold value better in downturns. Good risk/reward ratio.',
+            risks: ['Token value capture unclear', 'Team unlock supply pressure', 'Oracle competition', 'DeFi adoption plateaus'],
+            catalysts: ['CCIP adoption by institutions', 'Staking expansion', 'SWIFT integration goes live', 'RWA tokenization demand', 'Data feeds for AI'],
+            stats: { 'Sector': 'Oracle / Infra', 'Chains': '30+', 'Value Secured': '$75B+', 'Data Feeds': '1000+' },
+            defaultAlloc: 15
+        },
+        {
+            ticker: 'KAS',
+            name: 'Kaspa',
+            type: 'Spec / L1',
+            badgeClass: 'crypto-badge-spec',
+            color: '#49eacb',
+            beta: 3.0,
+            altMultiplier: 2.5,
+            description: 'Next-gen L1 using blockDAG (not blockchain) with GHOSTDAG consensus. Proof-of-work but with 1-second block times. Founded by DAGLabs researchers.',
+            bullCase: 'Novel technology (blockDAG) solves the blockchain trilemma differently. Fair launch with no pre-mine. Growing mining ecosystem. Potential for smart contracts via Rusty Kaspa upgrade.',
+            bearCase: 'Unproven at scale. No smart contracts yet (in development). Small ecosystem. PoW is out of favor with ESG. Very speculative.',
+            strategy: 'High-risk spec (5-10%). Smallest allocation. Buy on deep dips. Set stop-losses. This is a 10x-or-zero type play.',
+            risks: ['Unproven technology at scale', 'No smart contract support yet', 'Tiny ecosystem', 'PoW energy concerns', 'Could go to zero'],
+            catalysts: ['Smart contract launch', 'Exchange listings (tier 1)', 'Mining hashrate growth', 'DAG technology validation', 'Community growth'],
+            stats: { 'Consensus': 'GHOSTDAG/PoW', 'Block Time': '1 second', 'Supply': '28.7B max', 'Smart Contracts': 'Coming soon' },
+            defaultAlloc: 10
+        }
+    ];
+
+    let cryptoAllocations = {};
+    let cryptoInitialized = false;
+
+    function initCryptoView() {
+        if (cryptoInitialized) return;
+        cryptoInitialized = true;
+
+        // Render asset cards
+        const grid = document.getElementById('cryptoAssetsGrid');
+        grid.innerHTML = CRYPTO_ASSETS.map(a => `
+            <div class="crypto-asset-card" onclick="showCryptoDetail('${a.ticker}')">
+                <div class="crypto-asset-header">
+                    <div class="crypto-icon" style="background:${a.color};">${a.ticker.substring(0, 2)}</div>
+                    <div>
+                        <div class="crypto-asset-ticker">${a.ticker}</div>
+                        <div class="crypto-asset-name">${a.name}</div>
+                    </div>
+                </div>
+                <div class="crypto-badges">
+                    <span class="crypto-badge ${a.badgeClass}">${a.type}</span>
+                    <span class="crypto-badge" style="background:rgba(255,255,255,0.05);color:var(--text-dim);">Beta: ${a.beta}x</span>
+                </div>
+                <div class="crypto-asset-desc">${a.description.substring(0, 120)}...</div>
+                <div class="crypto-bull"><strong>Bull:</strong> ${a.bullCase.substring(0, 100)}...</div>
+                <div class="crypto-asset-stats">
+                    ${Object.entries(a.stats).map(([k, v]) => `
+                        <div class="crypto-stat">
+                            <div class="crypto-stat-label">${k}</div>
+                            <div class="crypto-stat-value">${v}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        // Render allocation controls
+        CRYPTO_ASSETS.forEach(a => { cryptoAllocations[a.ticker] = a.defaultAlloc; });
+        renderCryptoAlloc();
+
+        // Slider listeners
+        document.getElementById('cryptoBTCTarget').addEventListener('input', (e) => {
+            document.getElementById('cryptoBTCTargetVal').textContent = '$' + parseInt(e.target.value).toLocaleString();
+        });
+        document.getElementById('cryptoTimeline').addEventListener('input', (e) => {
+            document.getElementById('cryptoTimelineVal').textContent = e.target.value;
+        });
+        document.getElementById('cryptoAltIntensity').addEventListener('input', (e) => {
+            const v = parseInt(e.target.value);
+            document.getElementById('cryptoAltVal').textContent = v <= 20 ? 'Minimal' : v <= 40 ? 'Low' : v <= 60 ? 'Medium' : v <= 80 ? 'High' : 'Extreme';
+        });
+        document.getElementById('cryptoVol').addEventListener('input', (e) => {
+            const v = parseInt(e.target.value);
+            document.getElementById('cryptoVolVal').textContent = v <= 20 ? 'Low' : v <= 40 ? 'Mild' : v <= 60 ? 'Medium' : v <= 80 ? 'High' : 'Extreme';
+        });
+    }
+
+    function renderCryptoAlloc() {
+        const container = document.getElementById('cryptoAllocControls');
+        container.innerHTML = CRYPTO_ASSETS.map(a => `
+            <div class="crypto-alloc-row">
+                <div class="crypto-alloc-icon" style="background:${a.color};">${a.ticker.substring(0, 2)}</div>
+                <div class="crypto-alloc-info">
+                    <div class="crypto-alloc-ticker">${a.ticker}</div>
+                    <div class="crypto-alloc-name">${a.name}</div>
+                </div>
+                <div class="crypto-alloc-slider">
+                    <input type="range" min="0" max="100" step="5" value="${cryptoAllocations[a.ticker]}" onchange="updateCryptoAlloc('${a.ticker}', this.value)">
+                </div>
+                <div class="crypto-alloc-pct" id="alloc_${a.ticker}">${cryptoAllocations[a.ticker]}%</div>
+            </div>
+        `).join('');
+        updateAllocTotal();
+    }
+
+    function updateCryptoAlloc(ticker, val) {
+        cryptoAllocations[ticker] = parseInt(val);
+        document.getElementById('alloc_' + ticker).textContent = val + '%';
+        updateAllocTotal();
+    }
+
+    function updateAllocTotal() {
+        const total = Object.values(cryptoAllocations).reduce((s, v) => s + v, 0);
+        const el = document.getElementById('cryptoAllocTotal');
+        el.textContent = `Total: ${total}%`;
+        el.style.color = total === 100 ? 'var(--green)' : 'var(--red)';
+    }
+
+    function showCryptoDetail(ticker) {
+        const a = CRYPTO_ASSETS.find(x => x.ticker === ticker);
+        if (!a) return;
+        const modal = document.getElementById('detailModal');
+        const content = document.getElementById('detailContent');
+
+        content.innerHTML = `
+            <div class="modal-handle"></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div class="crypto-icon" style="background:${a.color};width:44px;height:44px;font-size:16px;">${a.ticker.substring(0, 2)}</div>
+                <div>
+                    <div class="detail-ticker" style="color:#8b5cf6;">${a.ticker}</div>
+                    <div class="detail-name">${a.name}</div>
+                </div>
+            </div>
+            <div class="crypto-badges" style="margin-bottom:16px;">
+                <span class="crypto-badge ${a.badgeClass}">${a.type}</span>
+                <span class="crypto-badge" style="background:rgba(255,255,255,0.05);color:var(--text-dim);">Beta: ${a.beta}x BTC</span>
+                <span class="crypto-badge" style="background:rgba(255,255,255,0.05);color:var(--text-dim);">Alt Mult: ${a.altMultiplier}x</span>
+            </div>
+            <div class="detail-section"><h4 style="color:#8b5cf6;">Description</h4><p>${a.description}</p></div>
+            <div class="detail-section"><h4>Bull Case</h4><p>${a.bullCase}</p></div>
+            <div class="detail-section"><h4 class="red">Bear Case</h4><p>${a.bearCase}</p></div>
+            <div class="detail-section"><h4 class="amber">Strategy</h4><p>${a.strategy}</p></div>
+            <div class="detail-section risks"><h4 class="red">Risk Factors</h4><ul>${a.risks.map(r => `<li>${r}</li>`).join('')}</ul></div>
+            <div class="detail-section catalysts"><h4 class="amber">Catalysts</h4><ul>${a.catalysts.map(c => `<li>${c}</li>`).join('')}</ul></div>
+            <div class="card-stats" style="margin-top:16px;">
+                ${Object.entries(a.stats).map(([k, v]) => `<div class="card-stat"><div class="card-stat-label">${k}</div><div class="card-stat-value">${v}</div></div>`).join('')}
+            </div>
+        `;
+        modal.classList.add('active');
+    }
+
+    function applyCryptoPreset(name) {
+        const presets = {
+            conservative: { btcTarget: 150000, timeline: 18, alt: 30, vol: 35, etf: true, reg: false, alloc: {BTC:50, POL:15, RNDR:15, LINK:15, KAS:5} },
+            fullbull:     { btcTarget: 250000, timeline: 12, alt: 60, vol: 50, etf: true, reg: false, alloc: {BTC:40, POL:20, RNDR:15, LINK:15, KAS:10} },
+            supercycle:   { btcTarget: 500000, timeline: 24, alt: 80, vol: 60, etf: true, reg: false, alloc: {BTC:35, POL:20, RNDR:20, LINK:15, KAS:10} },
+            alts:         { btcTarget: 120000, timeline: 6,  alt: 95, vol: 70, etf: true, reg: false, alloc: {BTC:20, POL:25, RNDR:25, LINK:15, KAS:15} },
+            bear:         { btcTarget: 35000,  timeline: 12, alt: 10, vol: 80, etf: false, reg: true, alloc: {BTC:60, POL:15, RNDR:10, LINK:10, KAS:5} },
+            blackswan:    { btcTarget: 15000,  timeline: 3,  alt: 5,  vol: 95, etf: false, reg: true, alloc: {BTC:70, POL:10, RNDR:10, LINK:5, KAS:5} }
+        };
+        const p = presets[name];
+        if (!p) return;
+
+        document.getElementById('cryptoBTCTarget').value = p.btcTarget;
+        document.getElementById('cryptoBTCTargetVal').textContent = '$' + p.btcTarget.toLocaleString();
+        document.getElementById('cryptoTimeline').value = p.timeline;
+        document.getElementById('cryptoTimelineVal').textContent = p.timeline;
+        document.getElementById('cryptoAltIntensity').value = p.alt;
+        const altLabel = p.alt <= 20 ? 'Minimal' : p.alt <= 40 ? 'Low' : p.alt <= 60 ? 'Medium' : p.alt <= 80 ? 'High' : 'Extreme';
+        document.getElementById('cryptoAltVal').textContent = altLabel;
+        document.getElementById('cryptoVol').value = p.vol;
+        const volLabel = p.vol <= 20 ? 'Low' : p.vol <= 40 ? 'Mild' : p.vol <= 60 ? 'Medium' : p.vol <= 80 ? 'High' : 'Extreme';
+        document.getElementById('cryptoVolVal').textContent = volLabel;
+        document.getElementById('cryptoETFFlows').checked = p.etf;
+        document.getElementById('cryptoRegRisk').checked = p.reg;
+
+        cryptoAllocations = { ...p.alloc };
+        renderCryptoAlloc();
+
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
+
+        runCryptoScenario();
+    }
+
+    function runCryptoScenario() {
+        const capital = parseFloat(document.getElementById('cryptoCapital').value) || 10000;
+        const btcNow = parseFloat(document.getElementById('cryptoBTCNow').value) || 85000;
+        const btcTarget = parseFloat(document.getElementById('cryptoBTCTarget').value) || 200000;
+        const months = parseInt(document.getElementById('cryptoTimeline').value) || 12;
+        const altIntensity = parseInt(document.getElementById('cryptoAltIntensity').value) / 100;
+        const volFactor = parseInt(document.getElementById('cryptoVol').value) / 100;
+        const useETF = document.getElementById('cryptoETFFlows').checked;
+        const useReg = document.getElementById('cryptoRegRisk').checked;
+
+        const totalAlloc = Object.values(cryptoAllocations).reduce((s, v) => s + v, 0);
+
+        // BTC trajectory: model as S-curve with volatility
+        const btcReturn = (btcTarget - btcNow) / btcNow; // total BTC return
+        const etfBoost = useETF ? 0.10 : 0; // 10% boost from ETF flows
+        const regDrag = useReg ? -0.15 : 0; // -15% regulatory drag
+        const adjustedBTCReturn = btcReturn + etfBoost + regDrag;
+
+        // Generate monthly data points
+        const monthlyData = [];
+        let maxDrawdown = 0;
+        let peakPortfolio = capital;
+
+        for (let m = 0; m <= months; m++) {
+            const progress = m / months;
+
+            // S-curve for BTC price (slow start, acceleration, plateau)
+            const sCurve = 1 / (1 + Math.exp(-10 * (progress - 0.4)));
+            const btcProgress = sCurve;
+
+            // Add volatility (sinusoidal + damped noise)
+            const volAmplitude = volFactor * 0.25;
+            const noise = Math.sin(m * 1.7) * volAmplitude * (1 - progress * 0.5)
+                        + Math.sin(m * 3.1) * volAmplitude * 0.3;
+            const btcReturnAtMonth = adjustedBTCReturn * btcProgress + noise * Math.abs(adjustedBTCReturn);
+            const btcPrice = btcNow * (1 + btcReturnAtMonth);
+
+            // Alt season dynamics: alts outperform more in mid-to-late cycle
+            const altSeasonPhase = Math.pow(Math.sin(progress * Math.PI), 0.7); // peaks in middle
+            const altBoost = 1 + altIntensity * altSeasonPhase * 1.5;
+
+            // Calculate per-asset returns
+            let portfolioValue = 0;
+            const assetValues = {};
+
+            CRYPTO_ASSETS.forEach(asset => {
+                const alloc = (cryptoAllocations[asset.ticker] || 0) / totalAlloc;
+                const invested = capital * alloc;
+
+                let assetReturn;
+                if (asset.ticker === 'BTC') {
+                    assetReturn = btcReturnAtMonth;
+                } else {
+                    // Alt return = BTC return * beta * alt season boost
+                    const altNoise = Math.sin(m * 2.3 + asset.beta) * volAmplitude * asset.beta * 0.5;
+                    assetReturn = btcReturnAtMonth * asset.beta * (adjustedBTCReturn >= 0 ? altBoost * asset.altMultiplier : (1 + (1 - asset.beta) * 0.3)) + altNoise * Math.abs(adjustedBTCReturn);
+
+                    // In bear markets, alts fall harder
+                    if (adjustedBTCReturn < 0) {
+                        assetReturn = btcReturnAtMonth * asset.beta * (1 + altIntensity * 0.5);
+                    }
+                }
+
+                const value = invested * (1 + assetReturn);
+                assetValues[asset.ticker] = { invested, value, returnPct: assetReturn * 100 };
+                portfolioValue += value;
+            });
+
+            // Track drawdown
+            if (portfolioValue > peakPortfolio) peakPortfolio = portfolioValue;
+            const currentDrawdown = (peakPortfolio - portfolioValue) / peakPortfolio;
+            if (currentDrawdown > maxDrawdown) maxDrawdown = currentDrawdown;
+
+            monthlyData.push({
+                month: m,
+                btcPrice,
+                btcChange: ((btcPrice - btcNow) / btcNow) * 100,
+                portfolioValue,
+                portfolioReturn: ((portfolioValue - capital) / capital) * 100,
+                maxDrawdown: currentDrawdown * 100,
+                assetValues
+            });
+        }
+
+        // Show results
+        document.getElementById('cryptoResults').style.display = 'block';
+
+        const finalData = monthlyData[monthlyData.length - 1];
+        const peakPortfolioVal = Math.max(...monthlyData.map(d => d.portfolioValue));
+        const worstDrawdown = Math.max(...monthlyData.map(d => d.maxDrawdown));
+
+        // Key outputs
+        document.getElementById('cryptoOutputs').innerHTML = `
+            <div class="scenario-result-item">
+                <div class="scenario-result-label">Final BTC Price</div>
+                <div class="scenario-result-value" style="color:#f7931a;">$${finalData.btcPrice.toLocaleString(undefined, {maximumFractionDigits:0})}</div>
+                <div class="scenario-result-note">${finalData.btcChange >= 0 ? '+' : ''}${finalData.btcChange.toFixed(0)}%</div>
+            </div>
+            <div class="scenario-result-item">
+                <div class="scenario-result-label">Portfolio Value</div>
+                <div class="scenario-result-value" style="color:#8b5cf6;">$${finalData.portfolioValue.toLocaleString(undefined, {maximumFractionDigits:0})}</div>
+                <div class="scenario-result-note">${finalData.portfolioReturn >= 0 ? '+' : ''}${finalData.portfolioReturn.toFixed(0)}%</div>
+            </div>
+            <div class="scenario-result-item">
+                <div class="scenario-result-label">Profit / Loss</div>
+                <div class="scenario-result-value" style="color:${finalData.portfolioValue >= capital ? 'var(--green)' : 'var(--red)'};">
+                    ${finalData.portfolioValue >= capital ? '+' : '-'}$${Math.abs(finalData.portfolioValue - capital).toLocaleString(undefined, {maximumFractionDigits:0})}
+                </div>
+            </div>
+            <div class="scenario-result-item">
+                <div class="scenario-result-label">Peak Portfolio</div>
+                <div class="scenario-result-value" style="color:var(--green);">$${peakPortfolioVal.toLocaleString(undefined, {maximumFractionDigits:0})}</div>
+                <div class="scenario-result-note">${((peakPortfolioVal - capital) / capital * 100).toFixed(0)}% max gain</div>
+            </div>
+            <div class="scenario-result-item">
+                <div class="scenario-result-label">Worst Drawdown</div>
+                <div class="scenario-result-value" style="color:var(--red);">-${worstDrawdown.toFixed(1)}%</div>
+                <div class="scenario-result-note">From peak</div>
+            </div>
+            <div class="scenario-result-item">
+                <div class="scenario-result-label">Return Multiple</div>
+                <div class="scenario-result-value" style="color:var(--amber);">${(finalData.portfolioValue / capital).toFixed(2)}x</div>
+                <div class="scenario-result-note">On invested capital</div>
+            </div>
+        `;
+
+        // Per-asset breakdown
+        const assetBody = document.querySelector('#cryptoAssetTable tbody');
+        assetBody.innerHTML = CRYPTO_ASSETS.map(a => {
+            const av = finalData.assetValues[a.ticker];
+            if (!av) return '';
+            const pnl = av.value - av.invested;
+            const pnlClass = pnl >= 0 ? 'impact-positive' : 'impact-negative';
+            return `<tr>
+                <td><span style="color:${a.color};font-weight:800;">${a.ticker}</span> <span style="font-size:10px;color:var(--text-dim);">${a.name}</span></td>
+                <td style="color:var(--amber);">${cryptoAllocations[a.ticker]}%</td>
+                <td>$${av.invested.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                <td class="${pnlClass}">${av.returnPct >= 0 ? '+' : ''}${av.returnPct.toFixed(0)}%</td>
+                <td style="font-weight:700;">$${av.value.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                <td class="${pnlClass}">${pnl >= 0 ? '+' : '-'}$${Math.abs(pnl).toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+            </tr>`;
+        }).join('');
+
+        // Monthly milestones
+        const milestoneMonths = [0, 1, 2, 3, 6, 9, 12, 18, 24, 30, 36].filter(m => m <= months);
+        if (milestoneMonths[milestoneMonths.length - 1] !== months) milestoneMonths.push(months);
+        const milestoneBody = document.querySelector('#cryptoMilestoneTable tbody');
+        milestoneBody.innerHTML = milestoneMonths.map(m => {
+            const d = monthlyData[m];
+            if (!d) return '';
+            const btcClass = d.btcChange >= 0 ? 'impact-positive' : 'impact-negative';
+            const portClass = d.portfolioReturn >= 0 ? 'impact-positive' : 'impact-negative';
+            return `<tr>
+                <td style="font-weight:700;">M${d.month}</td>
+                <td style="color:#f7931a;font-weight:600;">$${d.btcPrice.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                <td class="${btcClass}">${d.btcChange >= 0 ? '+' : ''}${d.btcChange.toFixed(1)}%</td>
+                <td style="font-weight:700;">$${d.portfolioValue.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                <td class="${portClass}">${d.portfolioReturn >= 0 ? '+' : ''}${d.portfolioReturn.toFixed(1)}%</td>
+                <td style="color:${d.maxDrawdown > 20 ? 'var(--red)' : 'var(--text-dim)'};">-${d.maxDrawdown.toFixed(1)}%</td>
+            </tr>`;
+        }).join('');
+
+        // Risk scenarios table
+        const riskBody = document.querySelector('#cryptoRiskTable tbody');
+        const riskScenarios = [
+            { name: 'Exchange Hack/Failure', btcMult: 0.6, note: '-40% BTC crash' },
+            { name: 'Major Regulatory Ban', btcMult: 0.5, note: '-50% BTC crash' },
+            { name: 'Stablecoin Depeg', btcMult: 0.65, note: '-35% BTC panic' },
+            { name: 'Global Recession', btcMult: 0.45, note: '-55% risk-off crash' },
+            { name: 'Smart Contract Exploit', btcMult: 0.85, note: 'Alts hit harder' },
+            { name: 'BTC ETF Outflows', btcMult: 0.7, note: '-30% sustained selling' }
+        ];
+
+        riskBody.innerHTML = riskScenarios.map(rs => {
+            const riskBtcPrice = btcNow * rs.btcMult;
+            let riskPortfolio = 0;
+            CRYPTO_ASSETS.forEach(a => {
+                const alloc = (cryptoAllocations[a.ticker] || 0) / totalAlloc;
+                const invested = capital * alloc;
+                const assetMult = a.ticker === 'BTC' ? rs.btcMult : rs.btcMult * (0.5 + (1 - a.beta * 0.3));
+                riskPortfolio += invested * Math.max(0.01, assetMult);
+            });
+            const drawdown = ((capital - riskPortfolio) / capital) * 100;
+            return `<tr>
+                <td style="font-weight:600;">${rs.name}<br><span style="font-size:10px;color:var(--text-dim);">${rs.note}</span></td>
+                <td style="color:var(--red);font-weight:600;">$${riskBtcPrice.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                <td style="color:var(--red);font-weight:700;">$${riskPortfolio.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                <td style="color:var(--red);font-weight:700;">-${drawdown.toFixed(0)}%</td>
+            </tr>`;
+        }).join('');
+
+        // Draw chart
+        drawCryptoChart(monthlyData, capital);
+    }
+
+    function drawCryptoChart(data, capital) {
+        const canvas = document.getElementById('cryptoChart');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width;
+        const h = rect.height;
+        const pad = { top: 30, right: 60, bottom: 35, left: 60 };
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        ctx.fillStyle = '#0f1520';
+        ctx.fillRect(0, 0, w, h);
+
+        // Find ranges
+        const allPortVals = data.map(d => d.portfolioValue);
+        const allBtcChanges = data.map(d => d.btcChange);
+        const maxPortVal = Math.max(...allPortVals) * 1.1;
+        const minPortVal = Math.min(...allPortVals, capital) * 0.9;
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+            const y = pad.top + (plotH / 4) * i;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        }
+
+        // Y-axis labels (portfolio value)
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 4; i++) {
+            const y = pad.top + (plotH / 4) * i;
+            const val = maxPortVal - (maxPortVal - minPortVal) * (i / 4);
+            ctx.fillText('$' + (val / 1000).toFixed(1) + 'K', pad.left - 8, y + 4);
+        }
+
+        // X-axis labels
+        ctx.textAlign = 'center';
+        const xSteps = Math.min(data.length - 1, 8);
+        for (let i = 0; i <= xSteps; i++) {
+            const idx = Math.round((data.length - 1) * i / xSteps);
+            const x = pad.left + (plotW * idx / (data.length - 1 || 1));
+            ctx.fillText('M' + data[idx].month, x, h - pad.bottom + 16);
+        }
+
+        const xMap = (i) => pad.left + (plotW * i / (data.length - 1 || 1));
+        const yMap = (v) => pad.top + plotH - ((v - minPortVal) / (maxPortVal - minPortVal)) * plotH;
+
+        // Baseline
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(pad.left, yMap(capital)); ctx.lineTo(w - pad.right, yMap(capital)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#9ca3af'; ctx.textAlign = 'left';
+        ctx.fillText('Capital $' + (capital / 1000).toFixed(1) + 'K', w - pad.right + 4, yMap(capital) + 4);
+
+        // BTC line (normalized to same scale as portfolio for visibility)
+        const btcNow = data[0].btcPrice || 85000;
+        const btcToPort = (btcPrice) => capital * (btcPrice / btcNow);
+
+        ctx.strokeStyle = '#f7931a';
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        data.forEach((d, i) => {
+            const y = yMap(btcToPort(d.btcPrice));
+            i === 0 ? ctx.moveTo(xMap(i), y) : ctx.lineTo(xMap(i), y);
+        });
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Alts average line
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        data.forEach((d, i) => {
+            const altAvg = Object.entries(d.assetValues)
+                .filter(([k]) => k !== 'BTC')
+                .reduce((sum, [, v]) => sum + (v.value / v.invested), 0) / 4;
+            const y = yMap(capital * altAvg);
+            i === 0 ? ctx.moveTo(xMap(i), y) : ctx.lineTo(xMap(i), y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+
+        // Portfolio line (main, thick)
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        data.forEach((d, i) => {
+            const y = yMap(d.portfolioValue);
+            i === 0 ? ctx.moveTo(xMap(i), y) : ctx.lineTo(xMap(i), y);
+        });
+        ctx.stroke();
+
+        // Fill under portfolio
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(xMap(0), yMap(capital));
+        data.forEach((d, i) => ctx.lineTo(xMap(i), yMap(d.portfolioValue)));
+        ctx.lineTo(xMap(data.length - 1), yMap(capital));
+        ctx.closePath();
+        ctx.fill();
+
+        // End point marker
+        const lastD = data[data.length - 1];
+        const endX = xMap(data.length - 1);
+        const endY = yMap(lastD.portfolioValue);
+        ctx.fillStyle = '#8b5cf6';
+        ctx.beginPath(); ctx.arc(endX, endY, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('$' + (lastD.portfolioValue / 1000).toFixed(1) + 'K', endX, endY - 10);
     }
 
     // ---- COMPARE ----
