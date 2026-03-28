@@ -3053,6 +3053,55 @@
                     </div>
                 </div>
             </div>
+
+            <!-- CHARTS VIEW -->
+            <div class="view" id="chartsView">
+                <div class="analysis-container">
+                    <div class="research-card">
+                        <h3>Price Charts</h3>
+                        <p class="subtitle">Candlestick and line charts with OHLCV data from CoinGecko. Hover over candles for details.</p>
+                        <div class="calc-row">
+                            <div class="calc-field">
+                                <label>Asset</label>
+                                <select id="chartAsset">
+                                    <option value="bitcoin">Bitcoin (BTC)</option>
+                                    <option value="ethereum">Ethereum (ETH)</option>
+                                    <option value="solana">Solana (SOL)</option>
+                                    <option value="matic-network">Polygon (POL)</option>
+                                    <option value="render-token">Render (RNDR)</option>
+                                    <option value="chainlink">Chainlink (LINK)</option>
+                                    <option value="kaspa">Kaspa (KAS)</option>
+                                    <option value="avalanche-2">Avalanche (AVAX)</option>
+                                    <option value="dogecoin">Dogecoin (DOGE)</option>
+                                    <option value="bittensor">Bittensor (TAO)</option>
+                                </select>
+                            </div>
+                            <div class="calc-field">
+                                <label>Period</label>
+                                <select id="chartPeriod">
+                                    <option value="30">30 Days</option>
+                                    <option value="90" selected>90 Days</option>
+                                    <option value="180">180 Days</option>
+                                    <option value="365">1 Year</option>
+                                </select>
+                            </div>
+                            <div class="calc-field">
+                                <label>Type</label>
+                                <select id="chartType">
+                                    <option value="candle">Candlestick</option>
+                                    <option value="line">Line</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="calc-btn" onclick="loadChart()">Load Chart</button>
+                        <div id="chartStatus" style="margin-top:8px;font-size:11px;color:var(--text-dim);min-height:16px;"></div>
+                        <div id="chartOHLC" style="margin-top:4px;font-size:11px;color:var(--green);min-height:16px;font-weight:600;"></div>
+                        <div class="ta-chart-wrap" style="height:380px;margin-top:12px;position:relative;">
+                            <canvas id="mainCandleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- BOTTOM NAV -->
@@ -3084,6 +3133,10 @@
             <button class="nav-item" onclick="showView('dashboard')" data-view="dashboard">
                 <span class="nav-icon">&#128202;</span>
                 Dash
+            </button>
+            <button class="nav-item" onclick="showView('charts')" data-view="charts">
+                <span class="nav-icon">&#128250;</span>
+                Charts
             </button>
         </nav>
         <div class="credit-line">Crypto Radar by Greg Miller</div>
@@ -3812,7 +3865,8 @@
             chat: 'chatView',
             analysis: 'analysisView',
             news: 'newsView',
-            dashboard: 'dashboardView'
+            dashboard: 'dashboardView',
+            charts: 'chartsView'
         };
 
         Object.values(views).forEach(id => {
@@ -3830,6 +3884,7 @@
         if (name === 'tracker') renderPositions();
         if (name === 'news') initNewsView();
         if (name === 'analysis') initAnalysisView();
+        if (name === 'charts') initChartsView();
     }
 
     // ---- SCENARIOS: STRAIT OF HORMUZ MODEL ----
@@ -6182,6 +6237,222 @@
         if (e.key === 'ArrowRight') swipeCard('right');
         if (e.key === 'Escape') closeModal();
     });
+
+    // ---- CHARTS TAB ----
+    let chartsInitialized = false;
+
+    function initChartsView() {
+        if (!chartsInitialized) {
+            chartsInitialized = true;
+            loadChart();
+        }
+    }
+
+    async function loadChart() {
+        const coinId = document.getElementById('chartAsset').value;
+        const days = parseInt(document.getElementById('chartPeriod').value);
+        const type = document.getElementById('chartType').value;
+        const statusEl = document.getElementById('chartStatus');
+        const ohlcEl = document.getElementById('chartOHLC');
+        statusEl.textContent = 'Loading...';
+        ohlcEl.textContent = '';
+
+        if (type === 'candle') {
+            const ohlcv = await LiveData.getCryptoOHLCV(coinId, days);
+            if (!ohlcv || ohlcv.length === 0) {
+                statusEl.textContent = 'No data available. Try a different asset or period.';
+                return;
+            }
+            statusEl.textContent = `${ohlcv.length} candles loaded`;
+            drawCandlestickChart(ohlcv);
+            setupCandleTooltip(ohlcv);
+        } else {
+            const hist = await LiveData.getCryptoHistory(coinId, days);
+            if (!hist || !hist.prices || hist.prices.length === 0) {
+                statusEl.textContent = 'No data available.';
+                return;
+            }
+            const prices = hist.prices.map(p => p[1]);
+            const timestamps = hist.prices.map(p => p[0]);
+            statusEl.textContent = `${prices.length} data points loaded`;
+            drawLineChartCandleCanvas(prices, timestamps);
+        }
+    }
+
+    function drawCandlestickChart(ohlcv) {
+        const canvas = document.getElementById('mainCandleChart');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        ctx.scale(dpr, dpr);
+        const w = rect.width, h = rect.height;
+        const pad = { top: 20, right: 65, bottom: 30, left: 10 };
+        const pW = w - pad.left - pad.right, pH = h - pad.top - pad.bottom;
+
+        ctx.fillStyle = '#0f1520';
+        ctx.fillRect(0, 0, w, h);
+
+        const highs = ohlcv.map(c => c[2]);
+        const lows = ohlcv.map(c => c[3]);
+        const minV = Math.min(...lows) * 0.998;
+        const maxV = Math.max(...highs) * 1.002;
+        const n = ohlcv.length;
+        const xMap = i => pad.left + (pW * i / (n - 1 || 1));
+        const yMap = v => pad.top + pH - ((v - minV) / (maxV - minV || 1)) * pH;
+
+        // Grid lines + Y-axis labels
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        ctx.font = '9px Inter';
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'left';
+        for (let i = 0; i <= 5; i++) {
+            const y = pad.top + (pH / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(w - pad.right, y);
+            ctx.stroke();
+            const val = maxV - (maxV - minV) * (i / 5);
+            ctx.fillText('$' + formatChartPrice(val), w - pad.right + 4, y + 3);
+        }
+
+        // X-axis date labels
+        const step = Math.ceil(n / 6);
+        ctx.font = '8px Inter';
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'center';
+        for (let i = 0; i < n; i += step) {
+            const d = new Date(ohlcv[i][0]);
+            ctx.fillText((d.getMonth() + 1) + '/' + d.getDate(), xMap(i), h - 8);
+        }
+
+        // Candles
+        const candleWidth = Math.max(1, Math.min(12, pW / n * 0.7));
+        for (let i = 0; i < n; i++) {
+            const [ts, open, high, low, close] = ohlcv[i];
+            const x = xMap(i);
+            const color = close >= open ? '#10b981' : '#ef4444';
+
+            // Wick
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, yMap(high));
+            ctx.lineTo(x, yMap(low));
+            ctx.stroke();
+
+            // Body
+            const bodyTop = yMap(Math.max(open, close));
+            const bodyH = Math.max(1, yMap(Math.min(open, close)) - bodyTop);
+            ctx.fillStyle = color;
+            ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyH);
+        }
+    }
+
+    function setupCandleTooltip(ohlcv) {
+        const canvas = document.getElementById('mainCandleChart');
+        const ohlcEl = document.getElementById('chartOHLC');
+
+        canvas.onmousemove = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const pad = { left: 10, right: 65 };
+            const pW = rect.width - pad.left - pad.right;
+            const n = ohlcv.length;
+            const idx = Math.round((x - pad.left) / pW * (n - 1));
+            if (idx < 0 || idx >= n) return;
+            const [ts, open, high, low, close] = ohlcv[idx];
+            const d = new Date(ts);
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const chg = ((close - open) / open * 100).toFixed(2);
+            ohlcEl.style.color = close >= open ? 'var(--green)' : 'var(--red)';
+            ohlcEl.textContent = `${dateStr}  O:$${formatChartPrice(open)}  H:$${formatChartPrice(high)}  L:$${formatChartPrice(low)}  C:$${formatChartPrice(close)}  (${chg >= 0 ? '+' : ''}${chg}%)`;
+        };
+        canvas.onmouseleave = () => { ohlcEl.textContent = ''; };
+    }
+
+    function drawLineChartCandleCanvas(prices, timestamps) {
+        const canvas = document.getElementById('mainCandleChart');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        ctx.scale(dpr, dpr);
+        const w = rect.width, h = rect.height;
+        const pad = { top: 20, right: 65, bottom: 30, left: 10 };
+        const pW = w - pad.left - pad.right, pH = h - pad.top - pad.bottom;
+
+        ctx.fillStyle = '#0f1520';
+        ctx.fillRect(0, 0, w, h);
+
+        const minV = Math.min(...prices) * 0.99;
+        const maxV = Math.max(...prices) * 1.01;
+        const n = prices.length;
+        const xMap = i => pad.left + (pW * i / (n - 1 || 1));
+        const yMap = v => pad.top + pH - ((v - minV) / (maxV - minV || 1)) * pH;
+
+        // Grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        ctx.font = '9px Inter';
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'left';
+        for (let i = 0; i <= 5; i++) {
+            const y = pad.top + (pH / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(w - pad.right, y);
+            ctx.stroke();
+            ctx.fillText('$' + formatChartPrice(maxV - (maxV - minV) * (i / 5)), w - pad.right + 4, y + 3);
+        }
+
+        // X labels
+        const step = Math.ceil(n / 6);
+        ctx.font = '8px Inter';
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'center';
+        for (let i = 0; i < n; i += step) {
+            const d = new Date(timestamps[i]);
+            ctx.fillText((d.getMonth() + 1) + '/' + d.getDate(), xMap(i), h - 8);
+        }
+
+        // Gradient fill
+        const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+        grad.addColorStop(0, 'rgba(16,185,129,0.25)');
+        grad.addColorStop(1, 'rgba(16,185,129,0.01)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(xMap(0), yMap(prices[0]));
+        prices.forEach((p, i) => ctx.lineTo(xMap(i), yMap(p)));
+        ctx.lineTo(xMap(n - 1), h - pad.bottom);
+        ctx.lineTo(xMap(0), h - pad.bottom);
+        ctx.closePath();
+        ctx.fill();
+
+        // Price line
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        prices.forEach((p, i) => i === 0 ? ctx.moveTo(xMap(i), yMap(p)) : ctx.lineTo(xMap(i), yMap(p)));
+        ctx.stroke();
+
+        canvas.onmousemove = null;
+        canvas.onmouseleave = null;
+    }
+
+    function formatChartPrice(v) {
+        if (v >= 10000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+        if (v >= 100) return v.toFixed(2);
+        if (v >= 1) return v.toFixed(4);
+        return v.toFixed(6);
+    }
 
     // ---- INIT ----
     loadData();
