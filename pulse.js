@@ -237,7 +237,12 @@ const Pulse = {
   DEFAULT_RSS_FEEDS: [
     'https://rss.app/feeds/v1.1/zE01NN1ghIgOlAX6.json',
     'https://rss.app/feeds/v1.1/6MG8ydP2kDHE3wRz.json',
-    'https://rss.app/feeds/v1.1/tCdry3Rfc2IHc7kM.json'
+    'https://rss.app/feeds/v1.1/tCdry3Rfc2IHc7kM.json',
+    'https://rss.app/feeds/v1.1/XfedIiAiU2wDjzvL.json',
+    'https://rss.app/feeds/v1.1/CgRbKltP20IYqln8.json',
+    'https://rss.app/feeds/v1.1/rcFozjREjEtFKsoF.json',
+    'https://rss.app/feeds/v1.1/ty5WxPMDcza9CF8G.json',
+    'https://rss.app/feeds/v1.1/T805oVd5WUBGBTsa.json'
   ],
 
   // ── News Headlines — RSS.app → Messari → app RSS ──
