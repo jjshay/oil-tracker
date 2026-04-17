@@ -2151,6 +2151,259 @@
         .onchain-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; }
         .onchain-value { font-size: var(--fs-md); font-weight: 700; color: var(--text); }
 
+        /* ========== GEOINTEL ========== */
+        .geointel-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .geo-pillar-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 4px;
+        }
+        .geo-pillar-tab {
+            flex: 1;
+            padding: 8px 4px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font);
+        }
+        .geo-pillar-tab.active {
+            background: var(--bg-card);
+            color: var(--green);
+            border: 1px solid var(--border);
+        }
+        .geo-pillar-panel { display: none; }
+        .geo-pillar-panel.active { display: block; }
+
+        /* Historical chart */
+        .geo-chart-container {
+            width: 100%;
+            height: 380px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0a0f1a;
+            margin-bottom: 12px;
+        }
+        .geo-asset-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .geo-toggle-btn {
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: all 0.2s;
+        }
+        .geo-toggle-btn.oil.active  { background: rgba(245,158,11,0.15); color: #f59e0b; border-color: #f59e0b; }
+        .geo-toggle-btn.btc.active  { background: rgba(247,147,26,0.15); color: #f7931a; border-color: #f7931a; }
+        .geo-toggle-btn.spx.active  { background: rgba(96,165,250,0.15); color: #60a5fa; border-color: #60a5fa; }
+        .geo-corr-strip {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .geo-corr-chip {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-dim);
+        }
+        .geo-corr-chip span { font-weight: 700; color: var(--text); }
+
+        /* Event popup card */
+        .geo-event-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+        .geo-event-card.visible { display: block; }
+        .geo-event-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .geo-event-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .geo-event-card-title { font-weight: 700; font-size: 13px; }
+        .geo-event-card-date  { font-size: 10px; color: var(--text-dim); }
+        .geo-event-card-body  { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+        .geo-event-ai-text    { font-size: 12px; color: var(--text); line-height: 1.6; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+
+        /* Scenario drivers */
+        .geo-driver-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .geo-driver-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .geo-driver-icon  { font-size: 18px; }
+        .geo-driver-label { font-weight: 700; font-size: 13px; flex: 1; }
+        .geo-driver-val   { font-size: 13px; font-weight: 700; color: var(--green); min-width: 32px; text-align: right; }
+        .geo-driver-desc  { font-size: 10px; color: var(--text-dim); margin-bottom: 10px; }
+        .geo-driver-slider-wrap {
+            position: relative;
+        }
+        .geo-driver-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+        input.geo-slider {
+            width: 100%;
+            accent-color: var(--green);
+            cursor: pointer;
+        }
+        .geo-proj-results {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            display: none;
+        }
+        .geo-proj-results.visible { display: block; }
+        .geo-proj-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .geo-proj-asset { text-align: center; }
+        .geo-proj-asset-name { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
+        .geo-proj-base  { font-size: 18px; font-weight: 800; color: var(--green); }
+        .geo-proj-range { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+        .geo-proj-narrative {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.7;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+
+        /* Options / Impact */
+        .geo-impact-asset {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .geo-impact-asset-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .geo-impact-ticker { font-size: 20px; font-weight: 800; color: var(--green); }
+        .geo-impact-price  { font-size: 14px; color: var(--text-dim); }
+        .geo-impact-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 500px) { .geo-impact-cols { grid-template-columns: 1fr; } }
+        .geo-impact-col-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .geo-direct-stat { margin-bottom: 6px; font-size: 12px; }
+        .geo-direct-stat span { font-weight: 700; color: var(--text); }
+        .geo-options-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .geo-options-table th {
+            color: var(--text-dim);
+            font-size: 9px;
+            text-align: left;
+            padding: 4px 3px;
+            border-bottom: 1px solid var(--border);
+        }
+        .geo-options-table td { padding: 5px 3px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .geo-options-table tr.best-pick { background: rgba(16,185,129,0.07); }
+        .geo-options-table td.highlight { color: var(--green); font-weight: 700; }
+        .geo-ai-reco {
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-dim);
+            line-height: 1.6;
+            background: rgba(16,185,129,0.05);
+            border-left: 2px solid var(--green);
+            padding: 8px 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .geo-timeframe-btns {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .geo-tf-btn {
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 11px;
+            cursor: pointer;
+            font-family: var(--font);
+        }
+        .geo-tf-btn.active { background: var(--bg-card); color: var(--green); border-color: var(--green); }
+        .geo-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .geo-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        .geo-legend-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+
         /* ========== CREDIT ========== */
         .credit-line {
             font-size: var(--fs-xs);
@@ -2978,6 +3231,14 @@
                                     <label style="font-size:10px;color:var(--green);font-weight:600;">PERPLEXITY</label>
                                     <input type="password" id="keyPerplexity" class="search-input" style="width:100%;margin-top:2px;" placeholder="pplx-...">
                                 </div>
+                                <div>
+                                    <label style="font-size:10px;color:var(--amber);font-weight:600;">FRED API (free — fred.stlouisfed.org)</label>
+                                    <input type="text" id="keyFred" class="search-input" style="width:100%;margin-top:2px;" placeholder="abcdef1234...">
+                                </div>
+                                <div>
+                                    <label style="font-size:10px;color:var(--amber);font-weight:600;">TRADIER (free — tradier.com/api)</label>
+                                    <input type="text" id="keyTradier" class="search-input" style="width:100%;margin-top:2px;" placeholder="Bearer token...">
+                                </div>
                             </div>
                             <div style="display:flex;gap:8px;margin-top:12px;">
                                 <button class="news-btn active" onclick="saveKeys()">Save Keys</button>
@@ -3104,6 +3365,127 @@
             </div>
         </div>
 
+            <!-- GEOINTEL VIEW -->
+            <div class="view" id="geoIntelView">
+                <div class="geointel-container">
+
+                    <!-- Pillar sub-tabs -->
+                    <div class="geo-pillar-tabs">
+                        <button class="geo-pillar-tab active" onclick="switchGeoPillar('historical')">📈 Historical</button>
+                        <button class="geo-pillar-tab" onclick="switchGeoPillar('projected')">🔮 Projected</button>
+                        <button class="geo-pillar-tab" onclick="switchGeoPillar('impact')">💰 Impact</button>
+                    </div>
+
+                    <!-- ── PILLAR 1: HISTORICAL ── -->
+                    <div class="geo-pillar-panel active" id="geoPillarHistorical">
+                        <div class="research-card">
+                            <h3>Oil · Bitcoin · S&amp;P 500 — Historical Correlation</h3>
+                            <p class="subtitle">% change from start date. Click any event marker for AI analysis. Drag to pan, scroll to zoom.</p>
+
+                            <div class="geo-asset-toggle">
+                                <button class="geo-toggle-btn oil active" id="geoToggleOil" onclick="geoToggleAsset('oil')">WTI Oil</button>
+                                <button class="geo-toggle-btn btc active" id="geoToggleBtc" onclick="geoToggleAsset('btc')">Bitcoin</button>
+                                <button class="geo-toggle-btn spx active" id="geoToggleSpx" onclick="geoToggleAsset('spx')">S&amp;P 500</button>
+                            </div>
+
+                            <div class="geo-timeframe-btns">
+                                <button class="geo-tf-btn" onclick="geoSetTimeframe('1Y')">1Y</button>
+                                <button class="geo-tf-btn" onclick="geoSetTimeframe('3Y')">3Y</button>
+                                <button class="geo-tf-btn active" onclick="geoSetTimeframe('5Y')">5Y</button>
+                                <button class="geo-tf-btn" onclick="geoSetTimeframe('ALL')">All</button>
+                            </div>
+
+                            <div class="geo-legend" id="geoLegend">
+                                <div class="geo-legend-item"><div class="geo-legend-dot" style="background:#f59e0b"></div>WTI Oil</div>
+                                <div class="geo-legend-item"><div class="geo-legend-dot" style="background:#f7931a"></div>Bitcoin</div>
+                                <div class="geo-legend-item"><div class="geo-legend-dot" style="background:#60a5fa"></div>S&amp;P 500</div>
+                                <div class="geo-legend-item"><div class="geo-legend-dot" style="background:#ef4444"></div>Bearish Event</div>
+                                <div class="geo-legend-item"><div class="geo-legend-dot" style="background:#10b981"></div>Bullish Event</div>
+                            </div>
+
+                            <div class="geo-chart-container" id="geoHistChart"></div>
+
+                            <div class="geo-corr-strip" id="geoCorrStrip">
+                                <div class="geo-corr-chip">Loading correlations...</div>
+                            </div>
+
+                            <div class="geo-event-card" id="geoEventCard">
+                                <div class="geo-event-card-header">
+                                    <div class="geo-event-dot" id="geoEventDot"></div>
+                                    <div>
+                                        <div class="geo-event-card-title" id="geoEventTitle"></div>
+                                        <div class="geo-event-card-date" id="geoEventDate"></div>
+                                    </div>
+                                </div>
+                                <div class="geo-event-card-body" id="geoEventBody"></div>
+                                <div class="geo-event-ai-text" id="geoEventAI" style="display:none"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PILLAR 2: PROJECTED ── -->
+                    <div class="geo-pillar-panel" id="geoPillarProjected">
+                        <div class="research-card">
+                            <h3>Scenario Projection — Through End of 2026</h3>
+                            <p class="subtitle">Adjust each driver based on today's news. AI projects oil, BTC, and S&amp;P targets.</p>
+
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;">Today's Context (paste Google Alerts / news summary)</label>
+                                <textarea id="geoNewsContext" rows="3" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;padding:8px;font-family:var(--font);resize:vertical;" placeholder="Paste today's news headlines or Google Alerts summary here..."></textarea>
+                            </div>
+
+                            <div id="geoDriverCards"></div>
+
+                            <button class="calc-btn" onclick="runGeoProjection()" style="margin-top:4px;">Run Projection →</button>
+
+                            <div class="geo-proj-results" id="geoProjResults">
+                                <div class="geo-proj-grid">
+                                    <div class="geo-proj-asset">
+                                        <div class="geo-proj-asset-name">WTI Oil</div>
+                                        <div class="geo-proj-base" id="geoProjOil">--</div>
+                                        <div class="geo-proj-range" id="geoProjOilRange"></div>
+                                    </div>
+                                    <div class="geo-proj-asset">
+                                        <div class="geo-proj-asset-name">Bitcoin</div>
+                                        <div class="geo-proj-base" id="geoProjBtc">--</div>
+                                        <div class="geo-proj-range" id="geoProjBtcRange"></div>
+                                    </div>
+                                    <div class="geo-proj-asset">
+                                        <div class="geo-proj-asset-name">S&amp;P 500</div>
+                                        <div class="geo-proj-base" id="geoProjSpx">--</div>
+                                        <div class="geo-proj-range" id="geoProjSpxRange"></div>
+                                    </div>
+                                </div>
+                                <div class="geo-proj-narrative" id="geoProjNarrative">Generating AI projection...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PILLAR 3: FINANCIAL IMPACT ── -->
+                    <div class="geo-pillar-panel" id="geoPillarImpact">
+                        <div class="research-card">
+                            <h3>Financial Impact — Stocks, Bitcoin &amp; Options</h3>
+                            <p class="subtitle">Add up to 3 assets. Live options chains via Tradier. AI picks the best risk/reward trade.</p>
+
+                            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                                <input id="geoImpactTicker" type="text" placeholder="Ticker (e.g. NVDA, XOM, MSTR)" style="flex:1;min-width:140px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;font-family:var(--font);">
+                                <button class="calc-btn" style="max-width:100px;padding:8px 16px;" onclick="addGeoImpactAsset()">Add Asset</button>
+                            </div>
+
+                            <div id="geoImpactAssets"></div>
+
+                            <div id="geoImpactEmpty" style="text-align:center;color:var(--text-dim);font-size:12px;padding:32px 0;">
+                                Enter a ticker above to analyze direct buy vs. options.<br>
+                                <span style="font-size:10px;">Requires Tradier API key in settings. Get a free key at tradier.com/api</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
         <!-- BOTTOM NAV -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="showView('crypto')" data-view="crypto">
@@ -3138,6 +3520,10 @@
                 <span class="nav-icon">&#128250;</span>
                 Charts
             </button>
+            <button class="nav-item" onclick="showView('geointel')" data-view="geointel">
+                <span class="nav-icon">&#127758;</span>
+                GeoIntel
+            </button>
         </nav>
         <div class="credit-line">Crypto Radar by Greg Miller</div>
     </div>
@@ -3149,7 +3535,10 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
     <script src="engine.js"></script>
+    <script src="events-db.js"></script>
+    <script src="geo-intel.js"></script>
     <script>
     /* ============================================================
        CRYPTO RADAR - Main Application Script
@@ -3866,7 +4255,8 @@
             analysis: 'analysisView',
             news: 'newsView',
             dashboard: 'dashboardView',
-            charts: 'chartsView'
+            charts: 'chartsView',
+            geointel: 'geoIntelView'
         };
 
         Object.values(views).forEach(id => {
@@ -3885,6 +4275,7 @@
         if (name === 'news') initNewsView();
         if (name === 'analysis') initAnalysisView();
         if (name === 'charts') initChartsView();
+        if (name === 'geointel') initGeoIntel();
     }
 
     // ---- SCENARIOS: STRAIT OF HORMUZ MODEL ----
@@ -6076,6 +6467,8 @@
         document.getElementById('keyClaude').value = keys.claude || '';
         document.getElementById('keyGrok').value = keys.grok || '';
         document.getElementById('keyPerplexity').value = keys.perplexity || '';
+        document.getElementById('keyFred').value = keys.fred || '';
+        document.getElementById('keyTradier').value = keys.tradier || '';
     }
 
     function saveKeys() {
@@ -6085,7 +6478,9 @@
             openai: document.getElementById('keyOpenAI').value.trim(),
             claude: document.getElementById('keyClaude').value.trim(),
             grok: document.getElementById('keyGrok').value.trim(),
-            perplexity: document.getElementById('keyPerplexity').value.trim()
+            perplexity: document.getElementById('keyPerplexity').value.trim(),
+            fred: document.getElementById('keyFred').value.trim(),
+            tradier: document.getElementById('keyTradier').value.trim()
         });
         document.getElementById('keySettingsPanel').style.display = 'none';
     }
@@ -6237,6 +6632,369 @@
         if (e.key === 'ArrowRight') swipeCard('right');
         if (e.key === 'Escape') closeModal();
     });
+
+    // ---- GEOINTEL TAB ----
+    let geoIntelInitialized = false;
+    let geoChart = null;
+    let geoOilSeries = null, geoBtcSeries = null, geoSpxSeries = null;
+    let geoActiveAssets = { oil: true, btc: true, spx: true };
+    let geoTimeframe = '5Y';
+    let geoDataCache = {};
+    let geoScenarioValues = {};
+    let geoLastProjection = null;
+    let geoImpactList = [];
+
+    function initGeoIntel() {
+        if (geoIntelInitialized) return;
+        geoIntelInitialized = true;
+        buildDriverCards();
+        initGeoHistChart();
+    }
+
+    // ── PILLAR SUB-TAB SWITCHING ──
+    function switchGeoPillar(name) {
+        document.querySelectorAll('.geo-pillar-tab').forEach((btn, i) => {
+            const names = ['historical', 'projected', 'impact'];
+            btn.classList.toggle('active', names[i] === name);
+        });
+        document.querySelectorAll('.geo-pillar-panel').forEach(p => p.classList.remove('active'));
+        const map = { historical: 'geoPillarHistorical', projected: 'geoPillarProjected', impact: 'geoPillarImpact' };
+        document.getElementById(map[name])?.classList.add('active');
+        if (name === 'historical' && !geoChart) initGeoHistChart();
+    }
+
+    // ── PILLAR 1: HISTORICAL CHART ──
+    async function initGeoHistChart() {
+        const container = document.getElementById('geoHistChart');
+        if (!container || typeof LightweightCharts === 'undefined') {
+            container.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:20px;text-align:center;">Chart library loading...</div>';
+            return;
+        }
+
+        container.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:20px;text-align:center;">Loading data...</div>';
+
+        // Fetch all data in parallel
+        const fredKey = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys().fred : null;
+        const startDate = geoGetStartDate(geoTimeframe);
+
+        const [oilRaw, spxRaw, btcRaw] = await Promise.all([
+            fredKey ? GeoIntel.fetchFREDSeries('DCOILWTICO', startDate) : Promise.resolve([]),
+            fredKey ? GeoIntel.fetchFREDSeries('SP500', startDate) : Promise.resolve([]),
+            GeoIntel.fetchBTCHistory()
+        ]);
+
+        geoDataCache = { oil: oilRaw, spx: spxRaw, btc: btcRaw };
+        container.innerHTML = '';
+
+        // Create chart
+        geoChart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 380,
+            layout: { background: { color: '#0a0f1a' }, textColor: '#9ca3af' },
+            grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', scaleMargins: { top: 0.05, bottom: 0.05 } },
+            timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true }
+        });
+
+        // Normalize and add series
+        const norm = arr => GeoIntel.normalizeToPercent(arr.filter(p => p.value > 0));
+
+        if (geoActiveAssets.oil && oilRaw.length) {
+            geoOilSeries = geoChart.addLineSeries({ color: '#f59e0b', lineWidth: 2, title: 'Oil %' });
+            geoOilSeries.setData(norm(oilRaw));
+        }
+        if (geoActiveAssets.btc && btcRaw.length) {
+            geoBtcSeries = geoChart.addLineSeries({ color: '#f7931a', lineWidth: 2, title: 'BTC %' });
+            geoBtcSeries.setData(norm(btcRaw.filter(p => p.time >= startDate)));
+        }
+        if (geoActiveAssets.spx && spxRaw.length) {
+            geoSpxSeries = geoChart.addLineSeries({ color: '#60a5fa', lineWidth: 2, title: 'SPX %' });
+            geoSpxSeries.setData(norm(spxRaw));
+        }
+
+        // Event markers on BTC series (most continuous)
+        const activeSeries = geoBtcSeries || geoOilSeries || geoSpxSeries;
+        if (activeSeries && typeof GEO_EVENTS !== 'undefined') {
+            const markers = GEO_EVENTS
+                .filter(e => e.date >= startDate)
+                .map(e => ({
+                    time: e.date,
+                    position: 'aboveBar',
+                    color: e.color,
+                    shape: 'circle',
+                    text: '',
+                    size: 1
+                }));
+            try { activeSeries.setMarkers(markers); } catch(err) { /* markers not supported on this series type */ }
+        }
+
+        // Click handler for event info
+        geoChart.subscribeClick(param => {
+            if (!param.time) return;
+            const dateStr = typeof param.time === 'string' ? param.time
+                : new Date(param.time * 1000).toISOString().slice(0, 10);
+            const event = (GEO_EVENTS || []).find(e => Math.abs(new Date(e.date) - new Date(dateStr)) < 5 * 86400000);
+            if (event) showGeoEventCard(event);
+        });
+
+        geoChart.timeScale().fitContent();
+
+        // Correlations
+        geoUpdateCorrelations(oilRaw, btcRaw, spxRaw);
+
+        // Handle resize
+        new ResizeObserver(() => {
+            if (geoChart) geoChart.applyOptions({ width: container.clientWidth });
+        }).observe(container);
+    }
+
+    function geoGetStartDate(tf) {
+        const now = new Date();
+        const y = { '1Y': 1, '3Y': 3, '5Y': 5 }[tf];
+        if (!y) return '2013-01-01';
+        now.setFullYear(now.getFullYear() - y);
+        return now.toISOString().slice(0, 10);
+    }
+
+    function geoToggleAsset(asset) {
+        geoActiveAssets[asset] = !geoActiveAssets[asset];
+        document.getElementById('geoToggle' + asset.charAt(0).toUpperCase() + asset.slice(1))
+            ?.classList.toggle('active', geoActiveAssets[asset]);
+        // Rebuild chart
+        if (geoChart) { geoChart.remove(); geoChart = null; }
+        initGeoHistChart();
+    }
+
+    function geoSetTimeframe(tf) {
+        geoTimeframe = tf;
+        document.querySelectorAll('.geo-tf-btn').forEach(b =>
+            b.classList.toggle('active', b.textContent === tf));
+        if (geoChart) { geoChart.remove(); geoChart = null; }
+        initGeoHistChart();
+    }
+
+    function geoUpdateCorrelations(oil, btc, spx) {
+        const strip = document.getElementById('geoCorrStrip');
+        if (!strip) return;
+        const pairs = [
+            { a: btc, b: oil, label: 'BTC/Oil' },
+            { a: btc, b: spx, label: 'BTC/SPX' },
+            { a: oil, b: spx, label: 'Oil/SPX' }
+        ];
+        const html = pairs.map(p => {
+            const r = GeoIntel.correlation(p.a, p.b);
+            if (r === null) return '';
+            const color = Math.abs(r) > 0.6 ? 'var(--green)' : Math.abs(r) > 0.3 ? 'var(--amber)' : 'var(--text-dim)';
+            return `<div class="geo-corr-chip">${p.label} r=<span style="color:${color}">${r.toFixed(2)}</span></div>`;
+        }).join('');
+        strip.innerHTML = html || '<div class="geo-corr-chip">Add FRED API key in Settings to see correlations</div>';
+    }
+
+    function showGeoEventCard(event) {
+        const card = document.getElementById('geoEventCard');
+        document.getElementById('geoEventDot').style.background = event.color;
+        document.getElementById('geoEventTitle').textContent = event.label;
+        document.getElementById('geoEventDate').textContent = new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('geoEventBody').textContent = event.summary;
+        const aiEl = document.getElementById('geoEventAI');
+        aiEl.style.display = 'none';
+        aiEl.textContent = '';
+        card.classList.add('visible');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // Ask Claude for deeper analysis
+        const keys = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys() : {};
+        if (keys.claude) {
+            aiEl.style.display = 'block';
+            aiEl.textContent = 'Asking Claude for analysis...';
+            const prompt = `In 2-3 sentences, explain how the "${event.label}" (${event.date}) event affected oil, Bitcoin, and/or the stock market, what the market mechanism was, and what the forward implication turned out to be. Be specific and analytical.`;
+            AIAnalysis.chatWithClaude(prompt, event.summary).then(r => {
+                aiEl.textContent = r?.text || event.summary;
+            });
+        }
+    }
+
+    // ── PILLAR 2: SCENARIO PROJECTION ──
+    function buildDriverCards() {
+        if (typeof GeoIntel === 'undefined') return;
+        const container = document.getElementById('geoDriverCards');
+        if (!container) return;
+        container.innerHTML = GeoIntel.DRIVERS.map(d => `
+            <div class="geo-driver-card">
+                <div class="geo-driver-header">
+                    <span class="geo-driver-icon">${d.icon}</span>
+                    <span class="geo-driver-label">${d.label}</span>
+                    <span class="geo-driver-val" id="geoDriverVal_${d.id}">${d.value}%</span>
+                </div>
+                <div class="geo-driver-desc">${d.description}</div>
+                <div class="geo-driver-slider-wrap">
+                    <div class="geo-driver-slider-labels">
+                        <span>${d.lowLabel}</span>
+                        <span>${d.highLabel}</span>
+                    </div>
+                    <input type="range" class="geo-slider" min="0" max="100" value="${d.value}"
+                        oninput="geoUpdateDriver('${d.id}', this.value)">
+                </div>
+            </div>
+        `).join('');
+        // Init values
+        GeoIntel.DRIVERS.forEach(d => { geoScenarioValues[d.id] = d.value; });
+    }
+
+    function geoUpdateDriver(id, val) {
+        geoScenarioValues[id] = parseInt(val);
+        const el = document.getElementById('geoDriverVal_' + id);
+        if (el) el.textContent = val + '%';
+    }
+
+    async function runGeoProjection() {
+        const resultsEl = document.getElementById('geoProjResults');
+        const narrativeEl = document.getElementById('geoProjNarrative');
+        resultsEl.classList.add('visible');
+        narrativeEl.textContent = 'Running AI projection...';
+
+        // Get current prices from existing LiveData
+        let oilPrice = 72, btcPrice = 83000, spxPrice = 5200;
+        try {
+            const btcData = await LiveData.getCryptoPrices();
+            if (btcData?.bitcoin?.usd) btcPrice = btcData.bitcoin.usd;
+        } catch(e) {}
+
+        const newsContext = document.getElementById('geoNewsContext')?.value || '';
+        const projection = await GeoIntel.runProjection(geoScenarioValues, newsContext, { oilPrice, btcPrice, spxPrice });
+        geoLastProjection = projection;
+
+        // Update price targets
+        document.getElementById('geoProjOil').textContent = '$' + projection.oil.base;
+        document.getElementById('geoProjOilRange').textContent = `Bear $${projection.oil.bear} — Bull $${projection.oil.bull}`;
+        document.getElementById('geoProjBtc').textContent = '$' + projection.btc.base.toLocaleString();
+        document.getElementById('geoProjBtcRange').textContent = `Bear $${projection.btc.bear.toLocaleString()} — Bull $${projection.btc.bull.toLocaleString()}`;
+        document.getElementById('geoProjSpx').textContent = projection.spx.base.toLocaleString();
+        document.getElementById('geoProjSpxRange').textContent = `Bear ${projection.spx.bear.toLocaleString()} — Bull ${projection.spx.bull.toLocaleString()}`;
+
+        narrativeEl.textContent = projection.narrative || 'Add a Claude API key in Settings to get AI narrative.';
+    }
+
+    // ── PILLAR 3: FINANCIAL IMPACT ──
+    async function addGeoImpactAsset() {
+        const input = document.getElementById('geoImpactTicker');
+        const ticker = input.value.trim().toUpperCase();
+        if (!ticker) return;
+        if (geoImpactList.length >= 3) { alert('Maximum 3 assets at a time.'); return; }
+        if (geoImpactList.includes(ticker)) return;
+        geoImpactList.push(ticker);
+        input.value = '';
+        document.getElementById('geoImpactEmpty').style.display = 'none';
+        renderGeoImpactAsset(ticker);
+    }
+
+    async function renderGeoImpactAsset(ticker) {
+        const container = document.getElementById('geoImpactAssets');
+        const cardId = 'geoAsset_' + ticker;
+
+        // Placeholder card
+        const placeholder = document.createElement('div');
+        placeholder.className = 'geo-impact-asset';
+        placeholder.id = cardId;
+        placeholder.innerHTML = `
+            <div class="geo-impact-asset-header">
+                <div class="geo-impact-ticker">${ticker}</div>
+                <div class="geo-impact-price" id="${cardId}_price">Loading...</div>
+                <button onclick="removeGeoAsset('${ticker}')" style="margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;">✕</button>
+            </div>
+            <div style="color:var(--text-dim);font-size:11px;padding:8px 0;">Fetching live data...</div>
+        `;
+        container.appendChild(placeholder);
+
+        // Fetch quote and options in parallel
+        const [quote, chainResult] = await Promise.all([
+            GeoIntel.getQuote(ticker),
+            GeoIntel.fetchOptionsChain(ticker)
+        ]);
+
+        const currentPrice = quote?.last || quote?.close || null;
+        const targetPrice = geoLastProjection?.spx?.base
+            ? currentPrice ? Math.round(currentPrice * (geoLastProjection.spx.base / 5200)) : null
+            : null;
+
+        const priceEl = document.getElementById(cardId + '_price');
+        if (priceEl && currentPrice) priceEl.textContent = '$' + currentPrice.toFixed(2);
+
+        // Build card content
+        let optionsHtml = '';
+        let recoText = '';
+
+        if (chainResult?.error) {
+            optionsHtml = `<div style="color:var(--text-dim);font-size:11px;">${chainResult.error}</div>`;
+        } else if (chainResult?.options?.length) {
+            optionsHtml = `
+                <div style="overflow-x:auto;">
+                <table class="geo-options-table">
+                    <thead><tr>
+                        <th>Strike</th><th>Exp</th><th>DTE</th>
+                        <th>IV%</th><th>Δ</th><th>Mid</th><th>OI</th>
+                    </tr></thead>
+                    <tbody>
+                        ${chainResult.options.map((o, i) => `
+                        <tr class="${i === 0 ? 'best-pick' : ''}">
+                            <td class="${i === 0 ? 'highlight' : ''}">$${o.strike}</td>
+                            <td>${o.expiration}</td><td>${o.dte}d</td>
+                            <td>${o.iv}%</td><td>${o.delta}</td>
+                            <td class="${i === 0 ? 'highlight' : ''}">$${o.mid.toFixed(2)}</td>
+                            <td>${o.openInterest.toLocaleString()}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                </div>`;
+
+            // Get AI recommendation
+            if (currentPrice && targetPrice) {
+                recoText = 'Asking Claude for options recommendation...';
+                GeoIntel.getOptionsReco(ticker, chainResult.options, targetPrice, currentPrice, geoLastProjection?.narrative)
+                    .then(reco => {
+                        const recoEl = document.getElementById(cardId + '_reco');
+                        if (recoEl) recoEl.textContent = reco || 'No recommendation generated.';
+                    });
+            }
+        } else {
+            optionsHtml = '<div style="color:var(--text-dim);font-size:11px;">No options data. Add Tradier API key in Settings.</div>';
+        }
+
+        const upside = currentPrice && targetPrice
+            ? ((targetPrice - currentPrice) / currentPrice * 100).toFixed(1) : null;
+
+        placeholder.innerHTML = `
+            <div class="geo-impact-asset-header">
+                <div class="geo-impact-ticker">${ticker}</div>
+                <div class="geo-impact-price">${currentPrice ? '$' + currentPrice.toFixed(2) : '--'}</div>
+                <button onclick="removeGeoAsset('${ticker}')" style="margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;">✕</button>
+            </div>
+            <div class="geo-impact-cols">
+                <div>
+                    <div class="geo-impact-col-label">Direct Buy</div>
+                    <div class="geo-direct-stat">Current: <span>${currentPrice ? '$' + currentPrice.toFixed(2) : '--'}</span></div>
+                    <div class="geo-direct-stat">Scenario target: <span>${targetPrice ? '$' + targetPrice.toLocaleString() : 'Run projection first'}</span></div>
+                    <div class="geo-direct-stat">Potential return: <span style="color:var(--green)">${upside ? '+' + upside + '%' : '--'}</span></div>
+                    <div class="geo-direct-stat">By: <span>Dec 2026</span></div>
+                </div>
+                <div>
+                    <div class="geo-impact-col-label">Best Options (Calls)</div>
+                    ${optionsHtml}
+                </div>
+            </div>
+            ${recoText ? `<div class="geo-ai-reco" id="${cardId}_reco">${recoText}</div>` : ''}
+        `;
+    }
+
+    function removeGeoAsset(ticker) {
+        geoImpactList = geoImpactList.filter(t => t !== ticker);
+        document.getElementById('geoAsset_' + ticker)?.remove();
+        if (!geoImpactList.length) document.getElementById('geoImpactEmpty').style.display = 'block';
+    }
+
+    // ── Key settings: add FRED and Tradier fields ──
+    // (Keys are stored in same AIAnalysis key store, referenced as keys.fred and keys.tradier)
 
     // ---- CHARTS TAB ----
     let chartsInitialized = false;
