@@ -8,6 +8,83 @@ const Portfolio = {
 
   STORE_KEY: 'portfolio_v1',
   ALERTS_KEY: 'alerts_v1',
+  WATCHLIST_KEY: 'watchlist_v1',
+
+  // Default watchlist — BTC/IBIT (spot vs ETF), USO (oil), VXX (volatility)
+  DEFAULT_WATCHLIST: [
+    { symbol: 'BTC',  type: 'crypto', label: 'Bitcoin',          coingeckoId: 'bitcoin' },
+    { symbol: 'IBIT', type: 'stock',  label: 'iShares BTC ETF' },
+    { symbol: 'USO',  type: 'stock',  label: 'US Oil Fund' },
+    { symbol: 'VXX',  type: 'stock',  label: 'VIX Short-Term' }
+  ],
+
+  loadWatchlist() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.WATCHLIST_KEY));
+      return saved || this.DEFAULT_WATCHLIST;
+    } catch { return this.DEFAULT_WATCHLIST; }
+  },
+
+  saveWatchlist(list) {
+    localStorage.setItem(this.WATCHLIST_KEY, JSON.stringify(list));
+  },
+
+  addToWatchlist(symbol, type, label = '') {
+    const list = this.loadWatchlist();
+    if (list.find(w => w.symbol.toUpperCase() === symbol.toUpperCase())) return;
+    list.push({ symbol: symbol.toUpperCase(), type, label });
+    this.saveWatchlist(list);
+  },
+
+  removeFromWatchlist(symbol) {
+    this.saveWatchlist(this.loadWatchlist().filter(w => w.symbol !== symbol.toUpperCase()));
+  },
+
+  async fetchWatchlistPrices() {
+    const list = this.loadWatchlist();
+    const cryptos = list.filter(w => w.type === 'crypto');
+    const stocks  = list.filter(w => w.type === 'stock');
+    const prices  = {};
+
+    if (cryptos.length) {
+      const ids = cryptos.map(w => w.coingeckoId || w.symbol.toLowerCase()).join(',');
+      try {
+        const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`);
+        const d = await r.json();
+        for (const w of cryptos) {
+          const id = w.coingeckoId || w.symbol.toLowerCase();
+          if (d[id]) prices[w.symbol] = { price: d[id].usd, change24h: d[id].usd_24h_change, vol24h: d[id].usd_24h_vol };
+        }
+      } catch (e) { console.warn('Watchlist CoinGecko:', e.message); }
+    }
+
+    if (stocks.length) {
+      const keys = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys() : {};
+      const token = keys.tradier || 'UbRTiiIwAl52hIYm02TPrJAlP6AF';
+      try {
+        const syms = stocks.map(w => w.symbol).join(',');
+        const r = await fetch(
+          `https://api.tradier.com/v1/markets/quotes?symbols=${syms}&greeks=false`,
+          { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }
+        );
+        const d = await r.json();
+        const quotes = d?.quotes?.quote;
+        const arr = Array.isArray(quotes) ? quotes : (quotes ? [quotes] : []);
+        for (const q of arr) {
+          prices[q.symbol] = {
+            price: q.last ?? q.close,
+            change24h: q.change_percentage,
+            change: q.change,
+            high: q.high,
+            low: q.low,
+            volume: q.volume
+          };
+        }
+      } catch (e) { console.warn('Watchlist Tradier:', e.message); }
+    }
+
+    return prices;
+  },
 
   // ── Holdings CRUD ──
 

@@ -2328,6 +2328,20 @@
             animation:fadeInDown .3s ease; display:none;
         }
         @keyframes fadeInDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+        /* ── WATCHLIST STRIP ── */
+        .watch-card {
+            background:var(--bg-card); border:1px solid var(--border);
+            border-radius:12px; padding:12px 14px;
+            display:flex; flex-direction:column; gap:3px;
+        }
+        .watch-symbol { font-size:var(--fs-sm); font-weight:800; letter-spacing:.02em; }
+        .watch-label { font-size:10px; color:var(--text-dim); }
+        .watch-price { font-size:18px; font-weight:800; line-height:1.1; margin-top:2px; }
+        .watch-change { font-size:var(--fs-sm); font-weight:600; }
+        .watch-pos { color:#10b981; }
+        .watch-neg { color:#ef4444; }
+        .watch-loading { color:var(--text-dim); font-size:var(--fs-xs); }
         .geo-pillar-tabs {
             display: flex;
             gap: 6px;
@@ -3674,6 +3688,9 @@
           <div class="pulse-container">
             <div class="pulse-section-title">Market Pulse</div>
 
+            <!-- Watchlist strip -->
+            <div id="watchlistStrip" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;"></div>
+
             <!-- Composite score bar -->
             <div class="pulse-card pulse-wide" style="margin-bottom:14px;">
               <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
@@ -3870,6 +3887,9 @@
         <div class="view" id="portfolioView">
           <div class="portfolio-container">
             <div class="pulse-section-title">Portfolio</div>
+
+            <!-- Watchlist strip -->
+            <div id="portfolioWatchlist" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;"></div>
 
             <!-- Summary card -->
             <div class="portfolio-summary">
@@ -8373,6 +8393,61 @@
         el.textContent = msg; el.style.display = 'block';
         setTimeout(() => { el.style.display = 'none'; }, 4000);
     }
+
+    // ================================================================
+    // WATCHLIST
+    // ================================================================
+    let _watchPrices = {};
+
+    function renderWatchlist(prices, stripIds = ['watchlistStrip', 'portfolioWatchlist']) {
+        _watchPrices = prices;
+        const list = Portfolio.loadWatchlist();
+        const html = list.map(w => {
+            const p = prices[w.symbol];
+            const priceStr = p?.price != null ? formatWatchPrice(p.price) : '…';
+            const chg = p?.change24h;
+            const chgStr = chg != null ? `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%` : '';
+            const cls = chg == null ? '' : chg >= 0 ? 'watch-pos' : 'watch-neg';
+            return `<div class="watch-card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <div class="watch-symbol">${w.symbol}</div>
+                        <div class="watch-label">${w.label}</div>
+                    </div>
+                    <div class="watch-change ${cls}">${chgStr}</div>
+                </div>
+                <div class="watch-price ${cls}">${p?.price != null ? '$' + priceStr : '–'}</div>
+            </div>`;
+        }).join('');
+        stripIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        });
+    }
+
+    function formatWatchPrice(v) {
+        if (v >= 10000) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        if (v >= 100)   return v.toFixed(2);
+        if (v >= 1)     return v.toFixed(3);
+        return v.toFixed(4);
+    }
+
+    async function refreshWatchlist() {
+        const list = Portfolio.loadWatchlist();
+        // Skeleton
+        ['watchlistStrip','portfolioWatchlist'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = list.map(w =>
+                `<div class="watch-card"><div class="watch-symbol">${w.symbol}</div><div class="watch-label">${w.label}</div><div class="watch-price watch-loading">Loading…</div></div>`
+            ).join('');
+        });
+        const prices = await Portfolio.fetchWatchlistPrices();
+        renderWatchlist(prices);
+    }
+
+    // Kick off watchlist on load and refresh every 90s
+    refreshWatchlist();
+    setInterval(refreshWatchlist, 90000);
 
     // ---- INIT ----
     loadData();
