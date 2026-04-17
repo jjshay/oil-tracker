@@ -28,7 +28,7 @@ const GeoIntel = {
   // Free key from fred.stlouisfed.org — stored in same AI key store
   async fetchFREDSeries(seriesId, startDate = '2013-01-01') {
     const keys = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys() : {};
-    const apiKey = keys.fred || 'your_fred_key';
+    const apiKey = keys.fred || 'ca0c99f98f1221bf443bc1a3c6994441';
     const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&observation_start=${startDate}&api_key=${apiKey}&file_type=json&frequency=d&aggregation_method=eop`;
     const data = await this._fetch(url, `fred_${seriesId}_${startDate}`);
     if (!data || !data.observations) return [];
@@ -75,7 +75,7 @@ const GeoIntel = {
   // ── TRADIER OPTIONS CHAIN ──
   async fetchOptionsChain(ticker, expiration = null) {
     const keys = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys() : {};
-    const token = keys.tradier;
+    const token = keys.tradier || 'UbRTiiIwAl52hIYm02TPrJAlP6AF';
     if (!token) return { error: 'No Tradier API key. Get a free key at tradier.com/api.' };
 
     // First get available expirations if none specified
@@ -339,7 +339,7 @@ Respond in 3-4 sentences: name the best 1-2 contracts, why, the expected return 
   // ── LIVE QUOTE (Tradier) ──
   async getQuote(ticker) {
     const keys = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys() : {};
-    const token = keys.tradier;
+    const token = keys.tradier || 'UbRTiiIwAl52hIYm02TPrJAlP6AF';
     if (!token) return null;
     const data = await this._fetch(
       `https://api.tradier.com/v1/markets/quotes?symbols=${ticker}&greeks=false`,
