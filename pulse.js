@@ -234,7 +234,10 @@ const Pulse = {
   },
 
   // Default RSS.app feed (JSON format)
-  DEFAULT_RSS_FEEDS: ['https://rss.app/feeds/v1.1/zE01NN1ghIgOlAX6.json'],
+  DEFAULT_RSS_FEEDS: [
+    'https://rss.app/feeds/v1.1/zE01NN1ghIgOlAX6.json',
+    'https://rss.app/feeds/v1.1/6MG8ydP2kDHE3wRz.json'
+  ],
 
   // ── News Headlines — RSS.app → Messari → app RSS ──
   async fetchNewsHeadlines(limit = 20) {
