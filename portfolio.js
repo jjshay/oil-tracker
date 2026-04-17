@@ -14,6 +14,7 @@ const Portfolio = {
   DEFAULT_WATCHLIST: [
     { symbol: 'BTC',  type: 'crypto', label: 'Bitcoin',          coingeckoId: 'bitcoin' },
     { symbol: 'IBIT', type: 'stock',  label: 'iShares BTC ETF' },
+    { symbol: 'COIN', type: 'stock',  label: 'Coinbase' },
     { symbol: 'USO',  type: 'stock',  label: 'US Oil Fund' },
     { symbol: 'VXX',  type: 'stock',  label: 'VIX Short-Term' }
   ],
