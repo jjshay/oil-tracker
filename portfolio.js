@@ -12,11 +12,13 @@ const Portfolio = {
 
   // Default watchlist — BTC/IBIT (spot vs ETF), USO (oil), VXX (volatility)
   DEFAULT_WATCHLIST: [
-    { symbol: 'BTC',  type: 'crypto', label: 'Bitcoin',          coingeckoId: 'bitcoin' },
+    { symbol: 'BTC',  type: 'crypto', label: 'Bitcoin',         coingeckoId: 'bitcoin' },
     { symbol: 'IBIT', type: 'stock',  label: 'iShares BTC ETF' },
     { symbol: 'COIN', type: 'stock',  label: 'Coinbase' },
+    { symbol: 'GLD',  type: 'stock',  label: 'Gold ETF' },
     { symbol: 'USO',  type: 'stock',  label: 'US Oil Fund' },
-    { symbol: 'VXX',  type: 'stock',  label: 'VIX Short-Term' }
+    { symbol: 'VXX',  type: 'stock',  label: 'VIX Futures' },
+    { symbol: 'UUP',  type: 'stock',  label: 'US Dollar Index' }
   ],
 
   loadWatchlist() {

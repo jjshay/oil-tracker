@@ -271,6 +271,132 @@ const Pulse = {
     return this.fetchFRED('PCALL', 90);
   },
 
+  // ── Gold + DXY (FRED) ──
+  async fetchGold(days = 90) {
+    return this.fetchFRED('GOLDPMGBD228NLBM', days); // London PM gold fix USD/troy oz
+  },
+
+  async fetchDXY(days = 90) {
+    return this.fetchFRED('DTWEXBGS', days); // Broad Trade-Weighted USD Index
+  },
+
+  // ── Correlation Matrix (BTC / Oil / SPX / Gold / DXY / VIX) ──
+  async buildCorrelationMatrix() {
+    const fredKey = (() => {
+      try { return (typeof AIAnalysis !== 'undefined' ? AIAnalysis.getKeys() : {}).fred || 'ca0c99f98f1221bf443bc1a3c6994441'; } catch { return 'ca0c99f98f1221bf443bc1a3c6994441'; }
+    })();
+
+    // Fetch all series (90 days of daily data)
+    const [btcRaw, oilRaw, spxRaw, goldRaw, dxyRaw, vixRaw] = await Promise.all([
+      (typeof GeoIntel !== 'undefined') ? GeoIntel.fetchBTCHistory() : [],
+      this.fetchFRED('DCOILWTICO', 120),
+      this.fetchFRED('SP500', 120),
+      this.fetchGold(120),
+      this.fetchDXY(120),
+      this.fetchVIX()
+    ]);
+
+    // Convert to daily returns
+    const returns = s => {
+      const arr = Array.isArray(s) ? s : [];
+      return arr.slice(-91).map((p, i, a) =>
+        i === 0 ? null : { date: p.date || p.time, r: (p.value - a[i-1].value) / a[i-1].value }
+      ).filter(Boolean);
+    };
+
+    const series = {
+      'BTC':  returns(btcRaw.map ? btcRaw.map(p => ({ date: p.time, value: p.value })) : btcRaw),
+      'Oil':  returns(oilRaw),
+      'SPX':  returns(spxRaw),
+      'Gold': returns(goldRaw),
+      'DXY':  returns(dxyRaw),
+      'VIX':  returns(vixRaw)
+    };
+
+    const labels = Object.keys(series);
+    const matrix = {};
+    for (const a of labels) {
+      matrix[a] = {};
+      for (const b of labels) {
+        if (a === b) { matrix[a][b] = 1; continue; }
+        const mapA = new Map(series[a].map(p => [p.date, p.r]));
+        const pairs = series[b].filter(p => mapA.has(p.date)).map(p => [mapA.get(p.date), p.r]);
+        if (pairs.length < 10) { matrix[a][b] = null; continue; }
+        const xs = pairs.map(p => p[0]), ys = pairs.map(p => p[1]);
+        const mx = xs.reduce((s,v)=>s+v,0)/xs.length, my = ys.reduce((s,v)=>s+v,0)/ys.length;
+        const num = xs.reduce((s,v,i)=>s+(v-mx)*(ys[i]-my),0);
+        const den = Math.sqrt(xs.reduce((s,v)=>s+(v-mx)**2,0)*ys.reduce((s,v)=>s+(v-my)**2,0));
+        matrix[a][b] = den === 0 ? 0 : +(num/den).toFixed(3);
+      }
+    }
+    return { labels, matrix };
+  },
+
+  // ── Earnings Calendar (Nasdaq free API) ──
+  async fetchEarningsCalendar(symbols = ['COIN', 'IBIT', 'USO', 'VXX', 'GLD']) {
+    const results = [];
+    // Nasdaq earnings API — check next 30 days
+    for (let dayOffset = 0; dayOffset <= 30; dayOffset++) {
+      const d = new Date(); d.setDate(d.getDate() + dayOffset);
+      const dateStr = d.toISOString().slice(0, 10);
+      try {
+        const r = await fetch(`https://api.nasdaq.com/api/calendar/earnings?date=${dateStr}`, {
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        if (!r.ok) continue;
+        const data = await r.json();
+        const rows = data?.data?.rows || [];
+        for (const row of rows) {
+          if (symbols.some(s => row.symbol?.toUpperCase() === s.toUpperCase())) {
+            results.push({
+              symbol: row.symbol,
+              date: dateStr,
+              time: row.time,
+              epsEstimate: row.eps_forecast,
+              revenueEstimate: row.revenue_forecast
+            });
+          }
+        }
+      } catch {}
+      if (results.length > 0 && dayOffset > 7) break; // stop after first week if we found something
+    }
+    return results;
+  },
+
+  // ── AI Morning Briefing Compiler ──
+  async compileMorningBriefing(watchPrices = {}) {
+    const [cfng, vix, spread, funding, headlines] = await Promise.all([
+      this.fetchCryptoFNG(1),
+      this.fetchVIX(),
+      this.fetchSpreadHistory(5),
+      this.fetchBTCFunding(3),
+      this.fetchNewsHeadlines(5)
+    ]);
+
+    const fng = cfng[0]?.value;
+    const vixVal = vix[vix.length-1]?.value;
+    const spreadVal = spread[spread.length-1]?.value;
+    const fundingVal = funding[funding.length-1]?.value;
+    const topHeadlines = headlines.slice(0, 5).map(h => typeof h === 'string' ? h : h.title).join('; ');
+
+    const watchSummary = Object.entries(watchPrices).map(([sym, p]) =>
+      p?.price != null ? `${sym} $${p.price.toLocaleString()} (${p.change24h?.toFixed(1) ?? '?'}%)` : null
+    ).filter(Boolean).join(', ');
+
+    return `You are a morning markets briefing AI. Date: ${new Date().toDateString()}.
+
+MARKET DATA:
+- Prices: ${watchSummary || 'unavailable'}
+- Crypto Fear & Greed: ${fng ?? '--'}/100 (${fng ? Pulse.fngLabel(fng) : '--'})
+- VIX: ${vixVal?.toFixed(1) ?? '--'}
+- 2Y-10Y Spread: ${spreadVal != null ? (spreadVal*100).toFixed(0)+'bp' : '--'}
+- BTC Funding Rate: ${fundingVal?.toFixed(4) ?? '--'}%
+
+TOP HEADLINES: ${topHeadlines || 'none'}
+
+Write a sharp 150-word morning briefing: key overnight moves, what's driving sentiment, the biggest risk to watch today. Lead with BTC/COIN if they moved. Be specific and direct.`;
+  },
+
   // ── AFINN-based sentiment scorer (finance/crypto extended) ──
   AFINN: {
     'crash': -4, 'crashes': -4, 'collapse': -4, 'collapses': -4,

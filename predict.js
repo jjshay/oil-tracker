@@ -234,6 +234,78 @@ const Predict = {
     return fedMarkets;
   },
 
+  // ── Unusual Options Flow Scanner ──
+  // Scans IBIT, COIN, USO, VXX for contracts with anomalous volume vs OI
+  FLOW_TICKERS: ['IBIT', 'COIN', 'USO', 'VXX'],
+
+  async scanOptionsFlow(tickers = null) {
+    const syms = tickers || this.FLOW_TICKERS;
+    const keys = (typeof AIAnalysis !== 'undefined') ? AIAnalysis.getKeys() : {};
+    const token = keys.tradier || 'UbRTiiIwAl52hIYm02TPrJAlP6AF';
+    const results = [];
+
+    for (const ticker of syms) {
+      try {
+        // Get nearest expiration 14-60 days out
+        const expData = await this._fetch(
+          `https://api.tradier.com/v1/markets/options/expirations?symbol=${ticker}&includeAllRoots=true`,
+          `exp_flow_${ticker}`,
+          { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }
+        );
+        const dates = expData?.expirations?.date;
+        if (!dates) continue;
+        const arr = Array.isArray(dates) ? dates : [dates];
+        const now = Date.now();
+        const exp = arr.find(d => {
+          const dte = (new Date(d) - now) / 86400000;
+          return dte >= 7 && dte <= 60;
+        }) || arr[0];
+
+        const chainData = await this._fetch(
+          `https://api.tradier.com/v1/markets/options/chains?symbol=${ticker}&expiration=${exp}&greeks=true`,
+          `flow_chain_${ticker}_${exp}`,
+          { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }
+        );
+        const options = chainData?.options?.option;
+        if (!options) continue;
+        const chain = Array.isArray(options) ? options : [options];
+
+        // Score each contract for unusual activity
+        for (const o of chain) {
+          const vol = o.volume || 0;
+          const oi = o.open_interest || 1;
+          const ratio = vol / oi;
+          // Flag if: vol/OI > 1.5 AND volume > 50
+          if (ratio >= 1.5 && vol >= 50) {
+            const mid = ((o.bid || 0) + (o.ask || 0)) / 2;
+            const dte = Math.round((new Date(o.expiration_date) - now) / 86400000);
+            results.push({
+              ticker,
+              type: o.option_type?.toUpperCase(),
+              strike: o.strike,
+              expiration: o.expiration_date,
+              dte,
+              volume: vol,
+              openInterest: oi,
+              ratio: +ratio.toFixed(2),
+              bid: o.bid,
+              ask: o.ask,
+              mid: +mid.toFixed(2),
+              iv: o.greeks?.mid_iv ? +(o.greeks.mid_iv * 100).toFixed(1) : null,
+              delta: o.greeks?.delta?.toFixed(3) ?? null,
+              anomalyScore: +(ratio * Math.log10(vol + 1)).toFixed(2)
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Flow scan error:', ticker, e.message);
+      }
+    }
+
+    // Sort by anomaly score descending
+    return results.sort((a, b) => b.anomalyScore - a.anomalyScore).slice(0, 25);
+  },
+
   // ── Format helpers ──
   formatVolume(v) {
     if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;

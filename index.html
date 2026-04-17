@@ -9,6 +9,10 @@
     <meta name="description" content="Crypto Radar - AI-powered crypto market intelligence with multi-model analysis, technical indicators, on-chain data, and portfolio modeling.">
     <meta name="theme-color" content="#10b981">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Crypto Radar">
+    <meta name="mobile-web-app-capable" content="yes">
     <style>
         :root {
             --bg: #080c14;
@@ -2329,6 +2333,55 @@
         }
         @keyframes fadeInDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
+        /* ── CORRELATION MATRIX ── */
+        .corr-matrix { width:100%; border-collapse:collapse; font-size:11px; }
+        .corr-matrix th { color:var(--text-dim); font-weight:600; padding:4px 2px; text-align:center; font-size:10px; }
+        .corr-matrix td { width:14.28%; padding:5px 2px; text-align:center; font-weight:700; border-radius:4px; font-size:11px; }
+        .corr-pos-strong { background:rgba(16,185,129,.35); color:#10b981; }
+        .corr-pos-med    { background:rgba(16,185,129,.18); color:#34d399; }
+        .corr-pos-weak   { background:rgba(16,185,129,.08); color:#6ee7b7; }
+        .corr-neg-strong { background:rgba(239,68,68,.35);  color:#ef4444; }
+        .corr-neg-med    { background:rgba(239,68,68,.18);  color:#f87171; }
+        .corr-neg-weak   { background:rgba(239,68,68,.08);  color:#fca5a5; }
+        .corr-neutral    { background:rgba(255,255,255,.05); color:var(--text-dim); }
+        .corr-self       { background:rgba(16,185,129,.5);  color:#10b981; }
+
+        /* ── ON-CHAIN ── */
+        .onchain-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+        .onchain-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px; }
+        .onchain-val  { font-size:20px; font-weight:800; margin:4px 0 2px; }
+        .onchain-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; }
+        .onchain-trend { font-size:11px; font-weight:600; }
+
+        /* ── OPTIONS FLOW ── */
+        .flow-table { width:100%; font-size:11px; border-collapse:collapse; }
+        .flow-table th { color:var(--text-dim); font-size:10px; padding:4px 6px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.07); }
+        .flow-table td { padding:6px 6px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+        .flow-call { color:#10b981; font-weight:700; }
+        .flow-put  { color:#ef4444; font-weight:700; }
+        .flow-hot  { background:rgba(245,158,11,.08); }
+        .flow-score { background:rgba(245,158,11,.2); color:var(--amber); font-weight:800; border-radius:4px; padding:1px 5px; font-size:10px; }
+
+        /* ── MORNING BRIEFING ── */
+        .briefing-btn {
+            width:100%; background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(96,165,250,.1));
+            border:1px solid var(--green); color:var(--green); border-radius:12px;
+            padding:14px; font-size:var(--fs-base); font-weight:700; cursor:pointer;
+            margin-bottom:14px; letter-spacing:.02em;
+        }
+        .briefing-output {
+            background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+            padding:16px; font-size:var(--fs-sm); line-height:1.7; color:var(--text);
+            display:none; margin-bottom:14px; white-space:pre-wrap;
+        }
+
+        /* ── EARNINGS ── */
+        .earnings-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:var(--fs-sm); }
+        .earnings-row:last-child { border-bottom:none; }
+        .earnings-sym { font-weight:800; min-width:50px; }
+        .earnings-date { color:var(--text-dim); font-size:var(--fs-xs); }
+        .earnings-eps { color:var(--amber); font-size:var(--fs-xs); }
+
         /* ── WATCHLIST STRIP ── */
         .watch-card {
             background:var(--bg-card); border:1px solid var(--border);
@@ -3795,6 +3848,30 @@
               </div>
             </div>
 
+            <!-- Morning Briefing -->
+            <button class="briefing-btn" onclick="runMorningBriefing()">☀ AI Morning Briefing</button>
+            <div class="briefing-output" id="briefingOutput"></div>
+
+            <!-- Correlation Matrix -->
+            <div class="pulse-card" style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:10px;">
+                <span class="pulse-card-title">Correlation Matrix (90d daily returns)</span>
+                <button class="pulse-refresh-btn" onclick="loadCorrelationMatrix()">↻</button>
+              </div>
+              <div id="corrMatrixWrap" style="width:100%;overflow-x:auto;">
+                <div style="color:var(--text-dim);font-size:var(--fs-sm);text-align:center;padding:12px;">Tap ↻ to load</div>
+              </div>
+            </div>
+
+            <!-- On-Chain Metrics -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span class="pulse-card-title" style="font-size:var(--fs-sm);text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);">Bitcoin On-Chain</span>
+              <button class="pulse-refresh-btn" onclick="loadOnChain()">↻ Load</button>
+            </div>
+            <div class="onchain-grid" id="onchainGrid">
+              <div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:12px;font-size:var(--fs-sm);">Tap Load to fetch on-chain data</div>
+            </div>
+
             <!-- CryptoPanic live widget -->
             <div class="pulse-card" style="margin-bottom:14px;padding:0;overflow:hidden;border-radius:12px;">
               <a href="https://cryptopanic.com/" target="_blank"
@@ -3826,8 +3903,9 @@
 
             <!-- Sub-tabs -->
             <div class="geo-pillar-tabs" style="margin-bottom:14px;">
-              <button class="geo-pillar-tab active" onclick="switchPredictPillar('markets')" id="ptab-markets">Live Markets</button>
+              <button class="geo-pillar-tab active" onclick="switchPredictPillar('markets')" id="ptab-markets">Markets</button>
               <button class="geo-pillar-tab" onclick="switchPredictPillar('futures')" id="ptab-futures">Futures</button>
+              <button class="geo-pillar-tab" onclick="switchPredictPillar('flow')" id="ptab-flow">Flow</button>
               <button class="geo-pillar-tab" onclick="switchPredictPillar('accuracy')" id="ptab-accuracy">Accuracy</button>
             </div>
 
@@ -3869,6 +3947,17 @@
                 <div class="kalshi-fed-list" id="kalshiFedList">
                   <div class="predict-empty" style="padding:16px;">Loading Kalshi markets…</div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Pillar: Options Flow Scanner -->
+            <div id="predictFlowPanel" style="display:none;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div style="font-size:var(--fs-sm);color:var(--text-dim);">Unusual activity: vol/OI &gt; 1.5 · IBIT · COIN · USO · VXX</div>
+                <button class="pulse-refresh-btn" onclick="loadOptionsFlow()">↻ Scan</button>
+              </div>
+              <div id="flowResults">
+                <div class="predict-empty">Tap Scan to detect unusual options activity</div>
               </div>
             </div>
 
@@ -3934,6 +4023,15 @@
 
             <!-- Holdings list -->
             <div id="holdingsList"></div>
+
+            <!-- Earnings Calendar -->
+            <div style="margin-bottom:20px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-size:var(--fs-sm);font-weight:700;">Upcoming Earnings</span>
+                <button class="pulse-refresh-btn" onclick="loadEarnings()">↻ Check</button>
+              </div>
+              <div id="earningsList"><div style="font-size:var(--fs-sm);color:var(--text-dim);">Tap Check to load earnings dates</div></div>
+            </div>
 
             <!-- Alerts section -->
             <div class="alerts-section">
@@ -4034,6 +4132,12 @@
     <script src="pulse.js"></script>
     <script src="predict.js"></script>
     <script src="portfolio.js"></script>
+    <script src="onchain.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+    </script>
     <script>
     /* ============================================================
        CRYPTO RADAR - Main Application Script
@@ -8406,6 +8510,162 @@
         el.textContent = msg; el.style.display = 'block';
         setTimeout(() => { el.style.display = 'none'; }, 4000);
     }
+
+    // ================================================================
+    // MORNING BRIEFING
+    // ================================================================
+    async function runMorningBriefing() {
+        const btn = document.querySelector('.briefing-btn');
+        const out = document.getElementById('briefingOutput');
+        btn.textContent = '⏳ Compiling briefing…'; btn.disabled = true;
+        out.style.display = 'none';
+        const prompt = await Pulse.compileMorningBriefing(_watchPrices);
+        const result = await AIAnalysis.chatWithClaude(prompt, []);
+        out.textContent = result || 'AI unavailable — check your Claude key in Settings.';
+        out.style.display = 'block';
+        btn.textContent = '☀ AI Morning Briefing'; btn.disabled = false;
+    }
+
+    // ================================================================
+    // CORRELATION MATRIX
+    // ================================================================
+    async function loadCorrelationMatrix() {
+        const wrap = document.getElementById('corrMatrixWrap');
+        wrap.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:16px;font-size:var(--fs-sm);">Fetching 90d returns…</div>';
+        const { labels, matrix } = await Pulse.buildCorrelationMatrix();
+        if (!labels.length) { wrap.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:16px;">No data</div>'; return; }
+
+        const corrClass = v => {
+            if (v === 1) return 'corr-self';
+            if (v == null) return 'corr-neutral';
+            if (v >= 0.6)  return 'corr-pos-strong';
+            if (v >= 0.3)  return 'corr-pos-med';
+            if (v >= 0.05) return 'corr-pos-weak';
+            if (v <= -0.6) return 'corr-neg-strong';
+            if (v <= -0.3) return 'corr-neg-med';
+            if (v <= -0.05)return 'corr-neg-weak';
+            return 'corr-neutral';
+        };
+
+        let html = '<table class="corr-matrix"><thead><tr><th></th>';
+        labels.forEach(l => html += `<th>${l}</th>`);
+        html += '</tr></thead><tbody>';
+        labels.forEach(a => {
+            html += `<tr><th style="text-align:right;padding-right:6px;">${a}</th>`;
+            labels.forEach(b => {
+                const v = matrix[a][b];
+                const display = v === 1 ? '1.0' : v != null ? v.toFixed(2) : '--';
+                html += `<td class="${corrClass(v)}">${display}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div style="font-size:10px;color:var(--text-dim);margin-top:8px;text-align:center;">Green = moves together · Red = moves opposite · Based on 90d daily returns</div>';
+        wrap.innerHTML = html;
+    }
+
+    // ================================================================
+    // ON-CHAIN METRICS
+    // ================================================================
+    async function loadOnChain() {
+        const grid = document.getElementById('onchainGrid');
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:12px;font-size:var(--fs-sm);">Fetching on-chain data…</div>';
+        const { hashRate, txCount, addrs, mempool, volume, minerRev } = await OnChain.fetchAll();
+
+        const metrics = [
+            { label: 'Hash Rate',     series: hashRate, unit: ' EH/s', divisor: 1e9, digits: 1 },
+            { label: 'Daily Txns',    series: txCount,  unit: '',       divisor: 1,   digits: 0, fmtFn: v => OnChain.fmt(v) },
+            { label: 'Active Addrs',  series: addrs,    unit: '',       divisor: 1,   digits: 0, fmtFn: v => OnChain.fmt(v) },
+            { label: 'Mempool (MB)',  series: mempool,  unit: ' MB',    divisor: 1e6, digits: 1 },
+            { label: 'On-chain Vol',  series: volume,   unit: '',       divisor: 1,   digits: 0, fmtFn: v => '$' + OnChain.fmt(v) },
+            { label: 'Miner Revenue', series: minerRev, unit: '',       divisor: 1,   digits: 0, fmtFn: v => '$' + OnChain.fmt(v) }
+        ];
+
+        grid.innerHTML = metrics.map(m => {
+            const t = OnChain.trend(m.series);
+            const val = t.latest != null
+                ? (m.fmtFn ? m.fmtFn(t.latest) : (t.latest / m.divisor).toFixed(m.digits) + m.unit)
+                : '--';
+            const pct = t.pct30d;
+            const trendColor = pct == null ? '' : pct >= 0 ? 'color:#10b981' : 'color:#ef4444';
+            const trendStr = pct != null ? `${pct >= 0 ? '+' : ''}${pct}% (30d)` : '';
+            return `<div class="onchain-card">
+                <div class="onchain-label">${m.label}</div>
+                <div class="onchain-val">${val}</div>
+                <div class="onchain-trend" style="${trendColor}">${trendStr}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // ================================================================
+    // OPTIONS FLOW SCANNER
+    // ================================================================
+    async function loadOptionsFlow() {
+        const el = document.getElementById('flowResults');
+        el.innerHTML = '<div class="predict-empty">Scanning IBIT · COIN · USO · VXX…</div>';
+        const flows = await Predict.scanOptionsFlow();
+        if (!flows.length) {
+            el.innerHTML = '<div class="predict-empty">No unusual activity detected (vol/OI &lt; 1.5)</div>';
+            return;
+        }
+        el.innerHTML = `<div style="overflow-x:auto;">
+        <table class="flow-table">
+          <thead><tr>
+            <th>Ticker</th><th>Type</th><th>Strike</th><th>Exp</th><th>DTE</th>
+            <th>Vol</th><th>OI</th><th>Vol/OI</th><th>Mid</th><th>IV%</th><th>Score</th>
+          </tr></thead>
+          <tbody>
+          ${flows.map(f => `<tr class="${f.anomalyScore > 5 ? 'flow-hot' : ''}">
+            <td style="font-weight:800;">${f.ticker}</td>
+            <td class="${f.type === 'CALL' ? 'flow-call' : 'flow-put'}">${f.type}</td>
+            <td>$${f.strike}</td>
+            <td style="font-size:10px;">${f.expiration}</td>
+            <td style="color:var(--text-dim);">${f.dte}d</td>
+            <td style="font-weight:700;">${f.volume?.toLocaleString()}</td>
+            <td style="color:var(--text-dim);">${f.openInterest?.toLocaleString()}</td>
+            <td style="font-weight:700;color:var(--amber);">${f.ratio}x</td>
+            <td>$${f.mid}</td>
+            <td style="color:var(--text-dim);">${f.iv ?? '--'}%</td>
+            <td><span class="flow-score">${f.anomalyScore}</span></td>
+          </tr>`).join('')}
+          </tbody>
+        </table></div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:8px;">Score = (vol/OI) × log₁₀(volume) · Higher = more unusual · Data: Tradier</div>`;
+    }
+
+    // ================================================================
+    // EARNINGS CALENDAR
+    // ================================================================
+    async function loadEarnings() {
+        const el = document.getElementById('earningsList');
+        el.innerHTML = '<div style="font-size:var(--fs-sm);color:var(--text-dim);">Checking next 30 days…</div>';
+        const watchSyms = Portfolio.loadWatchlist().map(w => w.symbol);
+        const earnings = await Pulse.fetchEarningsCalendar([...watchSyms, 'COIN', 'MSTR', 'MARA', 'RIOT']);
+        if (!earnings.length) {
+            el.innerHTML = '<div style="font-size:var(--fs-sm);color:var(--text-dim);">No upcoming earnings found for watchlist tickers</div>';
+            return;
+        }
+        el.innerHTML = earnings.map(e => `
+            <div class="earnings-row">
+                <span class="earnings-sym">${e.symbol}</span>
+                <span class="earnings-date">${e.date} ${e.time || ''}</span>
+                <span class="earnings-eps">${e.epsEstimate ? 'EPS est: ' + e.epsEstimate : ''}</span>
+            </div>`).join('');
+    }
+
+    // Update switchPredictPillar to handle the new 'flow' pillar
+    const _origSwitchPredictPillar = switchPredictPillar;
+    switchPredictPillar = function(name) {
+        ['markets','futures','flow','accuracy'].forEach(p => {
+            const panel = document.getElementById('predict' + p.charAt(0).toUpperCase() + p.slice(1) + 'Panel');
+            if (panel) panel.style.display = p === name ? '' : 'none';
+            const tab = document.getElementById('ptab-' + p);
+            if (tab) tab.classList.toggle('active', p === name);
+        });
+        if (name === 'futures' && !document.getElementById('oilCurveRows').innerHTML.trim()) loadPredictFutures();
+        if (name === 'flow') { /* scan on first open */ }
+        if (name === 'accuracy' && !_calData) loadCalibration('economics', document.querySelector('#predictAccuracyPanel .predict-cat-btn'));
+    };
 
     // ================================================================
     // WATCHLIST
