@@ -1,1 +1,6 @@
 .letta/
+
+# Local-only secrets — never commit
+keys.local.js
+.env
+.env.local

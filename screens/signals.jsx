@@ -329,14 +329,12 @@ function SignalsScreen() {
         padding: '0 20px', borderBottom: `1px solid ${T.edge}`,
         background: T.ink100,
       }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: 7,
-          background: '#1a3a6b',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 600, color: T.signal, fontFamily: T.mono,
-          boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.08)`,
-        }}>TR</div>
-        <div style={{ marginLeft: 12, fontSize: 13, fontWeight: 500 }}>TradeRadar</div>
+        <img src="assets/gg-logo.png" alt="GG"
+          style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(201,162,39,0.25))' }} />
+        <div style={{ marginLeft: 10, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <div style={{ fontSize: 8.5, fontWeight: 600, color: T.signal, letterSpacing: 1.4, textTransform: 'uppercase', fontFamily: T.mono }}>Global Gauntlet</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: 0.2 }}>TradeRadar</div>
+        </div>
 
         <div style={{
           marginLeft: 32, display: 'flex', padding: 3,
