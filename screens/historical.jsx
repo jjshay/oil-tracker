@@ -169,7 +169,33 @@ function HistoricalScreen({ onNav }) {
 
   const cfg = RANGES[range];
   const N = cfg.N;
-  const data = React.useMemo(() => synthSeries(range), [range]);
+
+  // LIVE — pull real BTC series from CoinGecko for ranges ≤ 1Y.
+  // Free tier caps at ~365 days, so 2Y/5Y/All fall back to the synth mock.
+  const { data: liveBtc, lastFetch, intervalMs } = (window.useAutoUpdate || (() => ({})))(
+    `btc-series-${cfg.days}`,
+    async () => {
+      if (cfg.days > 365 || typeof LiveData === 'undefined') return null;
+      const resp = await LiveData.getCryptoHistory('bitcoin', cfg.days);
+      if (!resp || !resp.prices || !resp.prices.length) return null;
+      return resp.prices.map(p => p[1]); // just the price values
+    },
+    { refreshKey: 'historical' }
+  );
+
+  const data = React.useMemo(() => {
+    const base = synthSeries(range);
+    if (!liveBtc || liveBtc.length < 2) return base;
+    // Resample to N points + normalize to % from first observation
+    const resampled = [];
+    for (let i = 0; i < N; i++) {
+      const idx = Math.round((i / (N - 1)) * (liveBtc.length - 1));
+      resampled.push(liveBtc[idx]);
+    }
+    const first = resampled[0] || 1;
+    const pct = resampled.map(v => ((v / first) - 1) * 100);
+    return { ...base, btc: pct };
+  }, [range, liveBtc]);
 
   // Filter events that fall within this range.
   // daysAgo → t-index. t=0 at oldest of window, t=1 at now.

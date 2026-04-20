@@ -376,10 +376,40 @@ function NewsScreen() {
     },
   ];
 
+  // LIVE — pull RSS feed (engine.js NewsFeed) and prepend as a "Live Feed" bucket.
+  const { data: liveArticles } = (window.useAutoUpdate || (() => ({})))(
+    'news-live-rss',
+    async () => {
+      if (typeof NewsFeed === 'undefined') return null;
+      const articles = await NewsFeed.fetchAll();
+      return articles && articles.length ? articles.slice(0, 24) : null;
+    },
+    { refreshKey: 'news' }
+  );
+
+  if (liveArticles && liveArticles.length && !buckets.find(b => b.id === 'live')) {
+    buckets.unshift({
+      id: 'live', label: 'Live Feed · RSS', c: T.signal, pulse: true, heat: 5,
+      synopsis: `Real-time crypto news pulled from ${liveArticles.length} recent headlines across CoinDesk, CoinTelegraph, Decrypt, Bitcoin Magazine, and CryptoPanic. Articles refresh on your Settings-configured interval.`,
+      metrics: [
+        { label: 'ARTICLES', v: String(liveArticles.length) },
+        { label: 'SOURCES',  v: new Set(liveArticles.map(a => a.source)).size + '' },
+        { label: 'LATEST',   v: new Date(liveArticles[0].date).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) },
+        { label: 'FRESH · 1H', v: liveArticles.filter(a => Date.now() - new Date(a.date) < 3_600_000).length + '' },
+      ],
+      items: liveArticles.map(a => ({
+        date: new Date(a.date).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12: false }),
+        sub: a.source, source: a.source, imp: 3,
+        title: a.title, body: a.description || '', url: a.link,
+        impact: { btc: 0, spx: 0, oil: 0 },
+      })),
+    });
+  }
+
   const [activeIdx, setActiveIdx] = React.useState(1); // CLARITY / Gov BTC default
   const [openArticle, setOpenArticle] = React.useState(null); // { item, bucket } | null
   const [sortMode, setSortMode] = React.useState('newest'); // 'newest' | 'impact'
-  const activeBucket = buckets[activeIdx];
+  const activeBucket = buckets[Math.min(activeIdx, buckets.length - 1)];
 
   // Risk level derived from importance (imp 1-5).
   const riskOf = (imp) => imp >= 4 ? { label: 'HIGH', color: '#D96B6B' }

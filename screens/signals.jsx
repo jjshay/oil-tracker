@@ -127,6 +127,41 @@ function SignalsScreen() {
   const [openSignal, setOpenSignal] = React.useState(null);
   const [assetFilter, setAssetFilter] = React.useState(null); // 'BTC' | 'OIL' | 'SPX' | null
 
+  // LIVE — BTC spot + 24h change (CoinGecko)
+  const { data: livePrices } = (window.useAutoUpdate || (() => ({})))(
+    'signals-prices',
+    async () => {
+      if (typeof LiveData === 'undefined') return null;
+      const p = await LiveData.getCryptoPrices();
+      return p && p.bitcoin ? { btc: p.bitcoin } : null;
+    },
+    { refreshKey: 'signals' }
+  );
+
+  // LIVE — US equities via Finnhub (requires key in Settings)
+  const finnhubKey = (window.TR_SETTINGS && window.TR_SETTINGS.keys && window.TR_SETTINGS.keys.finnhub) || '';
+  const { data: liveStocks } = (window.useAutoUpdate || (() => ({})))(
+    `signals-stocks-${finnhubKey ? 'on' : 'off'}`,
+    async () => {
+      if (!finnhubKey) return null;
+      const symbols = ['SPY', 'DIA', 'QQQ', 'NVDA', 'MSTR', 'COIN', 'IBIT'];
+      const results = {};
+      for (const sym of symbols) {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${finnhubKey}`);
+          if (r.ok) {
+            const q = await r.json();
+            if (q && typeof q.c === 'number' && q.c > 0) {
+              results[sym] = { price: q.c, changePct: q.dp, change: q.d };
+            }
+          }
+        } catch (_) { /* skip failed symbol */ }
+      }
+      return Object.keys(results).length ? results : null;
+    },
+    { refreshKey: 'signals' }
+  );
+
   const toggleLane = (id) => setCollapsedLanes(prev => {
     const next = new Set(prev);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -240,6 +275,40 @@ function SignalsScreen() {
       ],
     },
   ];
+
+  // LIVE overlay — merge live prices onto the matching lane cards if data arrived.
+  const liveLabelMap = {
+    'BTC Spot':  livePrices && livePrices.btc ? {
+      value: '$' + Math.round(livePrices.btc.usd).toLocaleString('en-US'),
+      delta: `${livePrices.btc.usd_24h_change >= 0 ? '+' : ''}${livePrices.btc.usd_24h_change.toFixed(2)}% · 24h`,
+      dir: livePrices.btc.usd_24h_change >= 0 ? 'up' : 'down',
+      status: 'LIVE · CoinGecko',
+    } : null,
+    'S&P 500':   liveStocks && liveStocks.SPY ? {
+      value: liveStocks.SPY.price.toLocaleString('en-US', { maximumFractionDigits: 2 }),
+      delta: `${liveStocks.SPY.changePct >= 0 ? '+' : ''}${liveStocks.SPY.changePct.toFixed(2)}% · today`,
+      dir: liveStocks.SPY.changePct >= 0 ? 'up' : 'down',
+      status: 'LIVE · Finnhub · SPY proxy',
+    } : null,
+    'NVDA':      liveStocks && liveStocks.NVDA ? {
+      value: '$' + liveStocks.NVDA.price.toFixed(2),
+      delta: `${liveStocks.NVDA.changePct >= 0 ? '+' : ''}${liveStocks.NVDA.changePct.toFixed(2)}% · today`,
+      dir: liveStocks.NVDA.changePct >= 0 ? 'up' : 'down',
+      status: 'LIVE · Finnhub',
+    } : null,
+    'MSTR':      liveStocks && liveStocks.MSTR ? {
+      value: '$' + liveStocks.MSTR.price.toFixed(2),
+      delta: `${liveStocks.MSTR.changePct >= 0 ? '+' : ''}${liveStocks.MSTR.changePct.toFixed(2)}% · today`,
+      dir: liveStocks.MSTR.changePct >= 0 ? 'up' : 'down',
+      status: 'LIVE · Finnhub',
+    } : null,
+  };
+  for (const lane of lanes) {
+    lane.signals = lane.signals.map(s => {
+      const live = liveLabelMap[s.label];
+      return live ? { ...s, ...live, hot: true, statusColor: T.signal } : s;
+    });
+  }
 
   // Top-line composite
   const composite = [
