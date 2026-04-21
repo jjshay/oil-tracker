@@ -263,8 +263,9 @@ function ProjectedScreen({ onNav }) {
     if (e.key === 'End')  { e.preventDefault(); setDriverVal(idx, 100); }
   };
 
-  // LIVE — triple-LLM projection narrative. Builds a prompt from current driver
-  // values, fans out to Claude + ChatGPT + Gemini, returns consensus summary.
+  // LIVE — multi-LLM projection narrative. Builds a hybrid prompt combining
+  // current driver slider values + real recent news headlines, fans out to
+  // Claude + ChatGPT + Gemini + Perplexity, returns consensus summary.
   const driverSignature = drivers.map(d => `${d.name.slice(0, 3)}${d.val}`).join(',');
   const { data: proj, loading: projLoading } = (window.useAutoUpdate || (() => ({})))(
     `projected-llm-${driverSignature}`,
@@ -272,13 +273,35 @@ function ProjectedScreen({ onNav }) {
       if (typeof AIAnalysis === 'undefined') return null;
       const keys = AIAnalysis.getKeys();
       if (!keys.claude && !keys.openai && !keys.gemini) return null;
-      // Synthetic "headline" describing the driver cluster — works with the
-      // same prompt AIAnalysis expects (market-sentiment output).
-      const syntheticHeadlines = [{
-        source: 'TradeRadar',
-        title: `Current driver regime: ${drivers.map(d => `${d.name} at ${d.val}/100`).join('; ')}. Project BTC/Oil/SPX through Dec 2026. Base/bull/bear range + tail risks.`,
-      }];
-      return await AIAnalysis.runMulti(syntheticHeadlines);
+
+      // Driver-regime prompt: compact label tier for each driver so the model
+      // sees BOTH the numeric position AND the qualitative tag.
+      const driverPrompt = {
+        source: 'TradeRadar Driver Regime',
+        title:
+          'Driver state: ' +
+          drivers.map(d => `${d.name}=${d.val}/100 (${driverTier(d.val).tag})`).join(', ') +
+          '. Project BTC price through Dec 2026 base/bull/bear.',
+      };
+
+      // Fetch real recent headlines and append. Fail silent → synthetic only.
+      let combined = [driverPrompt];
+      try {
+        if (typeof NewsFeed !== 'undefined' && NewsFeed && typeof NewsFeed.fetchAll === 'function') {
+          const headlines = await NewsFeed.fetchAll();
+          if (Array.isArray(headlines) && headlines.length) {
+            const recent = headlines.slice(0, 10).map(h => ({
+              source: h.source || 'News',
+              title: h.title || '',
+            }));
+            combined = [driverPrompt, ...recent];
+          }
+        }
+      } catch (_e) {
+        // fall back to driver-only prompt
+      }
+
+      return await AIAnalysis.runMulti(combined);
     },
     { refreshKey: 'projected' }
   );

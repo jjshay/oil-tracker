@@ -144,11 +144,12 @@ function SignalsScreen({ onNav }) {
     `signals-stocks-${finnhubKey ? 'on' : 'off'}`,
     async () => {
       if (!finnhubKey) return null;
-      const symbols = ['SPY', 'DIA', 'QQQ', 'NVDA', 'MSTR', 'COIN', 'IBIT'];
+      // Include macro proxies: ^VIX (volatility), ^TNX (10Y yield ×10), DX-Y.NYB (DXY).
+      const symbols = ['SPY', 'DIA', 'QQQ', 'NVDA', 'MSTR', 'COIN', 'IBIT', '^VIX', '^TNX', 'DX-Y.NYB'];
       const results = {};
       for (const sym of symbols) {
         try {
-          const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${finnhubKey}`);
+          const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${finnhubKey}`);
           if (r.ok) {
             const q = await r.json();
             if (q && typeof q.c === 'number' && q.c > 0) {
@@ -301,6 +302,26 @@ function SignalsScreen({ onNav }) {
       delta: `${liveStocks.MSTR.changePct >= 0 ? '+' : ''}${liveStocks.MSTR.changePct.toFixed(2)}% · today`,
       dir: liveStocks.MSTR.changePct >= 0 ? 'up' : 'down',
       status: 'LIVE · Finnhub',
+    } : null,
+    'VIX':       liveStocks && liveStocks['^VIX'] ? {
+      value: liveStocks['^VIX'].price.toFixed(2),
+      delta: `${liveStocks['^VIX'].changePct >= 0 ? '+' : ''}${liveStocks['^VIX'].changePct.toFixed(2)}% · today`,
+      // VIX going up = fear rising = bearish for risk; keep neutral semantics via dir
+      dir: liveStocks['^VIX'].changePct >= 0 ? 'up' : 'down',
+      status: 'LIVE · Finnhub · ^VIX',
+    } : null,
+    '10Y Treasury': liveStocks && liveStocks['^TNX'] ? {
+      // ^TNX is yield ×10, e.g. 42.1 → 4.21%
+      value: (liveStocks['^TNX'].price / 10).toFixed(2) + '%',
+      delta: `${liveStocks['^TNX'].changePct >= 0 ? '+' : ''}${liveStocks['^TNX'].changePct.toFixed(2)}% · today`,
+      dir: liveStocks['^TNX'].changePct >= 0 ? 'up' : 'down',
+      status: 'LIVE · Finnhub · ^TNX',
+    } : null,
+    'DXY Dollar Index': liveStocks && liveStocks['DX-Y.NYB'] ? {
+      value: liveStocks['DX-Y.NYB'].price.toFixed(2),
+      delta: `${liveStocks['DX-Y.NYB'].changePct >= 0 ? '+' : ''}${liveStocks['DX-Y.NYB'].changePct.toFixed(2)}% · today`,
+      dir: liveStocks['DX-Y.NYB'].changePct >= 0 ? 'up' : 'down',
+      status: 'LIVE · Finnhub · DX-Y.NYB',
     } : null,
   };
   for (const lane of lanes) {

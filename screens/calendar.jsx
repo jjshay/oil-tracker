@@ -33,8 +33,8 @@ function CalendarScreen({ onNav }) {
   const todayStr = '2026-04-19';
   const iso = (d) => d.toISOString().slice(0, 10);
 
-  // Key events. dir: +1/-1/0 per asset, importance 1-5, cat color
-  const events = [
+  // Hardcoded fallback/baseline events. dir: +1/-1/0 per asset, importance 1-5, cat color
+  const baseEvents = [
     { date: '2026-04-20', time: '08:30', cat: 'Macro Data',   c: T.fed,   imp: 3, title: 'US Retail Sales · Mar',       ex: { btc: +1, oil: 0, spx: +1 } },
     { date: '2026-04-21', time: '10:00', cat: 'Fed',          c: T.fed,   imp: 4, title: 'Powell · Economic Club NY',   ex: { btc: +1, oil: 0, spx: +1 } },
     { date: '2026-04-22', time: '14:00', cat: 'Fed',          c: T.fed,   imp: 5, title: 'FOMC Rate Decision',           ex: { btc: +1, oil: +1, spx: +1 }, pulse: true },
@@ -59,6 +59,143 @@ function CalendarScreen({ onNav }) {
   const [selectedDate, setSelectedDate] = React.useState('2026-04-22'); // default FOMC
   const [activeCats, setActiveCats] = React.useState(null); // null = all, or Set of cat labels
   const [monthShift, setMonthShift] = React.useState(0); // 0 = base (Apr-May)
+  const [customEvents, setCustomEvents] = React.useState([]); // user-added via "+ Add Event"
+
+  // LIVE — pull Finnhub economic + earnings calendar for next 30d and transform to event shape
+  const liveHook = (window.useAutoUpdate || (() => ({ data: null })))(
+    'calendar-live',
+    async () => {
+      const key = (window.TR_SETTINGS && window.TR_SETTINGS.keys && window.TR_SETTINGS.keys.finnhub) || '';
+      if (!key) return null;
+      const today = new Date();
+      const from = today.toISOString().slice(0, 10);
+      const toDt = new Date(today.getTime() + 30 * 86400000);
+      const to = toDt.toISOString().slice(0, 10);
+
+      // importance: Finnhub impact strings → 2/3/5 (low/medium/high). Numeric 0-3 also handled.
+      const impactToImp = (v) => {
+        if (typeof v === 'number') return v >= 3 ? 5 : v === 2 ? 3 : 2;
+        const s = String(v || '').toLowerCase();
+        if (s.indexOf('high') >= 0) return 5;
+        if (s.indexOf('medium') >= 0) return 3;
+        return 2;
+      };
+
+      // Classify a macro/economic event into cat/c/ex/imp/title
+      const classifyEcon = (e) => {
+        const raw = (e.event || e.title || '').trim();
+        const up = raw.toUpperCase();
+        const country = (e.country || '').toUpperCase();
+        // Filter non-US unless it's OPEC/Crude-related
+        if (country && country !== 'US' && !/OPEC|CRUDE|OIL/.test(up)) return null;
+
+        let cat = 'Macro Data', c = T.fed, imp = impactToImp(e.impact);
+        let ex = { btc: 0, oil: 0, spx: 0 };
+
+        if (/FOMC|FED FUNDS|FEDERAL FUNDS|RATE DECISION|POWELL|FED CHAIR/.test(up)) {
+          cat = 'Fed'; c = T.fed; imp = Math.max(imp, 5);
+          ex = { btc: +1, oil: +1, spx: +1 };
+        } else if (/\bCPI\b|CORE PCE|\bPCE\b|NON-?FARM|NONFARM|PAYROLLS|\bPPI\b|\bGDP\b/.test(up)) {
+          cat = 'Macro Data'; c = T.fed; imp = Math.max(imp, 4);
+          ex = { btc: +1, oil: 0, spx: +1 };
+        } else if (/OPEC|CRUDE|OIL INVENTOR|EIA/.test(up)) {
+          cat = 'Oil'; c = T.oil;
+          ex = { btc: 0, oil: -1, spx: 0 };
+        }
+
+        // Time: Finnhub economic events often only have a date, sometimes actual/estimate at release time.
+        const timeRaw = e.time || '';
+        const time = /^\d{2}:\d{2}/.test(timeRaw) ? timeRaw.slice(0, 5) : '08:30';
+        const date = (e.time && /^\d{4}-\d{2}-\d{2}/.test(e.time)) ? e.time.slice(0, 10) : (e.date || '').slice(0, 10);
+        if (!date) return null;
+
+        return {
+          date, time, cat, c, imp, title: raw || 'Economic Release', ex,
+          _live: true,
+        };
+      };
+
+      // Classify an earnings event — only surface the watchlist tickers the trader cares about
+      const EARN_WATCH = ['NVDA', 'MSTR', 'COIN', 'IBIT', 'MARA'];
+      const classifyEarn = (e) => {
+        const sym = (e.symbol || '').toUpperCase();
+        if (!sym || EARN_WATCH.indexOf(sym) === -1) return null;
+        const date = (e.date || '').slice(0, 10);
+        if (!date) return null;
+        const hour = (e.hour || '').toLowerCase(); // 'bmo' | 'amc' | 'dmh' | ''
+        const time = hour === 'bmo' ? '08:00' : hour === 'amc' ? '16:00' : '16:00';
+        const ex = sym === 'NVDA' ? { btc: +1, oil: 0, spx: +1 }
+                 : sym === 'MSTR' ? { btc: +1, oil: 0, spx: 0 }
+                 : sym === 'COIN' ? { btc: +1, oil: 0, spx: +1 }
+                 : { btc: +1, oil: 0, spx: 0 };
+        return {
+          date, time, cat: 'Earnings', c: T.earn, imp: 4,
+          title: `${sym} · Q${e.quarter || ''} Earnings`.replace('Q · ', ' · '),
+          ex, _live: true,
+        };
+      };
+
+      const urls = {
+        econ: `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${key}`,
+        earn: `https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&token=${key}`,
+      };
+      const [econRes, earnRes] = await Promise.all([
+        fetch(urls.econ).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(urls.earn).then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
+
+      const econList = (econRes && econRes.economicCalendar) || [];
+      const earnList = (earnRes && earnRes.earningsCalendar) || [];
+
+      const transformed = [
+        ...econList.map(classifyEcon).filter(Boolean),
+        ...earnList.map(classifyEarn).filter(Boolean),
+      ];
+      return transformed.length ? transformed : null;
+    },
+    { refreshKey: 'calendar' }
+  );
+  const liveEvents = liveHook && liveHook.data;
+  const liveOn = !!(liveEvents && liveEvents.length);
+
+  // Merge live + hardcoded + user-added. De-dupe by (date + normalized-title-keyword) — prefer live.
+  const events = React.useMemo(() => {
+    const norm = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24);
+    const keyFor = (e) => `${e.date}|${norm(e.title)}`;
+    // Also match looser: date + shared category root word for "FOMC Rate Decision" vs "Fed Funds Target Rate"
+    const looseTag = (e) => {
+      const up = (e.title || '').toUpperCase();
+      if (/FOMC|FED FUNDS|RATE DECISION/.test(up)) return `${e.date}|FED_RATE`;
+      if (/\bCPI\b/.test(up)) return `${e.date}|CPI`;
+      if (/\bPPI\b/.test(up)) return `${e.date}|PPI`;
+      if (/NON.?FARM|PAYROLLS/.test(up)) return `${e.date}|NFP`;
+      if (/\bGDP\b/.test(up)) return `${e.date}|GDP`;
+      if (/OPEC/.test(up)) return `${e.date}|OPEC`;
+      if (/EIA|CRUDE INVENT/.test(up)) return `${e.date}|EIA`;
+      const sym = (up.match(/^([A-Z]{2,5})\s*·/) || [])[1];
+      if (sym) return `${e.date}|SYM_${sym}`;
+      return null;
+    };
+    const seen = new Set();
+    const looseSeen = new Set();
+    const out = [];
+    const pushIfNew = (e) => {
+      const k = keyFor(e);
+      const lt = looseTag(e);
+      if (seen.has(k)) return;
+      if (lt && looseSeen.has(lt)) return;
+      seen.add(k);
+      if (lt) looseSeen.add(lt);
+      out.push(e);
+    };
+    // Live first so they take priority on de-dupe
+    (liveEvents || []).forEach(pushIfNew);
+    baseEvents.forEach(pushIfNew);
+    customEvents.forEach(pushIfNew);
+    // sort by date then time
+    out.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    return out;
+  }, [liveEvents, customEvents]);
 
   // Event derived from selected date — picks highest-importance event that day
   const selected = React.useMemo(() => {
@@ -144,6 +281,22 @@ function CalendarScreen({ onNav }) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+          {liveOn && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '3px 9px', borderRadius: 6,
+              background: 'rgba(111,207,142,0.10)',
+              border: '1px solid rgba(111,207,142,0.35)',
+              fontFamily: T.mono, fontSize: 9.5, fontWeight: 600,
+              color: '#6FCF8E', letterSpacing: 0.7, textTransform: 'uppercase',
+            }} title={`Live Finnhub calendar · ${liveEvents.length} upcoming events`}>
+              <div style={{
+                width: 5, height: 5, borderRadius: 3, background: '#6FCF8E',
+                boxShadow: '0 0 6px rgba(111,207,142,0.8)',
+              }} />
+              LIVE · Finnhub
+            </div>
+          )}
           <TRLiveStripInline />
           <TRGearInline />
           <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
@@ -258,12 +411,10 @@ function CalendarScreen({ onNav }) {
               const title = window.prompt('Event title');
               if (!title) return;
               const time = window.prompt('Time (HH:MM ET, 24h)', '14:00') || '14:00';
-              events.push({
+              setCustomEvents(prev => prev.concat([{
                 date: selectedDate, time, cat: 'Custom', c: T.signal, imp: 3,
                 title, ex: { btc: 0, oil: 0, spx: 0 },
-              });
-              // trigger re-render by bumping monthShift noop
-              setMonthShift(s => s);
+              }]));
             }}
             style={{
               height: 28, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6,

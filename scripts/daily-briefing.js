@@ -18,7 +18,9 @@
  * Exit codes: 0 = sent, 1 = error (check stderr).
  */
 
-require('dotenv').config();
+const path = require('path');
+// Load .env from the repo root regardless of where the script is invoked from.
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
 
@@ -103,7 +105,14 @@ Respond in this exact JSON format (no markdown, just raw JSON):
 }`;
 
 function parseJSON(t) {
-    try { return JSON.parse(t.replace(/^```json?|```$/g, '').trim()); } catch { return null; }
+    if (!t || typeof t !== 'string') return null;
+    // Strip ```json / ``` fences anywhere in the string, then try full parse.
+    let s = t.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+    try { return JSON.parse(s); } catch {}
+    // Fallback: extract the first {...} JSON object substring.
+    const m = s.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch {} }
+    return null;
 }
 
 async function callClaude(hl) {
@@ -112,7 +121,7 @@ async function callClaude(hl) {
         const r = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-api-key': keys.claude, 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: promptOf(hl) }] }),
+            body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1500, messages: [{ role: 'user', content: promptOf(hl) }] }),
         });
         if (!r.ok) return null;
         const j = await r.json();
@@ -135,7 +144,7 @@ async function callOpenAI(hl) {
 async function callGemini(hl) {
     if (!keys.gemini) return null;
     try {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keys.gemini}`, {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys.gemini}`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: promptOf(hl) }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 1500 } }),
         });
@@ -149,7 +158,7 @@ async function callGrok(hl) {
     try {
         const r = await fetch('https://api.x.ai/v1/chat/completions', {
             method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${keys.grok}` },
-            body: JSON.stringify({ model: 'grok-3-mini-fast', messages: [{ role: 'user', content: promptOf(hl) }], temperature: 0.3, max_tokens: 1500 }),
+            body: JSON.stringify({ model: 'grok-4-fast', messages: [{ role: 'user', content: promptOf(hl) }], temperature: 0.3, max_tokens: 1500 }),
         });
         if (!r.ok) return null;
         const j = await r.json();
