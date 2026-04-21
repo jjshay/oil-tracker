@@ -199,9 +199,10 @@ function TradeRadarApp() {
   const [tab, setTab] = React.useState('historical');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [optionsOpen, setOptionsOpen] = React.useState(false);
+  const [optionsInitialSymbol, setOptionsInitialSymbol] = React.useState(null);
   const [tradeOpen, setTradeOpen] = React.useState(false);
   const openSettings = () => setSettingsOpen(true);
-  const openOptions  = () => setOptionsOpen(true);
+  const openOptions  = (symbol) => { if (symbol) setOptionsInitialSymbol(symbol); setOptionsOpen(true); };
   const openTrade    = () => setTradeOpen(true);
 
   // Global triggers — any screen can open Settings, the Tradier chain, or the trade modal.
@@ -228,7 +229,7 @@ function TradeRadarApp() {
     <>
       <div className="tr-shell">{screen}</div>
       <TRSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <TROptionsChain open={optionsOpen} onClose={() => setOptionsOpen(false)} />
+      <TROptionsChain open={optionsOpen} onClose={() => setOptionsOpen(false)} initialSymbol={optionsInitialSymbol} />
       <TRTradeModal open={tradeOpen} onClose={() => setTradeOpen(false)} />
     </>
   );

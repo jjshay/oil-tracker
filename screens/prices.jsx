@@ -77,16 +77,21 @@ function PriceSpark({ data, color, w = 64, h = 20 }) {
   );
 }
 
-function PriceTile({ sym, name, price, change, unit, spark, color, loading, error }) {
+function PriceTile({ sym, name, price, change, unit, spark, color, loading, error, onClick }) {
   const T = prT;
   const up = change >= 0;
   const deltaColor = up ? T.bull : T.bear;
   return (
-    <div style={{
-      background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 9,
-      padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8,
-      position: 'relative', overflow: 'hidden', minHeight: 110,
-    }}>
+    <div
+      onClick={onClick}
+      title={onClick ? 'Click for 1Y chart + options chain' : ''}
+      style={{
+        background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 9,
+        padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8,
+        position: 'relative', overflow: 'hidden', minHeight: 110,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+      }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ width: 6, height: 6, borderRadius: 3, background: color || T.textMid }} />
         <div style={{ fontFamily: T.mono, fontSize: 11, fontWeight: 600, letterSpacing: 0.5, color: T.text }}>
@@ -129,9 +134,206 @@ function PriceTile({ sym, name, price, change, unit, spark, color, loading, erro
   );
 }
 
+// Price-detail modal — 1Y chart + 52W range + stats + options-chain button.
+// Data sources by asset class:
+//   stocks/ETFs  — Finnhub candles (res=D, from=1Y ago)
+//   futures      — Stooq historical CSV (https://stooq.com/q/d/l/?s=X&i=d)
+//   crypto       — CoinGecko /coins/{id}/market_chart?days=365
+function PriceDetailModal({ open, onClose, ticker }) {
+  const T = prT;
+  const [series, setSeries] = React.useState(null); // array of prices
+  const [stats, setStats]   = React.useState(null); // { hi52, lo52, ytdPct, todayHi, todayLo }
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!open || !ticker) return;
+    let active = true;
+    const finnhubKey = (window.TR_SETTINGS && window.TR_SETTINGS.keys && window.TR_SETTINGS.keys.finnhub) || '';
+
+    (async () => {
+      setLoading(true); setSeries(null); setStats(null); setError(null);
+      let prices = null, fetchedStats = {};
+      try {
+        if (ticker.kind === 'crypto') {
+          const r = await fetch(`https://api.coingecko.com/api/v3/coins/${ticker.id}/market_chart?vs_currency=usd&days=365&interval=daily`);
+          if (r.ok) {
+            const j = await r.json();
+            if (j && j.prices) prices = j.prices.map(p => p[1]);
+          }
+        } else if (ticker.kind === 'stock') {
+          if (finnhubKey) {
+            const now = Math.floor(Date.now() / 1000);
+            const from = now - 365 * 86400;
+            const r = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(ticker.sym)}&resolution=D&from=${from}&to=${now}&token=${finnhubKey}`);
+            if (r.ok) {
+              const j = await r.json();
+              if (j && j.s === 'ok' && j.c) prices = j.c;
+            }
+            const q = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker.sym)}&token=${finnhubKey}`).then(r => r.ok ? r.json() : null).catch(() => null);
+            if (q) { fetchedStats.todayHi = q.h; fetchedStats.todayLo = q.l; fetchedStats.last = q.c; }
+          }
+        } else if (ticker.kind === 'future') {
+          // Stooq daily CSV for 1Y
+          const r = await fetch(`https://stooq.com/q/d/l/?s=${ticker.stooq}&i=d`);
+          if (r.ok) {
+            const text = await r.text();
+            const rows = text.trim().split('\n').slice(1); // skip header
+            const cutoff = Date.now() - 365 * 86400000;
+            prices = rows.map(row => row.split(',')).filter(c => {
+              const d = new Date(c[0]);
+              return !isNaN(d) && d.getTime() > cutoff;
+            }).map(c => parseFloat(c[4])).filter(v => isFinite(v));
+          }
+        }
+
+        if (!active) return;
+        if (prices && prices.length >= 10) {
+          const hi52 = Math.max(...prices);
+          const lo52 = Math.min(...prices);
+          const first = prices[0], last = prices[prices.length - 1];
+          const ytdPct = ((last - first) / first) * 100;
+          setSeries(prices);
+          setStats({ hi52, lo52, ytdPct, ...fetchedStats, last });
+        } else {
+          setError(ticker.kind === 'stock' && !finnhubKey ? 'Add a Finnhub key in ⚙ Settings for stock candles.' : 'No historical data available.');
+        }
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [open, ticker]);
+
+  if (!open || !ticker) return null;
+
+  // Inline chart renderer (simple SVG path)
+  const Chart = ({ data }) => {
+    const W = 700, H = 260, pad = 20;
+    if (!data || data.length < 2) return <svg width={W} height={H} />;
+    const min = Math.min(...data), max = Math.max(...data);
+    const span = max - min || 1;
+    const pts = data.map((v, i) => {
+      const x = pad + (i / (data.length - 1)) * (W - pad * 2);
+      const y = H - pad - ((v - min) / span) * (H - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const last = data[data.length - 1];
+    const first = data[0];
+    const up = last >= first;
+    const color = up ? T.bull : T.bear;
+    const area = `M ${pad},${H - pad} L ` + pts + ` L ${W - pad},${H - pad} Z`;
+    return (
+      <svg width={W} height={H} style={{ display: 'block' }}>
+        <path d={area} fill={color} fillOpacity={0.08} />
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(7,9,12,0.78)',
+        backdropFilter: 'blur(12px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 80, padding: 40,
+      }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: 780, maxHeight: '90%', overflow: 'auto',
+        background: T.ink100, border: `1px solid ${T.edgeHi}`,
+        borderRadius: 14, padding: '22px 26px',
+        color: T.text, fontFamily: T.ui,
+        boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 22, fontWeight: 600, color: T.text, letterSpacing: -0.3 }}>
+            {ticker.sym}
+          </div>
+          <div style={{ fontSize: 13, color: T.textMid }}>{ticker.name}</div>
+          <div style={{
+            padding: '2px 8px', fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.6,
+            color: T.signal, background: 'rgba(201,162,39,0.14)',
+            border: '0.5px solid rgba(201,162,39,0.4)', borderRadius: 4,
+            textTransform: 'uppercase',
+          }}>{ticker.kind}</div>
+          <div onClick={onClose} style={{
+            marginLeft: 'auto', width: 28, height: 28, borderRadius: 7,
+            background: T.ink300, border: `1px solid ${T.edge}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: T.textMid, fontSize: 13,
+          }}>✕</div>
+        </div>
+
+        {/* Stats row */}
+        {stats && (
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
+            background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+            padding: '12px 14px', marginBottom: 14,
+          }}>
+            {[
+              { k: 'LAST', v: stats.last != null ? '$' + stats.last.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—' },
+              { k: '1Y %',   v: (stats.ytdPct >= 0 ? '+' : '') + stats.ytdPct.toFixed(1) + '%', c: stats.ytdPct >= 0 ? T.bull : T.bear },
+              { k: '52W HI', v: '$' + stats.hi52.toLocaleString('en-US', { maximumFractionDigits: 2 }) },
+              { k: '52W LO', v: '$' + stats.lo52.toLocaleString('en-US', { maximumFractionDigits: 2 }) },
+            ].map(s => (
+              <div key={s.k}>
+                <div style={{ fontSize: 9, letterSpacing: 0.9, color: T.textDim, textTransform: 'uppercase', fontWeight: 500, marginBottom: 3 }}>{s.k}</div>
+                <div style={{ fontFamily: T.mono, fontSize: 15, fontWeight: 500, color: s.c || T.text, letterSpacing: -0.2 }}>{s.v}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Chart */}
+        <div style={{
+          background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+          padding: '14px 18px', marginBottom: 14, minHeight: 280,
+        }}>
+          <div style={{
+            fontSize: 10, letterSpacing: 0.8, color: T.textDim,
+            textTransform: 'uppercase', fontWeight: 500, marginBottom: 8,
+          }}>1-Year Daily Close</div>
+          {loading && <div style={{ padding: '60px 0', textAlign: 'center', fontFamily: T.mono, fontSize: 11, color: T.textDim }}>LOADING 1Y SERIES…</div>}
+          {error && !loading && <div style={{ padding: '60px 0', textAlign: 'center', fontSize: 12, color: T.bear }}>{error}</div>}
+          {!loading && series && <Chart data={series} />}
+        </div>
+
+        {/* Options CTA — stocks/ETFs only (futures + crypto don't have Tradier chains) */}
+        {ticker.kind === 'stock' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, paddingTop: 14,
+            borderTop: `1px solid ${T.edge}`,
+          }}>
+            <div style={{ fontSize: 11.5, color: T.textMid }}>
+              Options chain: strikes × expirations with bid/ask/volume/OI spread
+            </div>
+            <div
+              onClick={() => { onClose(); setTimeout(() => window.openTROptions && window.openTROptions(ticker.sym), 80); }}
+              style={{
+                marginLeft: 'auto', padding: '8px 14px',
+                background: T.signal, color: T.ink000, borderRadius: 7,
+                fontFamily: T.mono, fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
+                cursor: 'pointer',
+                boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.3)',
+              }}>⚡ OPTIONS CHAIN →</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PricesScreen({ onNav }) {
   const T = prT;
   const W = 1280, H = 820;
+  const [openTicker, setOpenTicker] = React.useState(null);
 
   const finnhubKey = (window.TR_SETTINGS && window.TR_SETTINGS.keys && window.TR_SETTINGS.keys.finnhub) || '';
 
@@ -236,7 +438,7 @@ function PricesScreen({ onNav }) {
     return { up, down, total: loaded.length };
   }
 
-  const Lane = ({ title, desc, data }) => {
+  const Lane = ({ title, desc, data, kind }) => {
     const stats = laneStats(data);
     return (
       <div>
@@ -265,6 +467,7 @@ function PricesScreen({ onNav }) {
               unit={d.unit}
               color={d.color}
               loading={!d.price && (stocksLoading || cryptoLoading)}
+              onClick={() => setOpenTicker({ ...d, kind })}
             />
           ))}
         </div>
@@ -326,10 +529,12 @@ function PricesScreen({ onNav }) {
         height: H - 52, padding: '16px 20px', overflowY: 'auto', overflowX: 'hidden',
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
-        <Lane title="Stocks &amp; ETFs" desc="Equities · Bitcoin-adjacent tickers · Finnhub quotes" data={stocksData} />
-        <Lane title="Futures &amp; Commodities" desc="Oil, gold, silver, copper, index futures, DXY · Finnhub" data={futuresData} />
-        <Lane title="Crypto" desc="Top 10 by liquidity · CoinGecko · no key required" data={cryptoData} />
+        <Lane title="Stocks &amp; ETFs" desc="Equities · Bitcoin-adjacent tickers · Finnhub quotes · click for 1Y + options" data={stocksData} kind="stock" />
+        <Lane title="Futures &amp; Commodities" desc="Oil, gold, silver, copper, index futures, DXY · Stooq 1Y daily" data={futuresData} kind="future" />
+        <Lane title="Crypto" desc="Top 10 by liquidity · CoinGecko · click for 1Y chart" data={cryptoData} kind="crypto" />
         <div style={{ height: 12 }} />
+
+        <PriceDetailModal open={!!openTicker} onClose={() => setOpenTicker(null)} ticker={openTicker} />
       </div>
     </div>
   );

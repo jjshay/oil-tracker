@@ -91,7 +91,7 @@ function TRLastFetchedBadge({ lastFetch, label = 'updated' }) {
 }
 
 // Tradier options chain — modal. Opens from anywhere via window.openTROptions().
-function TROptionsChain({ open, onClose }) {
+function TROptionsChain({ open, onClose, initialSymbol }) {
   const T = {
     ink000: '#07090C', ink100: '#0B0E13', ink200: '#10141B', ink300: '#171C24',
     edge: 'rgba(255,255,255,0.06)', edgeHi: 'rgba(255,255,255,0.10)',
@@ -100,7 +100,8 @@ function TROptionsChain({ open, onClose }) {
     mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
   };
   const POPULAR = ['SPY', 'QQQ', 'IBIT', 'NVDA', 'MSTR', 'COIN', 'MARA', 'AAPL', 'TSLA'];
-  const [symbol, setSymbol] = React.useState('SPY');
+  const [symbol, setSymbol] = React.useState(initialSymbol || 'SPY');
+  React.useEffect(() => { if (initialSymbol) setSymbol(initialSymbol); }, [initialSymbol, open]);
   const [expirations, setExpirations] = React.useState([]);
   const [selectedExp, setSelectedExp] = React.useState('');
   const [chain, setChain] = React.useState(null);
