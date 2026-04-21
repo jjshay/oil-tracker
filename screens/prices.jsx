@@ -77,7 +77,7 @@ function PriceSpark({ data, color, w = 64, h = 20 }) {
   );
 }
 
-function PriceTile({ sym, name, price, change, unit, spark, color, loading, error, onClick }) {
+function PriceTile({ sym, name, price, change, unit, spark, color, loading, error, onClick, saved, onToggleSave }) {
   const T = prT;
   const up = change >= 0;
   const deltaColor = up ? T.bull : T.bear;
@@ -99,8 +99,11 @@ function PriceTile({ sym, name, price, change, unit, spark, color, loading, erro
         </div>
         <div style={{
           marginLeft: 'auto', fontSize: 9, color: T.textDim, letterSpacing: 0.3,
-          textAlign: 'right', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          textAlign: 'right', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{name}</div>
+        {onToggleSave && typeof TRStar !== 'undefined' && (
+          <TRStar saved={saved} onToggle={onToggleSave} size={12} />
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
@@ -334,6 +337,7 @@ function PricesScreen({ onNav }) {
   const T = prT;
   const W = 1280, H = 820;
   const [openTicker, setOpenTicker] = React.useState(null);
+  const wl = typeof useTRWatchlist !== 'undefined' ? useTRWatchlist() : null;
 
   const finnhubKey = (window.TR_SETTINGS && window.TR_SETTINGS.keys && window.TR_SETTINGS.keys.finnhub) || '';
 
@@ -468,6 +472,8 @@ function PricesScreen({ onNav }) {
               color={d.color}
               loading={!d.price && (stocksLoading || cryptoLoading)}
               onClick={() => setOpenTicker({ ...d, kind })}
+              saved={wl && wl.isTickerSaved(d.sym)}
+              onToggleSave={wl ? () => wl.toggleTicker({ ...d, kind }) : null}
             />
           ))}
         </div>
@@ -529,6 +535,101 @@ function PricesScreen({ onNav }) {
         height: H - 52, padding: '16px 20px', overflowY: 'auto', overflowX: 'hidden',
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
+        {/* WATCHLIST — shown when there's anything saved */}
+        {wl && (wl.watchlist.tickers.length > 0 || wl.watchlist.options.length > 0) && (
+          <div style={{
+            background: 'linear-gradient(180deg, rgba(201,162,39,0.04) 0%, transparent 100%)',
+            border: '1px solid rgba(201,162,39,0.28)', borderRadius: 10,
+            padding: '14px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{
+                color: T.signal, fontSize: 16, lineHeight: 1,
+              }}>★</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: T.text, letterSpacing: -0.1 }}>My Watchlist</div>
+              <div style={{ fontSize: 10, color: T.textDim, letterSpacing: 0.2 }}>
+                saved locally · persists across reloads
+              </div>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, fontFamily: T.mono, fontSize: 9.5, color: T.textDim, letterSpacing: 0.3 }}>
+                <span>{wl.watchlist.tickers.length} tickers</span>
+                <span>{wl.watchlist.options.length} options</span>
+                {(wl.watchlist.tickers.length + wl.watchlist.options.length) > 0 && (
+                  <span
+                    onClick={() => { if (confirm('Clear entire watchlist?')) wl.clearAll(); }}
+                    style={{ cursor: 'pointer', color: T.bear }}>clear all</span>
+                )}
+              </div>
+            </div>
+
+            {/* Saved tickers */}
+            {wl.watchlist.tickers.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: wl.watchlist.options.length ? 10 : 0 }}>
+                {wl.watchlist.tickers.map(t => {
+                  // resolve live price from whichever bucket matches kind
+                  let price = null, change = null;
+                  if (t.kind === 'stock' && stockQuotes && stockQuotes[t.sym]) {
+                    price = stockQuotes[t.sym].price; change = stockQuotes[t.sym].change;
+                  } else if (t.kind === 'future' && futuresQuotes && futuresQuotes[t.sym]) {
+                    price = futuresQuotes[t.sym].price; change = futuresQuotes[t.sym].change;
+                  } else if (t.kind === 'crypto' && cryptoQuotes && cryptoQuotes[t.id]) {
+                    price = cryptoQuotes[t.id].usd; change = cryptoQuotes[t.id].usd_24h_change;
+                  }
+                  const color = t.kind === 'crypto' ? (t.sym === 'BTC' ? T.btc : t.sym === 'ETH' ? T.eth : T.spx)
+                              : t.kind === 'future' ? T.oil
+                              : T.spx;
+                  return (
+                    <PriceTile key={`${t.kind}-${t.sym}`}
+                      sym={t.sym} name={t.name}
+                      price={price} change={change}
+                      color={color}
+                      onClick={() => setOpenTicker({ ...t, kind: t.kind })}
+                      saved={true}
+                      onToggleSave={() => wl.toggleTicker(t)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Saved options */}
+            {wl.watchlist.options.length > 0 && (
+              <div>
+                <div style={{
+                  fontSize: 9.5, letterSpacing: 0.8, color: T.textDim,
+                  textTransform: 'uppercase', fontWeight: 500, marginBottom: 6,
+                }}>Saved option contracts</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {wl.watchlist.options.map(o => (
+                    <div key={o.symbol} style={{
+                      display: 'grid',
+                      gridTemplateColumns: '80px 70px 60px 1fr 80px 80px 80px 80px 28px',
+                      gap: 10, alignItems: 'center',
+                      padding: '7px 10px',
+                      background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 7,
+                      fontFamily: T.mono, fontSize: 11,
+                    }}>
+                      <div style={{ color: T.signal, fontWeight: 600, letterSpacing: 0.3 }}>{o.underlying}</div>
+                      <div style={{ color: T.text }}>{o.expiration}</div>
+                      <div style={{
+                        color: o.optionType === 'call' ? T.bull : T.bear,
+                        fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase', fontSize: 10,
+                      }}>{o.optionType}</div>
+                      <div style={{ color: T.text, fontWeight: 500 }}>${o.strike}</div>
+                      <div style={{ color: T.textMid, fontSize: 10 }}>BID ${((o.bid || 0).toFixed ? (o.bid || 0).toFixed(2) : o.bid)}</div>
+                      <div style={{ color: T.textMid, fontSize: 10 }}>ASK ${((o.ask || 0).toFixed ? (o.ask || 0).toFixed(2) : o.ask)}</div>
+                      <div style={{ color: T.textDim, fontSize: 10 }}>VOL {o.volume || 0}</div>
+                      <div style={{ color: T.textDim, fontSize: 10 }}>OI {o.oi || 0}</div>
+                      <div onClick={() => wl.toggleOption(o)} title="Remove" style={{
+                        color: T.textDim, cursor: 'pointer', fontSize: 14, textAlign: 'center',
+                      }}>★</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <Lane title="Stocks &amp; ETFs" desc="Equities · Bitcoin-adjacent tickers · Finnhub quotes · click for 1Y + options" data={stocksData} kind="stock" />
         <Lane title="Futures &amp; Commodities" desc="Oil, gold, silver, copper, index futures, DXY · Stooq 1Y daily" data={futuresData} kind="future" />
         <Lane title="Crypto" desc="Top 10 by liquidity · CoinGecko · click for 1Y chart" data={cryptoData} kind="crypto" />

@@ -107,6 +107,7 @@ function TROptionsChain({ open, onClose, initialSymbol }) {
   const [chain, setChain] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [quote, setQuote] = React.useState(null);
+  const wl = typeof useTRWatchlist !== 'undefined' ? useTRWatchlist() : null;
 
   React.useEffect(() => {
     if (!open || !symbol) return;
@@ -150,22 +151,37 @@ function TROptionsChain({ open, onClose, initialSymbol }) {
     puts  = filtered.filter(o => o.option_type === 'put' ).sort((a, b) => a.strike - b.strike);
   }
 
-  const Row = ({ o, isCall }) => (
-    <tr style={{ borderBottom: `0.5px solid ${T.edge}` }}>
-      <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10.5, color: T.text, fontWeight: 500, textAlign: isCall ? 'right' : 'left' }}>
-        ${(o.bid || 0).toFixed(2)}
-      </td>
-      <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10.5, color: T.textMid, textAlign: isCall ? 'right' : 'left' }}>
-        ${(o.ask || 0).toFixed(2)}
-      </td>
-      <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10, color: T.textDim, textAlign: isCall ? 'right' : 'left' }}>
-        {o.volume || 0}
-      </td>
-      <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10, color: T.textDim, textAlign: isCall ? 'right' : 'left' }}>
-        {o.open_interest || 0}
-      </td>
-    </tr>
-  );
+  const Row = ({ o, isCall }) => {
+    const saved = wl && wl.isOptionSaved(o.symbol);
+    const onStar = () => wl && wl.toggleOption({
+      symbol: o.symbol,
+      underlying: symbol,
+      strike: o.strike,
+      expiration: selectedExp,
+      optionType: o.option_type,
+      bid: o.bid, ask: o.ask,
+      volume: o.volume, oi: o.open_interest,
+    });
+    return (
+      <tr style={{ borderBottom: `0.5px solid ${T.edge}` }}>
+        <td style={{ padding: '4px 4px', textAlign: isCall ? 'left' : 'right', width: 20 }}>
+          {wl && <TRStar saved={saved} onToggle={onStar} size={11} />}
+        </td>
+        <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10.5, color: T.text, fontWeight: 500, textAlign: isCall ? 'right' : 'left' }}>
+          ${(o.bid || 0).toFixed(2)}
+        </td>
+        <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10.5, color: T.textMid, textAlign: isCall ? 'right' : 'left' }}>
+          ${(o.ask || 0).toFixed(2)}
+        </td>
+        <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10, color: T.textDim, textAlign: isCall ? 'right' : 'left' }}>
+          {o.volume || 0}
+        </td>
+        <td style={{ padding: '4px 6px', fontFamily: T.mono, fontSize: 10, color: T.textDim, textAlign: isCall ? 'right' : 'left' }}>
+          {o.open_interest || 0}
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div
@@ -839,6 +855,27 @@ function TRTradeButton() {
   );
 }
 window.TRTradeButton = TRTradeButton;
+
+// Reusable star button — toggles saved state on a ticker or option.
+// Parent decides what `saved` + `onToggle` do; this just renders the ★.
+function TRStar({ saved, onToggle, size = 14, title }) {
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); onToggle && onToggle(e); }}
+      title={title || (saved ? 'Remove from watchlist' : 'Add to watchlist')}
+      style={{
+        width: size + 6, height: size + 6, borderRadius: (size + 6) / 2,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer',
+        color: saved ? '#c9a227' : 'rgba(180,188,200,0.45)',
+        fontSize: size,
+        transition: 'color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+      }}>
+      {saved ? '★' : '☆'}
+    </div>
+  );
+}
+window.TRStar = TRStar;
 
 window.TRLiveStripInline = TRLiveStripInline;
 window.TRGearInline = TRGearInline;

@@ -97,6 +97,57 @@ function useAutoUpdate(key, fetcher, { refreshKey = 'header', manualMs = null, e
 window.useAutoUpdate = useAutoUpdate;
 window.useTRSettings = useTRSettings;
 
+// ───── Watchlist (localStorage-backed) ─────
+// Shape: { tickers: [{sym, name, kind}], options: [{symbol, underlying,
+// strike, expiration, optionType, bid, ask, volume, oi, added}] }
+function trLoadWatchlist() {
+  try {
+    const raw = localStorage.getItem('tr_watchlist');
+    if (!raw) return { tickers: [], options: [] };
+    const p = JSON.parse(raw);
+    return { tickers: p.tickers || [], options: p.options || [] };
+  } catch { return { tickers: [], options: [] }; }
+}
+function trSaveWatchlist(w) {
+  localStorage.setItem('tr_watchlist', JSON.stringify(w));
+  window.dispatchEvent(new CustomEvent('tr:watchlist-changed', { detail: w }));
+}
+window.TR_WATCHLIST = trLoadWatchlist();
+
+function useTRWatchlist() {
+  const [w, setW] = React.useState(window.TR_WATCHLIST);
+  React.useEffect(() => {
+    const h = (e) => { window.TR_WATCHLIST = e.detail; setW(e.detail); };
+    window.addEventListener('tr:watchlist-changed', h);
+    return () => window.removeEventListener('tr:watchlist-changed', h);
+  }, []);
+  return {
+    watchlist: w,
+    isTickerSaved: (sym) => !!w.tickers.find(t => t.sym === sym),
+    isOptionSaved: (symbol) => !!w.options.find(o => o.symbol === symbol),
+    toggleTicker: (ticker) => {
+      const exists = w.tickers.find(t => t.sym === ticker.sym);
+      const next = {
+        ...w,
+        tickers: exists ? w.tickers.filter(t => t.sym !== ticker.sym)
+                        : [...w.tickers, { sym: ticker.sym, name: ticker.name, kind: ticker.kind, id: ticker.id, stooq: ticker.stooq }],
+      };
+      trSaveWatchlist(next);
+    },
+    toggleOption: (opt) => {
+      const exists = w.options.find(o => o.symbol === opt.symbol);
+      const next = {
+        ...w,
+        options: exists ? w.options.filter(o => o.symbol !== opt.symbol)
+                        : [...w.options, { ...opt, added: Date.now() }],
+      };
+      trSaveWatchlist(next);
+    },
+    clearAll: () => trSaveWatchlist({ tickers: [], options: [] }),
+  };
+}
+window.useTRWatchlist = useTRWatchlist;
+
 // ───── Settings sheet ─────
 // Per-provider test — returns { ok, ms, detail } or throws.
 async function trTestProvider(k, key) {
