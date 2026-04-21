@@ -244,6 +244,7 @@ function ImpactScreen({ onNav }) {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
           <TRLiveStripInline />
           <TROptionsButton />
+          <TRTradeButton />
           <TRGearInline />
           <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
             <span style={{ color: T.oil }}>●</span>&nbsp; OIL → BTC · TWO-STAGE MODEL

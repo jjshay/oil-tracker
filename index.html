@@ -210,13 +210,16 @@ function TradeRadarApp() {
   const [tab, setTab] = React.useState('historical');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [optionsOpen, setOptionsOpen] = React.useState(false);
+  const [tradeOpen, setTradeOpen] = React.useState(false);
   const openSettings = () => setSettingsOpen(true);
   const openOptions  = () => setOptionsOpen(true);
+  const openTrade    = () => setTradeOpen(true);
 
-  // Global triggers — any screen can open Settings or the Tradier chain.
+  // Global triggers — any screen can open Settings, the Tradier chain, or the trade modal.
   React.useEffect(() => {
     window.openTRSettings = openSettings;
     window.openTROptions  = openOptions;
+    window.openTRTrade    = openTrade;
   }, []);
 
   let screen;
@@ -236,6 +239,7 @@ function TradeRadarApp() {
       <div className="tr-shell">{screen}</div>
       <TRSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <TROptionsChain open={optionsOpen} onClose={() => setOptionsOpen(false)} />
+      <TRTradeModal open={tradeOpen} onClose={() => setTradeOpen(false)} />
     </>
   );
 }
