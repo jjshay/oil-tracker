@@ -487,8 +487,8 @@ function SignalsScreen({ onNav }) {
           background: T.ink200, borderRadius: 10, border: `1px solid ${T.edge}`,
           height: 34, alignItems: 'center',
         }}>
-          {['Historical', 'Projected', 'Impact', 'Recommend', 'News', 'Calendar', 'Signals', 'Prices', 'Flights'].map((t, idx) => {
-            const active = idx === 6;
+          {['Summary', 'Historical', 'Projected', 'Impact', 'Recommend', 'News', 'Calendar', 'Signals', 'Prices', 'Flights'].map((t, idx) => {
+            const active = idx === 7;
             return (
               <div key={t} onClick={() => !active && onNav && onNav(t === 'Recommend' ? 'recommend' : t.toLowerCase())} style={{
                 cursor: active ? 'default' : 'pointer',
