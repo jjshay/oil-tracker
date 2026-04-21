@@ -332,11 +332,58 @@ function SignalsScreen({ onNav }) {
   }
 
   // Top-line composite
+  // Weighted-signal math. Each tile contributes +1 / 0 / -1 per direction,
+  // scaled by importance (hot = 1.5x). Lane score = avg dir across its tiles,
+  // mapped to 0–100 where 50 = neutral. Asset score = avg across every tile
+  // that includes that asset in its impact tags.
+  const sigWeight = (s) => (s.hot ? 1.5 : 1);
+  const sigDir    = (s) => s.dir === 'up' ? 1 : s.dir === 'down' ? -1 : 0;
+  const scoreToLabel = (score) => score >= 65 ? 'BULLISH'
+                                : score >= 55 ? 'LEAN BULL'
+                                : score > 45  ? 'NEUTRAL'
+                                : score > 35  ? 'LEAN BEAR'
+                                :               'BEARISH';
+  const scoreColor = (score) => score >= 60 ? T.bull
+                              : score <= 40 ? T.bear
+                              :               T.neutral;
+
+  function laneScore(lane) {
+    const sigs = lane.signals || [];
+    if (!sigs.length) return 50;
+    let num = 0, den = 0;
+    for (const s of sigs) {
+      const w = sigWeight(s);
+      num += sigDir(s) * w;
+      den += w;
+    }
+    return Math.round(50 + (num / (den || 1)) * 50);
+  }
+
+  // Per-asset aggregate — weighted across every tile that impacts that asset.
+  function assetScore(asset) {
+    let num = 0, den = 0;
+    for (const l of lanes) {
+      for (const s of (l.signals || [])) {
+        if (!s.impact || !s.impact.includes(asset)) continue;
+        const w = sigWeight(s);
+        num += sigDir(s) * w;
+        den += w;
+      }
+    }
+    if (!den) return 50;
+    return Math.round(50 + (num / den) * 50);
+  }
+
+  const btcScore = assetScore('BTC');
+  const oilScore = assetScore('OIL');
+  const spxScore = assetScore('SPX');
+
   const composite = [
-    { label: 'Macro Tilt', value: 'Risk-On', sub: '64 of 100', color: T.bull },
-    { label: 'BTC Cycle', value: 'Mid-Phase', sub: '+735d post-halving', color: T.btc },
-    { label: 'Oil Regime', value: 'Geo-Risk', sub: 'Hormuz in focus', color: T.oil },
-    { label: 'Fed Path', value: '1–2 Cuts', sub: '2026 implied', color: T.spx },
+    { label: 'BTC Signal',  asset: 'BTC', score: btcScore, color: T.btc, sub: scoreToLabel(btcScore) },
+    { label: 'SPX Signal',  asset: 'SPX', score: spxScore, color: T.spx, sub: scoreToLabel(spxScore) },
+    { label: 'OIL Signal',  asset: 'OIL', score: oilScore, color: T.oil, sub: scoreToLabel(oilScore) },
+    { label: 'Macro Tilt',  asset: null,  score: Math.round((btcScore + spxScore) / 2), color: T.signal,
+      sub: scoreToLabel(Math.round((btcScore + spxScore) / 2)) },
   ];
 
   return (
@@ -406,27 +453,53 @@ function SignalsScreen({ onNav }) {
         height: 60, display: 'flex',
         borderBottom: `1px solid ${T.edge}`, background: T.ink100,
       }}>
-        {composite.map((c, idx) => (
-          <div key={c.label} style={{
-            flex: 1, padding: '10px 20px',
-            borderRight: idx < composite.length - 1 ? `1px solid ${T.edge}` : 'none',
-            display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3,
-          }}>
-            <div style={{
-              fontSize: 9, letterSpacing: 0.9, color: T.textDim,
-              textTransform: 'uppercase', fontWeight: 500,
-            }}>{c.label}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        {composite.map((c, idx) => {
+          const sc = scoreColor(c.score);
+          return (
+            <div key={c.label}
+              onClick={() => c.asset && setAssetFilter(assetFilter === c.asset ? null : c.asset)}
+              title={c.asset ? `Click to filter lanes to ${c.asset} only` : ''}
+              style={{
+                flex: 1, padding: '8px 20px',
+                borderRight: idx < composite.length - 1 ? `1px solid ${T.edge}` : 'none',
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4,
+                background: assetFilter === c.asset ? T.ink200 : 'transparent',
+                cursor: c.asset ? 'pointer' : 'default',
+                transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1)',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 5, height: 5, borderRadius: 2.5, background: c.color }} />
+                <div style={{
+                  fontSize: 9, letterSpacing: 0.9, color: T.textDim,
+                  textTransform: 'uppercase', fontWeight: 500,
+                }}>{c.label}</div>
+                <div style={{
+                  marginLeft: 'auto', fontFamily: T.mono, fontSize: 9.5,
+                  fontWeight: 600, color: sc, letterSpacing: 0.4,
+                }}>{c.score}</div>
+              </div>
               <div style={{
-                fontFamily: T.mono, fontSize: 15, fontWeight: 500,
-                color: c.color, letterSpacing: -0.2,
-              }}>{c.value}</div>
-              <div style={{
-                fontFamily: T.mono, fontSize: 10, color: T.textMid, letterSpacing: 0.3,
+                fontFamily: T.mono, fontSize: 13, fontWeight: 500,
+                color: sc, letterSpacing: -0.1,
               }}>{c.sub}</div>
+              {/* score bar */}
+              <div style={{
+                height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden', position: 'relative',
+              }}>
+                <div style={{
+                  position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1,
+                  background: 'rgba(255,255,255,0.2)',
+                }} />
+                <div style={{
+                  position: 'absolute', top: 0, bottom: 0,
+                  left: c.score >= 50 ? '50%' : `${c.score}%`,
+                  width: `${Math.abs(c.score - 50)}%`,
+                  background: sc, opacity: 0.85,
+                }} />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Lanes grid */}
@@ -482,6 +555,22 @@ function SignalsScreen({ onNav }) {
               <div style={{
                 fontSize: 10, color: T.textDim, letterSpacing: 0.2,
               }}>{lane.desc}</div>
+              {(() => {
+                const ls = laneScore(lane);
+                const sc = scoreColor(ls);
+                return (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '2px 8px', marginLeft: 6,
+                    background: `${sc}18`, border: `0.5px solid ${sc}55`, borderRadius: 5,
+                  }}>
+                    <div style={{
+                      fontFamily: T.mono, fontSize: 9, fontWeight: 600, color: sc, letterSpacing: 0.6,
+                    }}>{scoreToLabel(ls)}</div>
+                    <div style={{ fontFamily: T.mono, fontSize: 9.5, fontWeight: 500, color: sc }}>{ls}</div>
+                  </div>
+                );
+              })()}
               <div style={{
                 marginLeft: 'auto', fontFamily: T.mono, fontSize: 9,
                 color: T.textDim, letterSpacing: 0.4,

@@ -165,6 +165,7 @@ function HistoricalScreen({ onNav }) {
   const W = 1280, H = 820;
 
   const [range, setRange] = React.useState('2Y');
+  const [focus, setFocus] = React.useState(null); // 'btc' | 'oil' | 'spx' | 'dow' | null (=all)
   const [hoverIdx, setHoverIdx] = React.useState(null); // index of hovered event
 
   const cfg = RANGES[range];
@@ -292,7 +293,7 @@ function HistoricalScreen({ onNav }) {
 
   const hover = hoverIdx !== null ? eventsInRange[hoverIdx] : null;
   const hoverX = hover ? iToPx(hover.i) : 0;
-  const hoverBtcY = hover ? yToPx(data.btc[hover.i]) : 0;
+  const hoverBtcY = hover ? yToPx((focus && data[focus] ? data[focus] : data.btc)[hover.i]) : 0;
 
   return (
     <div style={{
@@ -367,22 +368,36 @@ function HistoricalScreen({ onNav }) {
       }}>
         <div style={{ display: 'flex', gap: 22 }}>
           {[
-            { c: T.btc, label: 'BITCOIN', value: fmtPct(data.end.btc) },
-            { c: T.oil, label: 'WTI OIL',  value: fmtPct(data.end.oil) },
-            { c: T.spx, label: 'S&P 500',  value: fmtPct(data.end.spx) },
-            { c: T.dow, label: 'DOW 30',   value: fmtPct(data.end.dow) },
-          ].map(s => (
-            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 3, background: s.c }} />
-              <div style={{
-                fontSize: 10.5, fontWeight: 500, letterSpacing: 0.6,
-                color: T.textMid, textTransform: 'uppercase',
-              }}>{s.label}</div>
-              <div style={{
-                fontFamily: T.mono, fontSize: 12, color: T.text, fontWeight: 500, marginLeft: 2,
-              }}>{s.value}</div>
-            </div>
-          ))}
+            { key: 'btc', c: T.btc, label: 'BITCOIN', value: fmtPct(data.end.btc) },
+            { key: 'oil', c: T.oil, label: 'WTI OIL',  value: fmtPct(data.end.oil) },
+            { key: 'spx', c: T.spx, label: 'S&P 500',  value: fmtPct(data.end.spx) },
+            { key: 'dow', c: T.dow, label: 'DOW 30',   value: fmtPct(data.end.dow) },
+          ].map(s => {
+            const isFocus = focus === s.key;
+            const dim     = focus && !isFocus;
+            return (
+              <div key={s.label}
+                onClick={() => setFocus(isFocus ? null : s.key)}
+                title={isFocus ? 'Click to show all' : `Click to focus ${s.label} — dots anchor to this line`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  cursor: 'pointer', opacity: dim ? 0.4 : 1,
+                  padding: '4px 8px', borderRadius: 6,
+                  background: isFocus ? `${s.c}1a` : 'transparent',
+                  border: `1px solid ${isFocus ? `${s.c}55` : 'transparent'}`,
+                  transition: 'opacity 140ms cubic-bezier(0.2,0.7,0.2,1), background 140ms cubic-bezier(0.2,0.7,0.2,1)',
+                }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: s.c }} />
+                <div style={{
+                  fontSize: 10.5, fontWeight: 500, letterSpacing: 0.6,
+                  color: isFocus ? s.c : T.textMid, textTransform: 'uppercase',
+                }}>{s.label}</div>
+                <div style={{
+                  fontFamily: T.mono, fontSize: 12, color: isFocus ? s.c : T.text, fontWeight: 500, marginLeft: 2,
+                }}>{s.value}</div>
+              </div>
+            );
+          })}
         </div>
 
         <div style={{
@@ -473,19 +488,35 @@ function HistoricalScreen({ onNav }) {
           )}
 
           {/* Series */}
-          <path d={pathFor(data.dow)} fill="none" stroke={T.dow} strokeWidth={1.25} strokeOpacity={0.8}
+          <path d={pathFor(data.dow)} fill="none" stroke={T.dow} strokeWidth={focus === 'dow' ? 2 : 1.25} strokeOpacity={focus && focus !== 'dow' ? 0.12 : 0.8}
                 strokeLinecap="round" strokeLinejoin="round" />
-          <path d={pathFor(data.spx)} fill="none" stroke={T.spx} strokeWidth={1.25} strokeOpacity={0.85}
+          <path d={pathFor(data.spx)} fill="none" stroke={T.spx} strokeWidth={focus === 'spx' ? 2 : 1.25} strokeOpacity={focus && focus !== 'spx' ? 0.12 : 0.85}
                 strokeLinecap="round" strokeLinejoin="round" />
-          <path d={pathFor(data.oil)} fill="none" stroke={T.oil} strokeWidth={1.5}
+          <path d={pathFor(data.oil)} fill="none" stroke={T.oil}
+                strokeWidth={focus === 'oil' ? 2.25 : 1.5}
+                strokeOpacity={focus && focus !== 'oil' ? 0.12 : 1}
                 strokeLinecap="round" strokeLinejoin="round" />
-          <path d={pathFor(data.btc)} fill="none" stroke={T.btc} strokeWidth={1.75}
+          <path d={pathFor(data.btc)} fill="none" stroke={T.btc}
+                strokeWidth={focus === 'btc' ? 2.5 : 1.75}
+                strokeOpacity={focus && focus !== 'btc' ? 0.12 : 1}
                 strokeLinecap="round" strokeLinejoin="round" />
 
-          {/* Event dots — interactive */}
-          {eventsInRange.map((e, idx) => {
+          {/* Event dots — interactive. When a series is focused, anchor to that
+              line and highlight only events whose category is relevant to the
+              focused asset (oil: geo/oil events, btc: btc/reg events, etc). */}
+          {(() => {
+            const relevantCats = !focus ? null
+              : focus === 'oil' ? new Set(['geo', 'trump'])
+              : focus === 'btc' ? new Set(['btc', 'inst', 'reg', 'trump'])
+              : focus === 'spx' ? new Set(['fed', 'trump'])
+              : focus === 'dow' ? new Set(['fed', 'trump'])
+              : null;
+            const focusArr = !focus ? data.btc : data[focus];
+            return eventsInRange.filter(e => !relevantCats || relevantCats.has(e.cat));
+          })().map((e, idx) => {
             const cx = iToPx(e.i);
-            const cy = yToPx(data.btc[e.i]);
+            const focusArr = focus && data[focus] ? data[focus] : data.btc;
+            const cy = yToPx(focusArr[e.i]);
             const isHover = idx === hoverIdx;
             return (
               <g key={`evt-${idx}`}
