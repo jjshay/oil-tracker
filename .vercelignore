@@ -1,0 +1,12 @@
+# Never ship local secrets to Vercel even if they somehow get added later.
+keys.local.js
+.env
+.env.local
+.env.*
+logs/
+scripts/.env.example
+node_modules/
+.letta/
+legacy/
+design/
+ml-pipeline/
