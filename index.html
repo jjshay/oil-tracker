@@ -28,6 +28,7 @@
 <div id="root"></div>
 <!-- Auto-update hook + settings sheet -->
 <script type="text/babel" src="tr-hooks.jsx"></script>
+<script type="text/babel" src="tr-header-extras.jsx"></script>
 <!-- Local-only key bootstrap (gitignored) — pre-fills localStorage.tr_settings
      so the Settings sheet loads with JJ's API keys on first page load. -->
 <script src="keys.local.js"></script>
@@ -208,11 +209,15 @@ function TRWrap({ tab, onNav, onOpenSettings, children }) {
 function TradeRadarApp() {
   const [tab, setTab] = React.useState('historical');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [optionsOpen, setOptionsOpen] = React.useState(false);
   const openSettings = () => setSettingsOpen(true);
+  const openOptions  = () => setOptionsOpen(true);
 
-  // Stash a global callback so screens that render their own header can still
-  // trigger the settings sheet (until we refactor them to accept the prop).
-  React.useEffect(() => { window.openTRSettings = openSettings; }, []);
+  // Global triggers — any screen can open Settings or the Tradier chain.
+  React.useEffect(() => {
+    window.openTRSettings = openSettings;
+    window.openTROptions  = openOptions;
+  }, []);
 
   let screen;
   // Screens that render their own TR header via onNav
@@ -230,6 +235,7 @@ function TradeRadarApp() {
     <>
       <div className="tr-shell">{screen}</div>
       <TRSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <TROptionsChain open={optionsOpen} onClose={() => setOptionsOpen(false)} />
     </>
   );
 }

@@ -618,6 +618,8 @@ function MobileFrame({ T, children }) {
         }}>
           <div>9:41</div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center' }}>
+          <TRLiveStripInline />
+          <TRGearInline />
             <div style={{ fontSize: 9, color: T.textMid }}>●●●●</div>
             <div style={{ width: 16, height: 8, border: `1px solid ${T.textMid}`, borderRadius: 2, padding: 1 }}>
               <div style={{ width: '70%', height: '100%', background: T.textMid }} />

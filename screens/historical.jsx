@@ -183,19 +183,57 @@ function HistoricalScreen({ onNav }) {
     { refreshKey: 'historical' }
   );
 
+  // LIVE — OIL (USO proxy) / SPX (SPY proxy) / DOW (DIA proxy) via Finnhub
+  // candle endpoint. Free tier supports up to 1Y of daily resolution.
+  const finnhubKey = (window.TR_SETTINGS && window.TR_SETTINGS.keys && window.TR_SETTINGS.keys.finnhub) || '';
+  const { data: liveEquities } = (window.useAutoUpdate || (() => ({})))(
+    `hist-equities-${cfg.days}-${finnhubKey ? 'on' : 'off'}`,
+    async () => {
+      if (!finnhubKey || cfg.days > 365) return null;
+      const now = Math.floor(Date.now() / 1000);
+      const from = now - cfg.days * 86400;
+      const res = cfg.days <= 7 ? '60' : cfg.days <= 30 ? 'D' : 'D';
+      const symbols = { oil: 'USO', spx: 'SPY', dow: 'DIA' };
+      const out = {};
+      for (const [k, sym] of Object.entries(symbols)) {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=${res}&from=${from}&to=${now}&token=${finnhubKey}`);
+          const j = await r.json();
+          if (j && j.s === 'ok' && j.c && j.c.length) out[k] = j.c;
+        } catch (_) { /* skip */ }
+      }
+      return Object.keys(out).length ? out : null;
+    },
+    { refreshKey: 'historical' }
+  );
+
   const data = React.useMemo(() => {
     const base = synthSeries(range);
-    if (!liveBtc || liveBtc.length < 2) return base;
-    // Resample to N points + normalize to % from first observation
-    const resampled = [];
-    for (let i = 0; i < N; i++) {
-      const idx = Math.round((i / (N - 1)) * (liveBtc.length - 1));
-      resampled.push(liveBtc[idx]);
+    const resample = (arr, len) => {
+      if (!arr || arr.length < 2) return null;
+      const out = [];
+      for (let i = 0; i < len; i++) {
+        const idx = Math.round((i / (len - 1)) * (arr.length - 1));
+        out.push(arr[idx]);
+      }
+      const first = out[0] || 1;
+      return out.map(v => ((v / first) - 1) * 100);
+    };
+    const result = { ...base };
+    if (liveBtc && liveBtc.length >= 2) {
+      const pct = resample(liveBtc, N);
+      if (pct) result.btc = pct;
     }
-    const first = resampled[0] || 1;
-    const pct = resampled.map(v => ((v / first) - 1) * 100);
-    return { ...base, btc: pct };
-  }, [range, liveBtc]);
+    if (liveEquities) {
+      ['oil', 'spx', 'dow'].forEach(k => {
+        if (liveEquities[k]) {
+          const pct = resample(liveEquities[k], N);
+          if (pct) result[k] = pct;
+        }
+      });
+    }
+    return result;
+  }, [range, liveBtc, liveEquities]);
 
   // Filter events that fall within this range.
   // daysAgo → t-index. t=0 at oldest of window, t=1 at now.
@@ -304,6 +342,8 @@ function HistoricalScreen({ onNav }) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <TRLiveStripInline />
+          <TRGearInline />
           <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
             <span style={{ color: T.signal }}>●</span>&nbsp; LIVE &nbsp;·&nbsp; {cfg.granularity}
           </div>

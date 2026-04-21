@@ -352,6 +352,8 @@ function ProjectedScreen({ onNav }) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+          <TRLiveStripInline />
+          <TRGearInline />
           <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
             <span style={{ color: T.signal }}>●</span>&nbsp; BITCOIN · LIVE NEWS-DRIVEN MODEL
           </div>

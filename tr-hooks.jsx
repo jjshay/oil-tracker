@@ -98,6 +98,88 @@ window.useAutoUpdate = useAutoUpdate;
 window.useTRSettings = useTRSettings;
 
 // ───── Settings sheet ─────
+// Per-provider test — returns { ok, ms, detail } or throws.
+async function trTestProvider(k, key) {
+  if (!key) return { ok: false, detail: 'no key' };
+  const t0 = Date.now();
+  try {
+    if (k === 'claude') {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', 'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8, messages: [{ role: 'user', content: 'ping' }] }),
+      });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${key}` } });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'gemini') {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'grok') {
+      const r = await fetch('https://api.x.ai/v1/models', { headers: { Authorization: `Bearer ${key}` } });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'perplexity') {
+      const r = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ model: 'sonar', messages: [{ role: 'user', content: 'ping' }], max_tokens: 5 }),
+      });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'finnhub') {
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${key}`);
+      const j = await r.json();
+      return { ok: !!(j && typeof j.c === 'number' && j.c > 0), ms: Date.now() - t0, detail: j.c > 0 ? `AAPL $${j.c}` : 'empty' };
+    }
+    if (k === 'tradier') {
+      const mode = (window.TR_SETTINGS && window.TR_SETTINGS.meta && window.TR_SETTINGS.meta.tradierMode) || 'sandbox';
+      const base = mode === 'live' ? 'https://api.tradier.com/v1' : 'https://sandbox.tradier.com/v1';
+      const r = await fetch(`${base}/markets/quotes?symbols=SPY`, { headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' } });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? `${mode} ok` : `HTTP ${r.status}` };
+    }
+    if (k === 'newsapi') {
+      const r = await fetch(`https://newsapi.org/v2/top-headlines?country=us&pageSize=1&apiKey=${key}`);
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'newsdata') {
+      const r = await fetch(`https://newsdata.io/api/1/news?apikey=${key}&q=bitcoin&size=1`);
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'bitly') {
+      const r = await fetch('https://api-ssl.bitly.com/v4/user', { headers: { Authorization: `Bearer ${key}` } });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'coingecko') {
+      const r = await fetch(`https://api.coingecko.com/api/v3/ping?x_cg_demo_api_key=${key}`);
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'polygon') {
+      const r = await fetch(`https://api.polygon.io/v2/aggs/ticker/AAPL/prev?apiKey=${key}`);
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'ok' : `HTTP ${r.status}` };
+    }
+    if (k === 'alpaca') {
+      const [id, secret] = key.split(':');
+      const r = await fetch('https://paper-api.alpaca.markets/v2/account', {
+        headers: { 'APCA-API-KEY-ID': id || '', 'APCA-API-SECRET-KEY': secret || '' },
+      });
+      return { ok: r.ok, ms: Date.now() - t0, detail: r.ok ? 'paper ok' : `HTTP ${r.status}` };
+    }
+    return { ok: false, detail: 'unknown provider' };
+  } catch (e) {
+    return { ok: false, ms: Date.now() - t0, detail: e.message };
+  }
+}
+window.trTestProvider = trTestProvider;
+
 function TRSettingsSheet({ open, onClose }) {
   const T = {
     ink000: '#07090C', ink100: '#0B0E13', ink200: '#10141B', ink300: '#171C24',
@@ -107,6 +189,13 @@ function TRSettingsSheet({ open, onClose }) {
     mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
   };
   const [s, save] = useTRSettings();
+  const [testResults, setTestResults] = React.useState({});   // { k: {ok, ms, detail, testing} }
+
+  const runTest = async (k) => {
+    setTestResults(prev => ({ ...prev, [k]: { ...(prev[k] || {}), testing: true } }));
+    const res = await trTestProvider(k, s.keys[k]);
+    setTestResults(prev => ({ ...prev, [k]: { ...res, testing: false } }));
+  };
 
   if (!open) return null;
 
@@ -220,6 +309,24 @@ function TRSettingsSheet({ open, onClose }) {
           padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 12.5, color: T.text, flex: 1 }}>Tradier mode</div>
+            {['sandbox', 'live'].map(v => {
+              const on = (s.meta?.tradierMode || 'sandbox') === v;
+              return (
+                <div key={v}
+                  onClick={() => save({ ...s, meta: { ...(s.meta || {}), tradierMode: v } })}
+                  style={{
+                    padding: '4px 10px', fontSize: 10.5, letterSpacing: 0.3,
+                    fontFamily: T.mono, fontWeight: 600,
+                    background: on ? T.signal : T.ink000,
+                    color: on ? T.ink000 : T.textMid,
+                    border: `1px solid ${on ? T.signal : T.edge}`, borderRadius: 5,
+                    cursor: on ? 'default' : 'pointer',
+                  }}>{v}</div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ fontSize: 12.5, color: T.text, flex: 1 }}>Stock prices</div>
             {['yahoo', 'polygon', 'alpaca', 'finnhub'].map(v => {
               const on = s.sources.stocks === v;
@@ -251,25 +358,60 @@ function TRSettingsSheet({ open, onClose }) {
           background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
           padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 24,
         }}>
-          {keyFields.map(f => (
-            <div key={f.k}>
-              <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 4 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 500, color: T.text }}>{f.label}</div>
-                <div style={{ marginLeft: 'auto', fontSize: 10, color: T.textDim }}>{f.hint}</div>
+          {keyFields.map(f => {
+            const res = testResults[f.k];
+            return (
+              <div key={f.k}>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 4 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 500, color: T.text }}>{f.label}</div>
+                  <div style={{ marginLeft: 'auto', fontSize: 10, color: T.textDim }}>{f.hint}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    type="password"
+                    value={s.keys[f.k] || ''}
+                    onChange={(e) => updateKey(f.k, e.target.value)}
+                    placeholder={s.keys[f.k] ? '•••• saved' : 'Paste key to enable live data'}
+                    style={{
+                      flex: 1, padding: '8px 12px', fontFamily: T.mono, fontSize: 12,
+                      background: T.ink000, border: `1px solid ${T.edge}`, color: T.text,
+                      borderRadius: 6, outline: 'none',
+                    }}
+                  />
+                  <div
+                    onClick={() => s.keys[f.k] && !res?.testing && runTest(f.k)}
+                    style={{
+                      padding: '0 12px', display: 'flex', alignItems: 'center',
+                      background: !s.keys[f.k] ? T.ink300
+                        : res?.testing ? T.ink300
+                        : res?.ok === true ? 'rgba(111,207,142,0.18)'
+                        : res?.ok === false ? 'rgba(217,107,107,0.18)'
+                        : T.ink200,
+                      border: `1px solid ${!s.keys[f.k] ? T.edge
+                        : res?.ok === true ? 'rgba(111,207,142,0.5)'
+                        : res?.ok === false ? 'rgba(217,107,107,0.5)'
+                        : T.edge}`,
+                      borderRadius: 6, cursor: s.keys[f.k] ? 'pointer' : 'default',
+                      fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
+                      color: !s.keys[f.k] ? T.textDim
+                        : res?.ok === true ? '#6FCF8E'
+                        : res?.ok === false ? '#D96B6B'
+                        : T.textMid,
+                      fontFamily: T.mono,
+                    }}>
+                    {res?.testing ? '…' : res ? (res.ok ? `✓ ${res.ms}ms` : '✕') : 'Test'}
+                  </div>
+                </div>
+                {res && !res.testing && res.detail && (
+                  <div style={{
+                    fontSize: 9.5, marginTop: 4,
+                    color: res.ok ? '#6FCF8E' : '#D96B6B',
+                    fontFamily: T.mono, letterSpacing: 0.3,
+                  }}>{res.detail}</div>
+                )}
               </div>
-              <input
-                type="password"
-                value={s.keys[f.k] || ''}
-                onChange={(e) => updateKey(f.k, e.target.value)}
-                placeholder={s.keys[f.k] ? '•••• saved' : 'Paste key to enable live data'}
-                style={{
-                  width: '100%', padding: '8px 12px', fontFamily: T.mono, fontSize: 12,
-                  background: T.ink000, border: `1px solid ${T.edge}`, color: T.text,
-                  borderRadius: 6, outline: 'none',
-                }}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div style={{ fontSize: 10.5, color: T.textDim, letterSpacing: 0.3, lineHeight: 1.55 }}>

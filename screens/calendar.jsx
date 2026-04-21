@@ -144,6 +144,8 @@ function CalendarScreen({ onNav }) {
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
+          <TRLiveStripInline />
+          <TRGearInline />
           <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
             SUN · APR 19 · 2026
           </div>
