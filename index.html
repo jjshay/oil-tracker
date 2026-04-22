@@ -117,6 +117,7 @@
 <!-- Local-only key bootstrap (gitignored) — pre-fills localStorage.tr_settings
      so the Settings sheet loads with JJ's API keys on first page load. -->
 <script src="keys.local.js"></script>
+<script type="text/babel" src="screens/drivers.jsx"></script>
 <script type="text/babel" src="screens/summary.jsx"></script>
 <script type="text/babel" src="screens/historical.jsx"></script>
 <script type="text/babel" src="screens/projected.jsx"></script>
@@ -142,6 +143,7 @@ const TR_TOKENS = {
 };
 
 const TR_TABS = [
+  { key: 'drivers',     label: 'Drivers'     },
   { key: 'summary',     label: 'Summary'     },
   { key: 'historical',  label: 'Historical'  },
   { key: 'projected',   label: 'Projected'   },
@@ -285,7 +287,7 @@ function TRWrap({ tab, onNav, onOpenSettings, children }) {
 }
 
 function TradeRadarApp() {
-  const [tab, setTab] = React.useState('summary');
+  const [tab, setTab] = React.useState('drivers');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [optionsOpen, setOptionsOpen] = React.useState(false);
   const [optionsInitialSymbol, setOptionsInitialSymbol] = React.useState(null);
@@ -381,7 +383,8 @@ function TradeRadarApp() {
 
   let screen;
   // Screens that render their own TR header via onNav
-  if (tab === 'summary')         screen = <SummaryScreen          onNav={setTab} />;
+  if (tab === 'drivers')         screen = <DriversScreen          onNav={setTab} />;
+  else if (tab === 'summary')    screen = <SummaryScreen          onNav={setTab} />;
   else if (tab === 'historical') screen = <HistoricalScreen       onNav={setTab} />;
   else if (tab === 'projected')  screen = <ProjectedScreen        onNav={setTab} />;
   else if (tab === 'impact')     screen = <ImpactScreen           onNav={setTab} />;
@@ -392,7 +395,7 @@ function TradeRadarApp() {
   else if (tab === 'signals')  screen = <SignalsScreen  onNav={setTab} />;
   else if (tab === 'prices')   screen = <PricesScreen   onNav={setTab} />;
   else if (tab === 'flights')  screen = <FlightsScreen  onNav={setTab} />;
-  else screen = <SummaryScreen onNav={setTab} />;
+  else screen = <DriversScreen onNav={setTab} />;
 
   // Wrap active screen in an ErrorBoundary so a bad fetch/throw in one tab
   // doesn't blank the whole app. Reset → re-mount that tab only.

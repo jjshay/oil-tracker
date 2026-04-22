@@ -864,6 +864,7 @@ window.TRTradeButton = TRTradeButton;
 
 // Single source of truth for tab nav. Add/remove/rename tabs here only.
 window.TR_TABS_META = [
+  { key: 'drivers',     label: 'Drivers'     },
   { key: 'summary',     label: 'Summary'     },
   { key: 'historical',  label: 'Historical'  },
   { key: 'projected',   label: 'Projected'   },
