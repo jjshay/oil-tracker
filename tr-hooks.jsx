@@ -257,6 +257,7 @@ function TRSettingsSheet({ open, onClose }) {
   };
   const [s, save] = useTRSettings();
   const [testResults, setTestResults] = React.useState({});   // { k: {ok, ms, detail, testing} }
+  const [advancedOpen, setAdvancedOpen] = React.useState(false);
 
   const runTest = async (k) => {
     setTestResults(prev => ({ ...prev, [k]: { ...(prev[k] || {}), testing: true } }));
@@ -273,22 +274,26 @@ function TRSettingsSheet({ open, onClose }) {
   const refreshLabel = (sec) => sec <= 0 ? 'Off' : sec < 60 ? `${sec}s` : `${Math.round(sec / 60)}m`;
   const refreshOptions = [15, 30, 60, 120, 300, 600, 0];
 
-  const keyFields = [
-    { k: 'coingecko', label: 'CoinGecko API Key',  hint: 'Optional · higher rate limits' },
-    { k: 'tradier',   label: 'Tradier Token',      hint: 'Real-time stock quotes + options chains' },
-    { k: 'polygon',   label: 'Polygon.io API Key', hint: 'Alt stock/options data provider' },
-    { k: 'finnhub',   label: 'Finnhub API Key',    hint: 'Free stock prices + news' },
-    { k: 'alpaca',    label: 'Alpaca Keys (id:secret)', hint: 'Paper/live trading + quotes' },
-    { k: 'claude',     label: 'Anthropic (Claude) API Key',  hint: 'Main 4 · Claude POV + discovery' },
-    { k: 'openai',     label: 'OpenAI (ChatGPT) API Key',    hint: 'Main 4 · ChatGPT POV + discovery' },
-    { k: 'gemini',     label: 'Google AI Studio (Gemini) Key', hint: 'Main 4 · Gemini POV + discovery' },
-    { k: 'grok',       label: 'xAI (Grok) API Key',          hint: 'Main 4 · Grok POV — X/Twitter angle' },
-    { k: 'perplexity', label: 'Perplexity API Key',          hint: 'Search-augmented LLM for fact-checked takes' },
-    { k: 'newsapi',    label: 'NewsAPI Key (newsapi.org)',   hint: 'Aggregated global news beyond crypto RSS' },
-    { k: 'newsdata',   label: 'NewsData Key (newsdata.io)',  hint: 'Alternative news aggregator, richer metadata' },
-    { k: 'bitly',          label: 'Bitly API Key',            hint: 'Auto-shorten article links for sharing' },
-    { k: 'telegramBot',    label: 'Telegram Bot Token',       hint: 'Create via @BotFather — pushes alerts to your Telegram' },
-    { k: 'telegramChatId', label: 'Telegram Chat ID',         hint: 'DM your bot any message, then test below to auto-grab it' },
+  // Core keys — shown always. Cover 90% of app features.
+  const coreKeys = [
+    { k: 'claude',   label: 'Anthropic (Claude) API Key', hint: 'Primary LLM for predictions + rationale' },
+    { k: 'openai',   label: 'OpenAI (ChatGPT) API Key',   hint: 'Secondary LLM · dual-consensus' },
+    { k: 'finnhub',  label: 'Finnhub API Key',            hint: 'Stock prices + econ calendar (free tier)' },
+    { k: 'tradier',  label: 'Tradier Token',              hint: 'Options chains + trading layer' },
+  ];
+  // Advanced keys — collapsed by default. Optional LLMs, alt providers, integrations.
+  const advancedKeys = [
+    { k: 'gemini',         label: 'Google AI Studio (Gemini) Key', hint: 'Optional 3rd LLM opinion' },
+    { k: 'grok',           label: 'xAI (Grok) API Key',            hint: 'Optional — X/Twitter angle' },
+    { k: 'perplexity',     label: 'Perplexity API Key',            hint: 'Optional — web-search-grounded LLM' },
+    { k: 'alpaca',         label: 'Alpaca Keys (id:secret)',       hint: 'Paper trading (alt to Tradier)' },
+    { k: 'polygon',        label: 'Polygon.io API Key',            hint: 'Alt stock/options provider' },
+    { k: 'coingecko',      label: 'CoinGecko API Key',             hint: 'Optional · higher rate limits' },
+    { k: 'telegramBot',    label: 'Telegram Bot Token',            hint: 'From @BotFather — pushes alerts to Telegram' },
+    { k: 'telegramChatId', label: 'Telegram Chat ID',              hint: 'DM your bot, then test to get your id' },
+    { k: 'newsapi',        label: 'NewsAPI Key (newsapi.org)',     hint: 'Aggregated global news' },
+    { k: 'newsdata',       label: 'NewsData Key (newsdata.io)',    hint: 'Alt news aggregator' },
+    { k: 'bitly',          label: 'Bitly API Key',                 hint: 'Auto-shorten shared links' },
   ];
 
   const refreshRows = [
@@ -424,11 +429,9 @@ function TRSettingsSheet({ open, onClose }) {
         <div style={{ fontSize: 12.5, color: T.textMid, lineHeight: 1.55, marginBottom: 14 }}>
           Stored locally in this browser only. Never sent to any TradeRadar server.
         </div>
-        <div style={{
-          background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
-          padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 24,
-        }}>
-          {keyFields.map(f => {
+        {/* KEY ROW RENDERER — reused for Core and Advanced */}
+        {(() => {
+          const renderRow = (f) => {
             const res = testResults[f.k];
             return (
               <div key={f.k}>
@@ -437,8 +440,7 @@ function TRSettingsSheet({ open, onClose }) {
                   <div style={{ marginLeft: 'auto', fontSize: 10, color: T.textDim }}>{f.hint}</div>
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <input
-                    type="password"
+                  <input type="password"
                     value={s.keys[f.k] || ''}
                     onChange={(e) => updateKey(f.k, e.target.value)}
                     placeholder={s.keys[f.k] ? '•••• saved' : 'Paste key to enable live data'}
@@ -448,8 +450,7 @@ function TRSettingsSheet({ open, onClose }) {
                       borderRadius: 6, outline: 'none',
                     }}
                   />
-                  <div
-                    onClick={() => s.keys[f.k] && !res?.testing && runTest(f.k)}
+                  <div onClick={() => s.keys[f.k] && !res?.testing && runTest(f.k)}
                     style={{
                       padding: '0 12px', display: 'flex', alignItems: 'center',
                       background: !s.keys[f.k] ? T.ink300
@@ -474,15 +475,56 @@ function TRSettingsSheet({ open, onClose }) {
                 </div>
                 {res && !res.testing && res.detail && (
                   <div style={{
-                    fontSize: 9.5, marginTop: 4,
-                    color: res.ok ? '#6FCF8E' : '#D96B6B',
+                    fontSize: 9.5, marginTop: 4, color: res.ok ? '#6FCF8E' : '#D96B6B',
                     fontFamily: T.mono, letterSpacing: 0.3,
                   }}>{res.detail}</div>
                 )}
               </div>
             );
-          })}
-        </div>
+          };
+          return (
+            <>
+              {/* CORE block */}
+              <div style={{
+                background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+                padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14,
+                marginBottom: 12,
+              }}>
+                <div style={{
+                  fontSize: 9, letterSpacing: 1.2, color: T.textDim,
+                  textTransform: 'uppercase', fontWeight: 600,
+                }}>Core — covers 90% of features</div>
+                {coreKeys.map(renderRow)}
+              </div>
+
+              {/* ADVANCED collapsible */}
+              <div
+                onClick={() => setAdvancedOpen(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px', cursor: 'pointer',
+                  background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+                  marginBottom: advancedOpen ? 10 : 24,
+                }}>
+                <div style={{ fontSize: 9, letterSpacing: 1.2, color: T.textMid, textTransform: 'uppercase', fontWeight: 600 }}>
+                  Advanced — optional LLMs, alt providers, integrations
+                </div>
+                <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: 11, color: T.textDim }}>
+                  {advancedOpen ? '▾' : '▸'} {advancedKeys.length}
+                </div>
+              </div>
+              {advancedOpen && (
+                <div style={{
+                  background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+                  padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14,
+                  marginBottom: 24,
+                }}>
+                  {advancedKeys.map(renderRow)}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         <div style={{ fontSize: 10.5, color: T.textDim, letterSpacing: 0.3, lineHeight: 1.55 }}>
           Tradier sandbox (delayed data) is free. Polygon.io starts at $29/mo. Finnhub has a generous free tier

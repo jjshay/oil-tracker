@@ -145,7 +145,7 @@ function RecommendationsScreen({ onNav }) {
         if (!keys.claude && !keys.openai && !keys.gemini) return null; // no keys → design defaults
         const articles = await NewsFeed.fetchAll();
         if (!articles || !articles.length) return null;
-        return await AIAnalysis.runMulti(articles.slice(0, 15));
+        return await AIAnalysis.runMulti(articles.slice(0, 15), { full: true });
       },
       { refreshKey: 'recommend' }
     );

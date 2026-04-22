@@ -419,7 +419,7 @@ function NewsScreen({ onNav }) {
     try {
       const result = await AIAnalysis.runMulti([
         { source: item.source || 'News', title: item.title },
-      ]);
+      ], { full: true });
       setAiScore({ article: item, result });
     } catch (e) { setAiScore({ article: item, error: e.message }); }
     finally { setAiScoring(false); }

@@ -301,7 +301,7 @@ function ProjectedScreen({ onNav }) {
         // fall back to driver-only prompt
       }
 
-      return await AIAnalysis.runMulti(combined);
+      return await AIAnalysis.runMulti(combined, { full: true });
     },
     { refreshKey: 'projected' }
   );
