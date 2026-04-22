@@ -51,6 +51,28 @@
 <script src="engine/tankers.js"></script>
 <script src="engine/etf-flows.js"></script>
 <script src="engine/funding.js"></script>
+<script src="engine/fred.js"></script>
+<script src="engine/treasury.js"></script>
+<script src="engine/cot.js"></script>
+<script src="engine/liquidations.js"></script>
+<script src="engine/deribit.js"></script>
+<script src="engine/stables.js"></script>
+<script src="engine/exchange-reserves.js"></script>
+<script src="engine/disasters.js"></script>
+<script src="engine/gdelt.js"></script>
+<script src="engine/insiders.js"></script>
+<script src="engine/edgar-13f.js"></script>
+<script src="engine/wsb.js"></script>
+<script src="engine/gtrends.js"></script>
+<script src="engine/weather.js"></script>
+<script src="engine/shipping.js"></script>
+<script src="engine/opec.js"></script>
+<script src="engine/recession.js"></script>
+<script src="engine/central-banks.js"></script>
+<script src="engine/earnings.js"></script>
+<script src="engine/defi-tvl.js"></script>
+<script src="engine/eth-staking.js"></script>
+<script src="engine/alt-flow.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -70,6 +92,28 @@
 <script type="text/babel" src="tr-tanker-panel.jsx"></script>
 <script type="text/babel" src="tr-etf-panel.jsx"></script>
 <script type="text/babel" src="tr-funding-panel.jsx"></script>
+<script type="text/babel" src="tr-fred-panel.jsx"></script>
+<script type="text/babel" src="tr-treasury-panel.jsx"></script>
+<script type="text/babel" src="tr-cot-panel.jsx"></script>
+<script type="text/babel" src="tr-liq-panel.jsx"></script>
+<script type="text/babel" src="tr-deribit-panel.jsx"></script>
+<script type="text/babel" src="tr-stables-panel.jsx"></script>
+<script type="text/babel" src="tr-reserves-panel.jsx"></script>
+<script type="text/babel" src="tr-disasters-panel.jsx"></script>
+<script type="text/babel" src="tr-gdelt-panel.jsx"></script>
+<script type="text/babel" src="tr-insider-panel.jsx"></script>
+<script type="text/babel" src="tr-13f-panel.jsx"></script>
+<script type="text/babel" src="tr-wsb-panel.jsx"></script>
+<script type="text/babel" src="tr-gtrends-panel.jsx"></script>
+<script type="text/babel" src="tr-weather-panel.jsx"></script>
+<script type="text/babel" src="tr-shipping-panel.jsx"></script>
+<script type="text/babel" src="tr-opec-panel.jsx"></script>
+<script type="text/babel" src="tr-recession-panel.jsx"></script>
+<script type="text/babel" src="tr-cb-panel.jsx"></script>
+<script type="text/babel" src="tr-earnings-panel.jsx"></script>
+<script type="text/babel" src="tr-defi-panel.jsx"></script>
+<script type="text/babel" src="tr-eth-staking-panel.jsx"></script>
+<script type="text/babel" src="tr-alt-panel.jsx"></script>
 <!-- Local-only key bootstrap (gitignored) — pre-fills localStorage.tr_settings
      so the Settings sheet loads with JJ's API keys on first page load. -->
 <script src="keys.local.js"></script>
@@ -248,11 +292,18 @@ function TradeRadarApp() {
   const [tradeOpen, setTradeOpen] = React.useState(false);
   const [alertsOpen, setAlertsOpen]     = React.useState(false);
   const [cmdkOpen, setCmdkOpen]         = React.useState(false);
-  const [congressOpen, setCongressOpen] = React.useState(false);
-  const [predOpen, setPredOpen]         = React.useState(false);
-  const [tankerOpen, setTankerOpen]     = React.useState(false);
-  const [etfOpen, setEtfOpen]           = React.useState(false);
-  const [fundingOpen, setFundingOpen]   = React.useState(false);
+  // All intelligence-panel open/close flags in one reducer for brevity
+  const [panels, setPanels] = React.useState({
+    congress: false, prediction: false, tanker: false, etf: false, funding: false,
+    fred: false, treasury: false, cot: false, liq: false, deribit: false,
+    stables: false, reserves: false, disasters: false, gdelt: false,
+    insider: false, edgar13f: false, wsb: false, gtrends: false,
+    weather: false, shipping: false, opec: false,
+    recession: false, cb: false, earnings: false,
+    defi: false, ethstaking: false, alt: false,
+  });
+  const openPanel  = (k) => setPanels(p => ({ ...p, [k]: true }));
+  const closePanel = (k) => setPanels(p => ({ ...p, [k]: false }));
   const openSettings = () => setSettingsOpen(true);
   const openOptions  = (symbol) => { if (symbol) setOptionsInitialSymbol(symbol); setOptionsOpen(true); };
   const openTrade    = () => setTradeOpen(true);
@@ -266,21 +317,48 @@ function TradeRadarApp() {
     window.openTRTrade    = openTrade;
     window.openTRAlerts   = openAlerts;
     window.openTRCmdK     = openCmdK;
-    window.openTRCongress   = () => setCongressOpen(true);
-    window.openTRPrediction = () => setPredOpen(true);
-    window.openTRTanker     = () => setTankerOpen(true);
-    window.openTRETF        = () => setEtfOpen(true);
-    window.openTRFunding    = () => setFundingOpen(true);
+    // Registry: panel-key → { global, customEvent }
+    const PANEL_REG = [
+      ['congress',   'openTRCongress',    null],
+      ['prediction', 'openTRPrediction',  null],
+      ['tanker',     'openTRTanker',      'tr:tanker:open'],
+      ['etf',        'openTRETF',         null],
+      ['funding',    'openTRFunding',     'tr:open-funding'],
+      ['fred',       'openTRFRED',        'tr:open-fred'],
+      ['treasury',   'openTRTreasury',    'tr:open-treasury'],
+      ['cot',        'openTRCOT',         'tr:open-cot'],
+      ['liq',        'openTRLiq',         'tr:open-liq'],
+      ['deribit',    'openTRDeribit',     'tr:open-deribit'],
+      ['stables',    'openTRStables',     null],
+      ['reserves',   'openTRReserves',    null],
+      ['disasters',  'openTRDisasters',   null],
+      ['gdelt',      'openTRGDELT',       null],
+      ['insider',    'openTRInsider',     null],
+      ['edgar13f',   'openTR13F',         null],
+      ['wsb',        'openTRWSB',         null],
+      ['gtrends',    'openTRTrends',      null],
+      ['weather',    'openTRWeather',     'tr:open-weather'],
+      ['shipping',   'openTRShipping',    'tr:open-shipping'],
+      ['opec',       'openTROPEC',        'tr:open-opec'],
+      ['recession',  'openTRRecession',   null],
+      ['cb',         'openTRCB',          null],
+      ['earnings',   'openTREarnings',    null],
+      ['defi',       'openTRDeFi',        null],
+      ['ethstaking', 'openTRETHStaking',  null],
+      ['alt',        'openTRAlt',         null],
+    ];
+    PANEL_REG.forEach(([k, globalName]) => { window[globalName] = () => openPanel(k); });
 
-    // Listen for palette/alert events fired from shortcuts or buttons
-    const onCmdk     = () => setCmdkOpen(true);
-    const onAlerts   = () => setAlertsOpen(true);
-    const onTanker   = () => setTankerOpen(true);
-    const onFunding  = () => setFundingOpen(true);
-    window.addEventListener('tr:open-cmdk',    onCmdk);
-    window.addEventListener('tr:open-alerts',  onAlerts);
-    window.addEventListener('tr:tanker:open',  onTanker);
-    window.addEventListener('tr:open-funding', onFunding);
+    // Listen for palette/alert events + any panel's custom event
+    const onCmdk   = () => setCmdkOpen(true);
+    const onAlerts = () => setAlertsOpen(true);
+    window.addEventListener('tr:open-cmdk',   onCmdk);
+    window.addEventListener('tr:open-alerts', onAlerts);
+    const evtHandlers = PANEL_REG.filter(([,, evt]) => evt).map(([k,, evt]) => {
+      const h = () => openPanel(k);
+      window.addEventListener(evt, h);
+      return [evt, h];
+    });
 
     // Keyboard shortcuts — 1-9/0 = tabs, / or Cmd+K = palette, R = refresh, Cmd+, = settings
     let cleanup = null;
@@ -294,10 +372,9 @@ function TradeRadarApp() {
     }
 
     return () => {
-      window.removeEventListener('tr:open-cmdk',    onCmdk);
-      window.removeEventListener('tr:open-alerts',  onAlerts);
-      window.removeEventListener('tr:tanker:open',  onTanker);
-      window.removeEventListener('tr:open-funding', onFunding);
+      window.removeEventListener('tr:open-cmdk',   onCmdk);
+      window.removeEventListener('tr:open-alerts', onAlerts);
+      evtHandlers.forEach(([evt, h]) => window.removeEventListener(evt, h));
       if (cleanup) cleanup();
     };
   }, []);
@@ -333,11 +410,38 @@ function TradeRadarApp() {
       <TRTradeModal open={tradeOpen} onClose={() => setTradeOpen(false)} />
       {window.TRAlertsPanel     && <window.TRAlertsPanel     open={alertsOpen}   onClose={() => setAlertsOpen(false)} />}
       {window.TRCmdK            && <window.TRCmdK            open={cmdkOpen}     onClose={() => setCmdkOpen(false)}   onNav={setTab} />}
-      {window.TRCongressPanel   && <window.TRCongressPanel   open={congressOpen} onClose={() => setCongressOpen(false)} />}
-      {window.TRPredictionPanel && <window.TRPredictionPanel open={predOpen}     onClose={() => setPredOpen(false)} />}
-      {window.TRTankerPanel     && <window.TRTankerPanel     open={tankerOpen}   onClose={() => setTankerOpen(false)} />}
-      {window.TRETFPanel        && <window.TRETFPanel        open={etfOpen}      onClose={() => setEtfOpen(false)} />}
-      {window.TRFundingPanel    && <window.TRFundingPanel    open={fundingOpen}  onClose={() => setFundingOpen(false)} />}
+      {[
+        ['congress',   'TRCongressPanel'],
+        ['prediction', 'TRPredictionPanel'],
+        ['tanker',     'TRTankerPanel'],
+        ['etf',        'TRETFPanel'],
+        ['funding',    'TRFundingPanel'],
+        ['fred',       'TRFREDPanel'],
+        ['treasury',   'TRTreasuryPanel'],
+        ['cot',        'TRCOTPanel'],
+        ['liq',        'TRLiqPanel'],
+        ['deribit',    'TRDeribitPanel'],
+        ['stables',    'TRStablesPanel'],
+        ['reserves',   'TRReservesPanel'],
+        ['disasters',  'TRDisastersPanel'],
+        ['gdelt',      'TRGDELTPanel'],
+        ['insider',    'TRInsiderPanel'],
+        ['edgar13f',   'TR13FPanel'],
+        ['wsb',        'TRWSBPanel'],
+        ['gtrends',    'TRTrendsPanel'],
+        ['weather',    'TRWeatherPanel'],
+        ['shipping',   'TRShippingPanel'],
+        ['opec',       'TROPECPanel'],
+        ['recession',  'TRRecessionPanel'],
+        ['cb',         'TRCBPanel'],
+        ['earnings',   'TREarningsPanel'],
+        ['defi',       'TRDeFiPanel'],
+        ['ethstaking', 'TRETHStakingPanel'],
+        ['alt',        'TRAltPanel'],
+      ].map(([k, Cmp]) => {
+        const C = window[Cmp];
+        return C ? <C key={k} open={panels[k]} onClose={() => closePanel(k)} /> : null;
+      })}
     </>
   );
 }
