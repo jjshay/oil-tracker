@@ -856,6 +856,62 @@ function TRTradeButton() {
 }
 window.TRTradeButton = TRTradeButton;
 
+// Single source of truth for tab nav. Add/remove/rename tabs here only.
+window.TR_TABS_META = [
+  { key: 'summary',     label: 'Summary'     },
+  { key: 'historical',  label: 'Historical'  },
+  { key: 'projected',   label: 'Projected'   },
+  { key: 'impact',      label: 'Impact'      },
+  { key: 'recommend',   label: 'Recommend'   },
+  { key: 'news',        label: 'News'        },
+  { key: 'calendar',    label: 'Calendar'    },
+  { key: 'signals',     label: 'Signals'     },
+  { key: 'prices',      label: 'Prices'      },
+  { key: 'flights',     label: 'Flights'     },
+];
+
+// Reusable tab bar — drops into every screen header. `current` = the tab key
+// of the screen rendering this; everything else is highlight + click logic.
+function TRTabBar({ current, onNav }) {
+  const T = {
+    ink200: '#10141B', ink400: '#1E2430', edge: 'rgba(255,255,255,0.06)',
+    text: '#ffffff', textMid: 'rgba(180,188,200,0.75)', textDim: 'rgba(130,138,150,0.55)',
+    signal: '#c9a227',
+    mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+  };
+  return (
+    <div style={{
+      display: 'flex', padding: 3,
+      background: T.ink200, borderRadius: 10, border: `1px solid ${T.edge}`,
+      height: 34, alignItems: 'center',
+    }}>
+      {window.TR_TABS_META.map((t, idx) => {
+        const active = t.key === current;
+        return (
+          <div key={t.key}
+            onClick={() => !active && onNav && onNav(t.key)}
+            style={{
+              padding: '0 10px', height: 28, display: 'flex', alignItems: 'center', gap: 5,
+              fontSize: 11.5, fontWeight: 500, borderRadius: 7,
+              background: active ? T.ink400 : 'transparent',
+              color: active ? T.text : T.textMid,
+              boxShadow: active ? 'inset 0 0.5px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.4)' : 'none',
+              cursor: active ? 'default' : 'pointer',
+              transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+            }}>
+            <span style={{
+              fontFamily: T.mono, fontSize: 9, color: active ? T.signal : T.textDim,
+              fontWeight: 600, letterSpacing: 0.3,
+            }}>{idx + 1}.</span>
+            {t.label}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+window.TRTabBar = TRTabBar;
+
 // First-visit welcome modal — gently tells new users to paste keys for full
 // functionality. Dismissal persisted in localStorage so it never re-shows.
 function TRWelcome() {

@@ -302,31 +302,7 @@ function SummaryScreen({ onNav }) {
           style={{ width: 44, height: 44, objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(201,162,39,0.28))' }} />
         <div style={{ marginLeft: 12, fontSize: 15, fontWeight: 500, color: T.text, letterSpacing: 0.2 }}>TradeRadar</div>
 
-        <div style={{
-          marginLeft: 32, display: 'flex', padding: 3,
-          background: T.ink200, borderRadius: 10, border: `1px solid ${T.edge}`,
-          height: 34, alignItems: 'center',
-        }}>
-          {['Summary', 'Historical', 'Projected', 'Impact', 'Recommend', 'News', 'Calendar', 'Signals', 'Prices', 'Flights'].map((t, idx) => {
-            const active = idx === 0;
-            const key = t === 'Recommend' ? 'recommend' : t.toLowerCase();
-            return (
-              <div key={t}
-                onClick={() => !active && onNav && onNav(key)}
-                style={{
-                  padding: '0 10px', height: 28, display: 'flex', alignItems: 'center', gap: 5,
-                  fontSize: 11.5, fontWeight: 500, borderRadius: 7,
-                  background: active ? T.ink400 : 'transparent',
-                  color: active ? T.text : T.textMid,
-                  boxShadow: active ? 'inset 0 0.5px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.4)' : 'none',
-                  cursor: active ? 'default' : 'pointer',
-                }}>
-                <span style={{ fontFamily: T.mono, fontSize: 9, color: active ? T.signal : T.textDim, fontWeight: 600, letterSpacing: 0.3 }}>{idx + 1}.</span>
-                {t}
-              </div>
-            );
-          })}
-        </div>
+        <TRTabBar current="summary" onNav={onNav} />
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           {typeof TRGearInline !== 'undefined' && <TRGearInline />}

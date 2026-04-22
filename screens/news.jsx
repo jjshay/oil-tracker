@@ -500,25 +500,7 @@ function NewsScreen({ onNav }) {
         style={{ width: 44, height: 44, objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(201,162,39,0.28))' }} />
       <div style={{ marginLeft: 12, fontSize: 15, fontWeight: 500, color: T.text, letterSpacing: 0.2 }}>TradeRadar</div>
 
-        <div style={{
-          marginLeft: 32, display: 'flex', padding: 3,
-          background: T.ink200, borderRadius: 10, border: `1px solid ${T.edge}`,
-          height: 34, alignItems: 'center',
-        }}>
-          {['Summary', 'Historical', 'Projected', 'Impact', 'Recommend', 'News', 'Calendar', 'Signals', 'Prices', 'Flights'].map((t, idx) => {
-            const active = idx === 5;
-            return (
-              <div key={t} onClick={() => !active && onNav && onNav(t === 'Recommend' ? 'recommend' : t.toLowerCase())} style={{
-                cursor: active ? 'default' : 'pointer',
-                padding: '0 13px', height: 28, display: 'flex', alignItems: 'center',
-                fontSize: 12.5, fontWeight: 500, borderRadius: 7,
-                background: active ? T.ink400 : 'transparent',
-                color: active ? T.text : T.textMid,
-                boxShadow: active ? `inset 0 0.5px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.4)` : 'none',
-              }}>{t}</div>
-            );
-          })}
-        </div>
+        <TRTabBar current="news" onNav={onNav} />
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
           <TRLiveStripInline />
