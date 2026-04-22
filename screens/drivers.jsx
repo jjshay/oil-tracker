@@ -329,14 +329,30 @@ function DriversScreen({ onNav }) {
       },
     },
     {
-      id: 'oil-opec', group: 'wti', label: 'OPEC+ discipline', kicker: 'Supply cut vs quota',
+      id: 'oil-opec', group: 'wti', label: 'Brent − WTI Spread', kicker: 'Global supply tightness proxy',
       onOpen: () => window.openTROPEC && window.openTROPEC(),
-      load: async () => ({
-        value: 'See OPEC panel',
-        delta: 'needs EIA key',
-        signal: 'neutral',
-        note: 'Sustained cuts above quota = bullish oil',
-      }),
+      load: async () => {
+        // Free, no-key proxy via Stooq futures quotes.
+        // cb.f = Brent front month, cl.f = WTI front month.
+        try {
+          const [rB, rW] = await Promise.all([
+            fetch('https://stooq.com/q/l/?s=cb.f&f=sohlc&h&e=csv'),
+            fetch('https://stooq.com/q/l/?s=cl.f&f=sohlc&h&e=csv'),
+          ]);
+          const [tB, tW] = await Promise.all([rB.text(), rW.text()]);
+          const brent = parseFloat(tB.trim().split('\n')[1]?.split(',')[4]);
+          const wti = parseFloat(tW.trim().split('\n')[1]?.split(',')[4]);
+          if (!isFinite(brent) || !isFinite(wti)) return {};
+          const spread = brent - wti;
+          return {
+            value: '$' + spread.toFixed(2),
+            delta: 'Brent $' + brent.toFixed(2),
+            // Wide Brent premium = tight global supply / geo risk → long oil
+            signal: spread > 4 ? 'long' : spread < 1.5 ? 'short' : 'neutral',
+            note: 'Brent > WTI by $4+ = tight global supply / OPEC discipline',
+          };
+        } catch { return {}; }
+      },
     },
     {
       id: 'oil-iran', group: 'wti', label: 'Iran Nuclear · Deadline', kicker: 'JCPOA-2 countdown',
@@ -375,22 +391,44 @@ function DriversScreen({ onNav }) {
     {
       id: 'spx-hy', group: 'spx', label: 'HY Credit Spread', kicker: 'Risk-off canary',
       onOpen: () => window.openTRFRED && window.openTRFRED(),
-      load: async () => ({
-        value: 'FRED · BAMLH0A0HYM2',
-        delta: 'needs FRED key',
-        signal: 'neutral',
-        note: 'Widening HY OAS = risk-off repricing',
-      }),
+      load: async () => {
+        if (typeof window.FREDData === 'undefined') return {};
+        const rows = await window.FREDData.getSeries('BAMLH0A0HYM2', 10);
+        if (!rows || !rows.length) return {};
+        const vals = rows.filter(r => r.value != null);
+        if (!vals.length) return {};
+        const latest = vals[0].value;
+        const prior = vals[1] ? vals[1].value : null;
+        const delta = prior != null ? latest - prior : null;
+        return {
+          value: latest.toFixed(2) + '%',
+          delta: delta != null ? ((delta >= 0 ? '+' : '') + delta.toFixed(2) + ' bp') : vals[0].date,
+          // Widening HY OAS = risk-off; >3.5% = stress
+          signal: latest > 3.8 ? 'short' : latest < 3.0 ? 'long' : 'neutral',
+          note: 'Widening HY OAS = risk-off repricing · BAMLH0A0HYM2',
+        };
+      },
     },
     {
       id: 'spx-2s10s', group: 'spx', label: '2s10s Spread', kicker: 'Recession lead',
       onOpen: () => window.openTRRecession && window.openTRRecession(),
-      load: async () => ({
-        value: 'See Recession panel',
-        delta: 'FRED · T10Y2Y',
-        signal: 'neutral',
-        note: 'Re-steepening from inversion = late-cycle',
-      }),
+      load: async () => {
+        if (typeof window.FREDData === 'undefined') return {};
+        const rows = await window.FREDData.getSeries('T10Y2Y', 10);
+        if (!rows || !rows.length) return {};
+        const vals = rows.filter(r => r.value != null);
+        if (!vals.length) return {};
+        const latest = vals[0].value;
+        const prior = vals[1] ? vals[1].value : null;
+        const delta = prior != null ? latest - prior : null;
+        return {
+          value: latest.toFixed(2) + '%',
+          delta: delta != null ? ((delta >= 0 ? '+' : '') + (delta * 100).toFixed(0) + ' bp') : vals[0].date,
+          // Inverted (<0) = recession warning for equities; re-steepening (>0.5) = late-cycle
+          signal: latest < 0 ? 'short' : latest > 0.5 ? 'neutral' : 'neutral',
+          note: 'Re-steepening from inversion = late-cycle · T10Y2Y',
+        };
+      },
     },
     {
       id: 'spx-vix', group: 'spx', label: 'VIX', kicker: 'Fear regime',
@@ -412,12 +450,23 @@ function DriversScreen({ onNav }) {
     {
       id: 'spx-recession', group: 'spx', label: 'NY Fed Recession Prob', kicker: '12-month ahead',
       onOpen: () => window.openTRRecession && window.openTRRecession(),
-      load: async () => ({
-        value: 'See Recession panel',
-        delta: 'needs FRED key',
-        signal: 'neutral',
-        note: 'Rising probability = de-risk equities',
-      }),
+      load: async () => {
+        if (typeof window.FREDData === 'undefined') return {};
+        const rows = await window.FREDData.getSeries('RECPROUSM156N', 12);
+        if (!rows || !rows.length) return {};
+        const vals = rows.filter(r => r.value != null);
+        if (!vals.length) return {};
+        const latest = vals[0].value;
+        const prior = vals[1] ? vals[1].value : null;
+        const delta = prior != null ? latest - prior : null;
+        return {
+          value: (latest * 100).toFixed(1) + '%',
+          delta: delta != null ? ((delta >= 0 ? '+' : '') + (delta * 100).toFixed(1) + ' pp') : vals[0].date,
+          // Rising probability = de-risk equities
+          signal: latest > 0.25 ? 'short' : latest < 0.10 ? 'long' : 'neutral',
+          note: 'Rising probability = de-risk equities · NY Fed RECPROUSM156N',
+        };
+      },
     },
   ];
 

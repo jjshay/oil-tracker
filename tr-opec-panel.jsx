@@ -81,6 +81,27 @@
     var st_rigs   = React.useState(null);
     var st_load   = React.useState(false);
     var st_noKey  = React.useState(false);
+    var st_bwSpread = React.useState(null); // { brent, wti, spread }
+
+    // Free, no-key Brent−WTI spread (always loaded; works key or not).
+    React.useEffect(function () {
+      if (!open) return;
+      var active = true;
+      (async function () {
+        try {
+          var rB = await fetch('https://stooq.com/q/l/?s=cb.f&f=sohlc&h&e=csv');
+          var rW = await fetch('https://stooq.com/q/l/?s=cl.f&f=sohlc&h&e=csv');
+          var tB = await rB.text(), tW = await rW.text();
+          var brent = parseFloat((tB.trim().split('\n')[1] || '').split(',')[4]);
+          var wti = parseFloat((tW.trim().split('\n')[1] || '').split(',')[4]);
+          if (!active) return;
+          if (isFinite(brent) && isFinite(wti)) {
+            st_bwSpread[1]({ brent: brent, wti: wti, spread: brent - wti });
+          }
+        } catch (_) {}
+      })();
+      return function () { active = false; };
+    }, [open]);
 
     React.useEffect(function () {
       if (!open) return;

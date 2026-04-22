@@ -73,6 +73,7 @@
 <script src="engine/defi-tvl.js"></script>
 <script src="engine/eth-staking.js"></script>
 <script src="engine/alt-flow.js"></script>
+<script src="engine/journal.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -114,6 +115,11 @@
 <script type="text/babel" src="tr-defi-panel.jsx"></script>
 <script type="text/babel" src="tr-eth-staking-panel.jsx"></script>
 <script type="text/babel" src="tr-alt-panel.jsx"></script>
+<!-- Porsche polish: shared UI kit, mobile nav, panel launcher, trade journal -->
+<script type="text/babel" src="tr-ui.jsx"></script>
+<script type="text/babel" src="tr-mobile.jsx"></script>
+<script type="text/babel" src="tr-panel-launcher.jsx"></script>
+<script type="text/babel" src="tr-journal-panel.jsx"></script>
 <!-- Local-only key bootstrap (gitignored) — pre-fills localStorage.tr_settings
      so the Settings sheet loads with JJ's API keys on first page load. -->
 <script src="keys.local.js"></script>
@@ -303,6 +309,7 @@ function TradeRadarApp() {
     weather: false, shipping: false, opec: false,
     recession: false, cb: false, earnings: false,
     defi: false, ethstaking: false, alt: false,
+    launcher: false, journal: false,
   });
   const openPanel  = (k) => setPanels(p => ({ ...p, [k]: true }));
   const closePanel = (k) => setPanels(p => ({ ...p, [k]: false }));
@@ -348,6 +355,8 @@ function TradeRadarApp() {
       ['defi',       'openTRDeFi',        null],
       ['ethstaking', 'openTRETHStaking',  null],
       ['alt',        'openTRAlt',         null],
+      ['launcher',   'openTRPanelLauncher', 'tr:open-launcher'],
+      ['journal',    'openTRJournal',       null],
     ];
     PANEL_REG.forEach(([k, globalName]) => { window[globalName] = () => openPanel(k); });
 
@@ -373,10 +382,27 @@ function TradeRadarApp() {
       window.TRAlertsManager.start();
     }
 
+    // Power-user shortcuts: Cmd+Shift+P = panel launcher, J = trade journal
+    const powerKeys = (e) => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (/input|textarea|select/i.test(tag) || e.target?.isContentEditable) return;
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        openPanel('launcher');
+      } else if (e.key.toLowerCase() === 'j' && !meta && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        openPanel('journal');
+      }
+    };
+    window.addEventListener('keydown', powerKeys);
+    const cleanupPowerKeys = () => window.removeEventListener('keydown', powerKeys);
+
     return () => {
       window.removeEventListener('tr:open-cmdk',   onCmdk);
       window.removeEventListener('tr:open-alerts', onAlerts);
       evtHandlers.forEach(([evt, h]) => window.removeEventListener(evt, h));
+      cleanupPowerKeys();
       if (cleanup) cleanup();
     };
   }, []);
@@ -407,6 +433,13 @@ function TradeRadarApp() {
   return (
     <>
       <div className="tr-shell">{wrappedScreen}</div>
+      {window.TRMobileNav     && <window.TRMobileNav     activeKey={tab} onNav={setTab} />}
+      {window.TRMobileToolbar && <window.TRMobileToolbar
+        onCmdK={() => setCmdkOpen(true)}
+        onAlerts={() => setAlertsOpen(true)}
+        onSettings={() => setSettingsOpen(true)}
+        onPanels={() => openPanel('launcher')}
+      />}
       <TRSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <TROptionsChain open={optionsOpen} onClose={() => setOptionsOpen(false)} initialSymbol={optionsInitialSymbol} />
       <TRWelcome />
@@ -441,6 +474,8 @@ function TradeRadarApp() {
         ['defi',       'TRDeFiPanel'],
         ['ethstaking', 'TRETHStakingPanel'],
         ['alt',        'TRAltPanel'],
+        ['launcher',   'TRPanelLauncher'],
+        ['journal',    'TRJournalPanel'],
       ].map(([k, Cmp]) => {
         const C = window[Cmp];
         return C ? <C key={k} open={panels[k]} onClose={() => closePanel(k)} /> : null;

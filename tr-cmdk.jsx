@@ -70,6 +70,16 @@
       run: ({ onClose }) => { if (window.openTRAlerts) window.openTRAlerts(); onClose && onClose(); },
     },
     {
+      key: 'act:launcher', icon: '⬚', label: 'All Panels (Launcher)', hint: '⌘⇧P · browse every panel',
+      keywords: 'launcher panels grid all dashboard navigate',
+      run: ({ onClose }) => { if (window.openTRPanelLauncher) window.openTRPanelLauncher(); onClose && onClose(); },
+    },
+    {
+      key: 'act:journal', icon: '📘', label: 'Trade Journal', hint: 'J · running P&L + log trades',
+      keywords: 'journal trade log pnl performance stats win rate',
+      run: ({ onClose }) => { if (window.openTRJournal) window.openTRJournal(); onClose && onClose(); },
+    },
+    {
       key: 'act:congress', icon: '🏛', label: 'Congress Trading', hint: 'Pelosi / Vance / Crenshaw filings',
       keywords: 'congress pelosi capitol trades politicians stock disclosure',
       run: ({ onClose }) => { if (window.openTRCongress) window.openTRCongress(); onClose && onClose(); },

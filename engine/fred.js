@@ -1,11 +1,13 @@
 // engine/fred.js — FRED (St. Louis Fed) macro series fetcher.
 //
-// Free public API. Users need a 32-char API key from
-// https://fred.stlouisfed.org/docs/api/api_key.html. The engine resolves the
-// key in this order:
+// NO-KEY BY DEFAULT. The public graphviz CSV endpoint
+//   https://fred.stlouisfed.org/graph/fredgraph.csv?id=<SERIES>
+// returns CSV for any series without an API key and is CORS-friendly.
+// We try that first; only if the CSV path fails do we fall back to the
+// keyed JSON observations endpoint using:
 //   1. window.TR_SETTINGS.keys.fred
 //   2. window.FRED_API_KEY
-//   3. fallback placeholder (will 400 — caller must show "paste key" UI)
+//   3. fallback placeholder (only triggers JSON path if user supplied a key)
 //
 // Exposes on window:
 //   FREDData.getSeries(seriesId, limit)   → [{ date:'YYYY-MM-DD', value:Number|null }, …]
@@ -16,16 +18,17 @@
 //     …one entry per SERIES id…
 //   }
 //   FREDData.SERIES                         → canonical series map (for UI labels/units)
-//   FREDData.hasKey()                       → boolean
+//   FREDData.hasKey()                       → boolean (CSV works without one — kept for compat)
 //   FREDData.clearCache()                   → void
 //
-// Cache: in-memory, 10-minute TTL, keyed by series id.
+// Cache: in-memory, 10-minute TTL, keyed by series id + limit.
 
 (function () {
   if (typeof window === 'undefined') return;
 
   var CACHE_TTL_MS = 10 * 60 * 1000;
-  var BASE = 'https://api.stlouisfed.org/fred/series/observations';
+  var CSV_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+  var JSON_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 
   // Canonical series set the FRED panel renders as tiles.
   // unit:  'pct' | 'bps' | 'usd-bn' | 'usd-tn' | 'num' | 'ratio'
@@ -50,15 +53,14 @@
     'WM2NS','WALCL',
   ];
 
-  // ---------- key resolution ----------
+  // ---------- key resolution (optional) ----------
   function resolveKey() {
     try {
       var s = window.TR_SETTINGS;
       if (s && s.keys && typeof s.keys.fred === 'string' && s.keys.fred.trim()) return s.keys.fred.trim();
     } catch (_) {}
     if (typeof window.FRED_API_KEY === 'string' && window.FRED_API_KEY.trim()) return window.FRED_API_KEY.trim();
-    // Placeholder. Will fail validation (32-char alpha-num lowercase).
-    return 'PASTE_FRED_KEY_HERE_________________';
+    return '';
   }
   function hasKey() {
     var k = resolveKey();
@@ -66,7 +68,7 @@
   }
 
   // ---------- cache ----------
-  var cache = {};  // { [seriesId]: { data, fetchedAt } }
+  var cache = {};  // { [seriesId+limit]: { data, fetchedAt } }
 
   function cacheGet(key) {
     var e = cache[key];
@@ -78,7 +80,35 @@
     cache[key] = { data: data, fetchedAt: Date.now() };
   }
 
-  // ---------- fetch ----------
+  // ---------- CSV parser ----------
+  // FRED CSV format:
+  //   observation_date,SERIES_ID
+  //   1962-01-02,4.06
+  //   ...
+  // Missing values are represented as "." (dot).
+  function parseCSV(text, seriesId) {
+    if (!text) return null;
+    var lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return null;
+    var rows = [];
+    // Skip header (lines[0])
+    for (var i = 1; i < lines.length; i++) {
+      var line = lines[i];
+      if (!line) continue;
+      var parts = line.split(',');
+      if (parts.length < 2) continue;
+      var date = (parts[0] || '').trim();
+      var raw = (parts[1] || '').trim();
+      if (!date) continue;
+      if (raw === '' || raw === '.') { rows.push({ date: date, value: null }); continue; }
+      var n = parseFloat(raw);
+      if (!isFinite(n)) { rows.push({ date: date, value: null }); continue; }
+      rows.push({ date: date, value: n });
+    }
+    return rows;
+  }
+
+  // ---------- fetch: CSV first, JSON fallback ----------
   async function getSeries(seriesId, limit) {
     if (!seriesId) return null;
     var lim = Math.max(1, Math.min(500, limit || 30));
@@ -86,30 +116,52 @@
     var cached = cacheGet(cacheKey);
     if (cached) return cached;
 
-    var key = resolveKey();
-    var url = BASE
-      + '?series_id=' + encodeURIComponent(seriesId)
-      + '&api_key=' + encodeURIComponent(key)
-      + '&file_type=json&sort_order=desc&limit=' + lim;
+    var scale = (SERIES[seriesId] && SERIES[seriesId].scale) || 1;
 
+    // Attempt 1 — public CSV endpoint, no key required.
     try {
-      var resp = await fetch(url, { method: 'GET' });
-      if (!resp.ok) return null;
-      var json = await resp.json();
-      if (!json || !Array.isArray(json.observations)) return null;
-      var scale = (SERIES[seriesId] && SERIES[seriesId].scale) || 1;
-      var rows = json.observations.map(function (o) {
-        var v = o.value;
-        if (v == null || v === '' || v === '.') return { date: o.date, value: null };
-        var n = parseFloat(v);
-        if (!isFinite(n)) return { date: o.date, value: null };
-        return { date: o.date, value: n * scale };
-      });
-      cacheSet(cacheKey, rows);
-      return rows;
-    } catch (_) {
-      return null;
+      var csvUrl = CSV_BASE + '?id=' + encodeURIComponent(seriesId);
+      var resp = await fetch(csvUrl, { method: 'GET' });
+      if (resp && resp.ok) {
+        var text = await resp.text();
+        var parsed = parseCSV(text, seriesId);
+        if (parsed && parsed.length) {
+          // CSV is oldest-first; reverse to newest-first and cap to `lim`.
+          parsed.reverse();
+          var trimmed = parsed.slice(0, lim).map(function (r) {
+            return { date: r.date, value: r.value == null ? null : r.value * scale };
+          });
+          cacheSet(cacheKey, trimmed);
+          return trimmed;
+        }
+      }
+    } catch (_) { /* fall through to keyed JSON */ }
+
+    // Attempt 2 — keyed JSON endpoint (only if user has supplied a valid key).
+    if (hasKey()) {
+      var key = resolveKey();
+      var url = JSON_BASE
+        + '?series_id=' + encodeURIComponent(seriesId)
+        + '&api_key=' + encodeURIComponent(key)
+        + '&file_type=json&sort_order=desc&limit=' + lim;
+      try {
+        var r2 = await fetch(url, { method: 'GET' });
+        if (!r2.ok) return null;
+        var json = await r2.json();
+        if (!json || !Array.isArray(json.observations)) return null;
+        var rows = json.observations.map(function (o) {
+          var v = o.value;
+          if (v == null || v === '' || v === '.') return { date: o.date, value: null };
+          var n = parseFloat(v);
+          if (!isFinite(n)) return { date: o.date, value: null };
+          return { date: o.date, value: n * scale };
+        });
+        cacheSet(cacheKey, rows);
+        return rows;
+      } catch (_) { return null; }
     }
+
+    return null;
   }
 
   // ---------- bundle ----------

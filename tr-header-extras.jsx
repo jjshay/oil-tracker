@@ -69,7 +69,9 @@ function TRGearInline() {
   );
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      {btn('⬚',  'Panel launcher (⌘⇧P)',         () => window.openTRPanelLauncher && window.openTRPanelLauncher(), 14)}
       {btn('⌘K', 'Command palette (⌘K or /)',    () => window.openTRCmdK    && window.openTRCmdK(),    10)}
+      {btn('📘', 'Trade journal (J)',             () => window.openTRJournal && window.openTRJournal(),  12)}
       {btn('🔔',  'Alerts · Telegram triggers',   () => window.openTRAlerts  && window.openTRAlerts())}
       {btn('⚙',  'Settings · refresh · API keys',() => window.openTRSettings && window.openTRSettings(), 14)}
     </div>
