@@ -57,16 +57,22 @@ function TRLiveStripInline() {
 }
 
 function TRGearInline() {
-  return (
-    <div
-      onClick={() => window.openTRSettings && window.openTRSettings()}
-      title="Settings · refresh · API keys"
+  const btn = (icon, title, onClick, fs) => (
+    <div onClick={onClick} title={title}
       style={{
         width: 28, height: 28, borderRadius: 7,
         background: '#10141B', border: '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: 'rgba(180,188,200,0.75)', fontSize: 14,
-      }}>⚙</div>
+        cursor: 'pointer', color: 'rgba(180,188,200,0.75)', fontSize: fs || 13,
+        fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontWeight: 600,
+      }}>{icon}</div>
+  );
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      {btn('⌘K', 'Command palette (⌘K or /)',    () => window.openTRCmdK    && window.openTRCmdK(),    10)}
+      {btn('🔔',  'Alerts · Telegram triggers',   () => window.openTRAlerts  && window.openTRAlerts())}
+      {btn('⚙',  'Settings · refresh · API keys',() => window.openTRSettings && window.openTRSettings(), 14)}
+    </div>
   );
 }
 

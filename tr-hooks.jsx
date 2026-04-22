@@ -526,12 +526,150 @@ function TRSettingsSheet({ open, onClose }) {
           );
         })()}
 
+        {/* RUNTIME LOG */}
+        <TRRuntimeLogSection T={T} />
+
         <div style={{ fontSize: 10.5, color: T.textDim, letterSpacing: 0.3, lineHeight: 1.55 }}>
           Tradier sandbox (delayed data) is free. Polygon.io starts at $29/mo. Finnhub has a generous free tier
           for US stock prices. Alpaca paper-trading keys are free. CoinGecko works without a key but has lower limits.
         </div>
       </div>
     </div>
+  );
+}
+
+// ───── Runtime log panel (collapsible) ─────
+// Polls window.TRLogger every 2s while open; renders last 50 entries.
+function TRRuntimeLogSection({ T }) {
+  const [open, setOpen] = React.useState(false);
+  const [rows, setRows] = React.useState([]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const read = () => {
+      const src = (window.TRLogger && typeof window.TRLogger.entries === 'function')
+        ? window.TRLogger.entries() : [];
+      setRows(src.slice(0, 50));
+    };
+    read();
+    const id = setInterval(read, 2000);
+    return () => clearInterval(id);
+  }, [open]);
+
+  const clearLog = () => {
+    if (window.TRLogger && typeof window.TRLogger.clear === 'function') {
+      window.TRLogger.clear();
+    }
+    setRows([]);
+  };
+
+  const fmtTime = (ts) => {
+    const d = new Date(ts);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  };
+
+  const shortUrl = (u) => {
+    if (!u) return '';
+    try {
+      const p = new URL(u);
+      return `${p.host}${p.pathname}`;
+    } catch { return u.length > 60 ? u.slice(0, 58) + '…' : u; }
+  };
+
+  return (
+    <>
+      <div
+        onClick={() => setOpen(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 14px', cursor: 'pointer',
+          background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+          marginBottom: open ? 10 : 24,
+        }}>
+        <div style={{ fontSize: 9, letterSpacing: 1.2, color: T.signal, textTransform: 'uppercase', fontWeight: 600 }}>
+          Runtime log
+        </div>
+        <div style={{ fontSize: 10.5, color: T.textMid, fontFamily: T.mono }}>
+          last 50 fetches · live
+        </div>
+        <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: 11, color: T.textDim }}>
+          {open ? '▾' : '▸'} {rows.length}
+        </div>
+      </div>
+      {open && (
+        <div style={{
+          background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+          padding: '10px 12px', marginBottom: 24,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: T.textDim, fontFamily: T.mono }}>
+              {rows.length} entries · polling 2s
+            </div>
+            <div
+              onClick={clearLog}
+              style={{
+                marginLeft: 'auto', padding: '4px 10px', fontSize: 10.5, letterSpacing: 0.3,
+                fontFamily: T.mono, fontWeight: 600, color: T.textMid,
+                background: T.ink000, border: `1px solid ${T.edge}`, borderRadius: 5,
+                cursor: 'pointer',
+              }}>Clear log</div>
+          </div>
+          <div style={{
+            maxHeight: 320, overflowY: 'auto',
+            border: `1px solid ${T.edge}`, borderRadius: 6, background: T.ink000,
+          }}>
+            <table style={{
+              width: '100%', borderCollapse: 'collapse', fontFamily: T.mono, fontSize: 10.5,
+            }}>
+              <thead>
+                <tr style={{ position: 'sticky', top: 0, background: T.ink100, zIndex: 1 }}>
+                  <th style={{ textAlign: 'left', padding: '6px 8px', color: T.textDim, fontWeight: 600, borderBottom: `1px solid ${T.edge}` }}>TIME</th>
+                  <th style={{ textAlign: 'left', padding: '6px 8px', color: T.textDim, fontWeight: 600, borderBottom: `1px solid ${T.edge}` }}>METHOD · URL</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', color: T.textDim, fontWeight: 600, borderBottom: `1px solid ${T.edge}` }}>STATUS</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', color: T.textDim, fontWeight: 600, borderBottom: `1px solid ${T.edge}` }}>MS</th>
+                  <th style={{ textAlign: 'center', padding: '6px 8px', color: T.textDim, fontWeight: 600, borderBottom: `1px solid ${T.edge}` }}>CACHE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: 14, textAlign: 'center', color: T.textDim }}>
+                    No log entries yet. Fetches via <span style={{ color: T.textMid }}>window.trFetch</span> will appear here.
+                  </td></tr>
+                )}
+                {rows.map((r, i) => {
+                  const isErr = !!r.error || r.status === 0 || r.status >= 500;
+                  const is429 = r.status === 429;
+                  const rowBg = isErr ? 'rgba(217,107,107,0.12)'
+                    : is429 ? 'rgba(201,162,39,0.12)'
+                    : 'transparent';
+                  const statusColor = isErr ? '#D96B6B'
+                    : is429 ? T.signal
+                    : r.status >= 400 ? '#D96B6B'
+                    : r.status >= 200 ? '#6FCF8E'
+                    : T.textMid;
+                  return (
+                    <tr key={`${r.ts}-${i}`} style={{ background: rowBg }}>
+                      <td style={{ padding: '5px 8px', color: T.textMid, whiteSpace: 'nowrap' }}>{fmtTime(r.ts)}</td>
+                      <td style={{ padding: '5px 8px', color: T.text, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`${r.method} ${r.url}${r.error ? ' — ' + r.error : ''}`}>
+                        <span style={{ color: T.textDim }}>{r.method}</span>{' '}{shortUrl(r.url)}
+                      </td>
+                      <td style={{ padding: '5px 8px', color: statusColor, textAlign: 'right', fontWeight: 600 }}>{r.status || '—'}</td>
+                      <td style={{ padding: '5px 8px', color: T.textMid, textAlign: 'right' }}>{r.ms || 0}</td>
+                      <td style={{ padding: '5px 8px', textAlign: 'center', color: r.cached ? T.signal : T.textDim }}>
+                        {r.cached ? '✓' : '·'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

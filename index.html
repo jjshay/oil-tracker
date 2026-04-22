@@ -16,6 +16,20 @@
   #root { width: 100%; min-height: 100vh; }
   .tr-shell { min-width: 1280px; min-height: 820px; }
   .tr-nav-btn:hover { background: #171C24 !important; color: rgba(235,238,244,0.95) !important; }
+
+  /* Mobile / small-viewport shrink-to-fit.
+     Keeps the desktop 1280px canvas pixel-perfect but scales it down uniformly
+     via CSS transform so the whole app is visible (and usable) on phones and
+     tablets. Pragmatic compromise — prevents horizontal-scroll-only state. */
+  @media (max-width: 1280px) {
+    .tr-shell {
+      transform: scale(calc(100vw / 1280));
+      transform-origin: top left;
+      width: 1280px !important;
+      min-width: 1280px !important;
+    }
+    html, body { overflow-x: hidden; }
+  }
 </style>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
@@ -34,9 +48,16 @@
 </head>
 <body>
 <div id="root"></div>
+<!-- Utility layer: cache + logger (plain JS, no JSX) -->
+<script src="tr-cache.js"></script>
+<script src="tr-logger.js"></script>
 <!-- Auto-update hook + settings sheet -->
 <script type="text/babel" src="tr-hooks.jsx"></script>
 <script type="text/babel" src="tr-header-extras.jsx"></script>
+<script type="text/babel" src="tr-error-boundary.jsx"></script>
+<script type="text/babel" src="tr-shortcuts.jsx"></script>
+<script type="text/babel" src="tr-alerts.jsx"></script>
+<script type="text/babel" src="tr-cmdk.jsx"></script>
 <!-- Local-only key bootstrap (gitignored) — pre-fills localStorage.tr_settings
      so the Settings sheet loads with JJ's API keys on first page load. -->
 <script src="keys.local.js"></script>
@@ -213,15 +234,44 @@ function TradeRadarApp() {
   const [optionsOpen, setOptionsOpen] = React.useState(false);
   const [optionsInitialSymbol, setOptionsInitialSymbol] = React.useState(null);
   const [tradeOpen, setTradeOpen] = React.useState(false);
+  const [alertsOpen, setAlertsOpen] = React.useState(false);
+  const [cmdkOpen, setCmdkOpen] = React.useState(false);
   const openSettings = () => setSettingsOpen(true);
   const openOptions  = (symbol) => { if (symbol) setOptionsInitialSymbol(symbol); setOptionsOpen(true); };
   const openTrade    = () => setTradeOpen(true);
+  const openAlerts   = () => setAlertsOpen(true);
+  const openCmdK     = () => setCmdkOpen(true);
 
-  // Global triggers — any screen can open Settings, the Tradier chain, or the trade modal.
+  // Global triggers + keyboard shortcuts + alerts daemon.
   React.useEffect(() => {
     window.openTRSettings = openSettings;
     window.openTROptions  = openOptions;
     window.openTRTrade    = openTrade;
+    window.openTRAlerts   = openAlerts;
+    window.openTRCmdK     = openCmdK;
+
+    // Listen for palette/alert events fired from shortcuts or buttons
+    const onCmdk   = () => setCmdkOpen(true);
+    const onAlerts = () => setAlertsOpen(true);
+    window.addEventListener('tr:open-cmdk',   onCmdk);
+    window.addEventListener('tr:open-alerts', onAlerts);
+
+    // Keyboard shortcuts — 1-9/0 = tabs, / or Cmd+K = palette, R = refresh, Cmd+, = settings
+    let cleanup = null;
+    if (typeof window.installTRShortcuts === 'function') {
+      cleanup = window.installTRShortcuts(setTab, () => window.location.reload());
+    }
+
+    // Start the alerts manager so triggers fire even when the panel is closed
+    if (window.TRAlertsManager && typeof window.TRAlertsManager.start === 'function') {
+      window.TRAlertsManager.start();
+    }
+
+    return () => {
+      window.removeEventListener('tr:open-cmdk',   onCmdk);
+      window.removeEventListener('tr:open-alerts', onAlerts);
+      if (cleanup) cleanup();
+    };
   }, []);
 
   let screen;
@@ -239,13 +289,22 @@ function TradeRadarApp() {
   else if (tab === 'flights')  screen = <FlightsScreen  onNav={setTab} />;
   else screen = <SummaryScreen onNav={setTab} />;
 
+  // Wrap active screen in an ErrorBoundary so a bad fetch/throw in one tab
+  // doesn't blank the whole app. Reset → re-mount that tab only.
+  const Boundary = window.TRErrorBoundary;
+  const wrappedScreen = Boundary ? (
+    <Boundary key={tab} onReset={() => setTab(tab)}>{screen}</Boundary>
+  ) : screen;
+
   return (
     <>
-      <div className="tr-shell">{screen}</div>
+      <div className="tr-shell">{wrappedScreen}</div>
       <TRSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <TROptionsChain open={optionsOpen} onClose={() => setOptionsOpen(false)} initialSymbol={optionsInitialSymbol} />
       <TRWelcome />
       <TRTradeModal open={tradeOpen} onClose={() => setTradeOpen(false)} />
+      {window.TRAlertsPanel && <window.TRAlertsPanel open={alertsOpen} onClose={() => setAlertsOpen(false)} />}
+      {window.TRCmdK       && <window.TRCmdK       open={cmdkOpen}   onClose={() => setCmdkOpen(false)} onNav={setTab} />}
     </>
   );
 }

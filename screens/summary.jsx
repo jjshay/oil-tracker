@@ -257,6 +257,9 @@ function SummaryScreen({ onNav }) {
       // Save snapshot for next-time delta, only if we got at least one valid prediction
       const anyValid = [cl, gp, ge].some(r => r && r.bitcoin_year_end_usd);
       if (anyValid) saveLastPredictions({ ...next, ts: Date.now() });
+
+      // Publish for TRAlertsManager's CONSENSUS_DIVERGENT rule
+      window.TR_LAST_PREDS = next;
     } catch (e) {
       console.error(e);
     } finally { setLoading(false); }
