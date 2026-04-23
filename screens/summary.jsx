@@ -47,48 +47,58 @@ Respond in this exact JSON format (no markdown fences, raw JSON only):
 }
 
 async function callModel(which, headlines) {
-  if (typeof AIAnalysis === 'undefined') return null;
+  // Returns parsed prediction obj on success, { _error, _detail } on failure.
+  if (typeof AIAnalysis === 'undefined') return { _error: 'engine-missing' };
   const keys = AIAnalysis.getKeys();
+  const keyMap = { claude: keys.claude, gpt: keys.openai, gemini: keys.gemini };
+  if (!keyMap[which]) return { _error: 'nokey' };
   const prompt = buildPrompt(headlines);
   try {
     let resp;
-    if (which === 'claude' && keys.claude) {
+    if (which === 'claude') {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': keys.claude, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
       });
-      if (!r.ok) return null;
+      if (!r.ok) {
+        const detail = await r.text().catch(() => '');
+        return { _error: `http-${r.status}`, _detail: detail.slice(0, 160) };
+      }
       const j = await r.json();
       resp = j.content?.[0]?.text || '';
-    } else if (which === 'gpt' && keys.openai) {
+    } else if (which === 'gpt') {
       const r = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${keys.openai}` },
         body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.4, max_tokens: 1000 }),
       });
-      if (!r.ok) return null;
+      if (!r.ok) {
+        const detail = await r.text().catch(() => '');
+        return { _error: `http-${r.status}`, _detail: detail.slice(0, 160) };
+      }
       const j = await r.json();
       resp = j.choices?.[0]?.message?.content || '';
-    } else if (which === 'gemini' && keys.gemini) {
+    } else if (which === 'gemini') {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys.gemini}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 1000 } }),
       });
-      if (!r.ok) return null;
+      if (!r.ok) {
+        const detail = await r.text().catch(() => '');
+        return { _error: `http-${r.status}`, _detail: detail.slice(0, 160) };
+      }
       const j = await r.json();
       resp = j.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    } else {
-      return null;
     }
     const cleaned = resp.replace(/^```json\s*|\s*```$/g, '').replace(/```/g, '').trim();
     try { return JSON.parse(cleaned); }
     catch {
       const m = cleaned.match(/\{[\s\S]*\}/);
       if (m) { try { return JSON.parse(m[0]); } catch {} }
-      return null;
+      return { _error: 'parse', _detail: cleaned.slice(0, 160) };
     }
-  } catch (_) { return null; }
+  } catch (e) { return { _error: 'network', _detail: (e && e.message) || String(e) }; }
 }
 
 function fmtPrice(n, prefix = '$') {
@@ -103,22 +113,41 @@ function fmtDelta(curr, prev) {
 }
 
 function PredictionCard({ brand, brandName, rec, prev, T }) {
-  if (!rec) {
+  const hasError = !rec || rec._error;
+  if (hasError) {
+    const msg = !rec                       ? { title: 'No response yet', body: 'Click ↻ REFRESH to run.', tone: 'dim' }
+              : rec._error === 'nokey'     ? { title: `No ${brandName} key`, body: 'Add it in ⚙ Settings → Core.', tone: 'dim' }
+              : rec._error === 'parse'     ? { title: `${brandName} returned invalid JSON`, body: rec._detail || 'Response did not parse.', tone: 'bear' }
+              : rec._error === 'network'   ? { title: `Network error · ${brandName}`, body: rec._detail || 'CORS, DNS or offline.', tone: 'bear' }
+              : /^http-/.test(rec._error)  ? { title: `${brandName} ${rec._error.toUpperCase()}`, body: rec._detail || 'API refused the request.', tone: 'bear' }
+              :                              { title: `${brandName} failed`, body: rec._error, tone: 'bear' };
+    const toneColor = msg.tone === 'bear' ? T.bear : T.textDim;
     return (
       <div style={{
-        background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 10,
+        background: T.ink200, border: `1px solid ${msg.tone === 'bear' ? `${T.bear}55` : T.edge}`, borderRadius: 10,
         padding: '16px 18px', minHeight: 280,
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <div style={{ width: 7, height: 7, borderRadius: 4, background: brand }} />
           <div style={{ fontSize: 13, fontWeight: 500, color: T.text }}>{brandName}</div>
+          {rec && rec._error && (
+            <div style={{
+              marginLeft: 'auto', padding: '2px 7px',
+              background: `${toneColor}18`, border: `0.5px solid ${toneColor}55`,
+              borderRadius: 4, fontFamily: T.mono, fontSize: 9, fontWeight: 600,
+              color: toneColor, letterSpacing: 0.6,
+            }}>{rec._error.toUpperCase()}</div>
+          )}
         </div>
         <div style={{
-          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: T.mono, fontSize: 10, color: T.textDim, letterSpacing: 0.4, textAlign: 'center',
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
+          gap: 8, padding: '0 8px',
         }}>
-          No API key set for {brandName}.<br/>Add one in ⚙ Settings.
+          <div style={{ fontSize: 12, color: T.text, fontWeight: 500, textAlign: 'center' }}>{msg.title}</div>
+          <div style={{ fontFamily: T.mono, fontSize: 10, color: toneColor, letterSpacing: 0.3, textAlign: 'center', wordBreak: 'break-word' }}>
+            {msg.body}
+          </div>
         </div>
       </div>
     );

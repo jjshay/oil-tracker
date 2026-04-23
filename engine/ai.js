@@ -174,7 +174,7 @@ Respond in this exact JSON format (no markdown, just raw JSON):
                     'anthropic-dangerous-direct-browser-access': 'true'
                 },
                 body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
+                    model: 'claude-sonnet-4-6',
                     max_tokens: 1500,
                     messages: [{ role: 'user', content: this._buildPrompt(headlines) }]
                 })
@@ -306,7 +306,7 @@ Write the briefing as natural spoken text (no JSON, no bullet points, no markdow
                     'anthropic-dangerous-direct-browser-access': 'true'
                 },
                 body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
+                    model: 'claude-sonnet-4-6',
                     max_tokens: 2000,
                     messages: [{ role: 'user', content: this._buildBriefingPrompt(headlines) }]
                 })
@@ -432,7 +432,7 @@ User's question: ${question}`;
             const resp = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-api-key': keys.claude, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-                body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages })
+                body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages })
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const data = await resp.json();

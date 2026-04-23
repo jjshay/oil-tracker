@@ -497,20 +497,28 @@ function ImpactScreen({ onNav }) {
               </div>
               <div style={{
                 marginLeft: 'auto', fontSize: 11, lineHeight: 1.5, color: T.textMid, maxWidth: 330,
-                fontStyle: 'italic',
+                fontStyle: 'italic', display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end',
               }}>
-                Oil at {fmtOil(oilMath.projectedOil)} acts as a{' '}
-                <span style={{
-                  color: btcMath.consensusBtc >= 0 ? T.bull : T.bear, fontWeight: 500, fontStyle: 'normal',
-                  fontFamily: T.mono,
+                <div>
+                  Oil at {fmtOil(oilMath.projectedOil)} acts as a{' '}
+                  <span style={{
+                    color: btcMath.consensusBtc >= 0 ? T.bull : T.bear, fontWeight: 500, fontStyle: 'normal',
+                    fontFamily: T.mono,
+                  }}>
+                    {btcMath.consensusBtc >= 0 ? 'tailwind' : 'headwind'}
+                  </span>{' '}
+                  on BTC — expected to{' '}
+                  {btcMath.consensusBtc >= 0 ? 'lift' : 'cap'} price by{' '}
+                  <span style={{ color: T.btc, fontFamily: T.mono, fontWeight: 500, fontStyle: 'normal' }}>
+                    {fmtBigDollar(btcMath.consensusBtc)}
+                  </span>.
+                </div>
+                <div style={{
+                  fontFamily: T.mono, fontSize: 9.5, color: T.textDim,
+                  letterSpacing: 0.3, fontStyle: 'normal',
                 }}>
-                  {btcMath.consensusBtc >= 0 ? 'tailwind' : 'headwind'}
-                </span>{' '}
-                on BTC — expected to{' '}
-                {btcMath.consensusBtc >= 0 ? 'lift' : 'cap'} price by{' '}
-                <span style={{ color: T.btc, fontFamily: T.mono, fontWeight: 500, fontStyle: 'normal' }}>
-                  {fmtBigDollar(btcMath.consensusBtc)}
-                </span>.
+                  {new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ET · live model
+                </div>
               </div>
             </div>
           </div>
