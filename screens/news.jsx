@@ -730,18 +730,27 @@ function NewsScreen({ onNav }) {
                         fontFamily: T.mono, fontSize: 9.5, color: T.textDim, letterSpacing: 0.3,
                       }}>{tPart} ET</div>
                       <div style={{ marginLeft: 'auto' }}>
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 5,
-                          padding: '2px 7px', borderRadius: 4,
-                          background: `${risk.color}18`,
-                          border: `0.5px solid ${risk.color}55`,
-                        }}>
-                          <div style={{ width: 4, height: 4, borderRadius: 2, background: risk.color }} />
-                          <div style={{
-                            fontSize: 8.5, fontWeight: 600, letterSpacing: 0.8,
-                            color: risk.color,
-                          }}>RISK · {risk.label}</div>
-                        </div>
+                        {(() => {
+                          const riskKey = risk.label === 'HIGH' ? 'news-risk-high' : risk.label === 'MED' ? 'news-risk-medium' : 'news-risk-low';
+                          const tipText = (window.TR_EXPLAIN && window.TR_EXPLAIN[riskKey]) || '';
+                          const chip = (
+                            <div style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 5,
+                              padding: '2px 7px', borderRadius: 4,
+                              background: `${risk.color}18`,
+                              border: `0.5px solid ${risk.color}55`,
+                            }}>
+                              <div style={{ width: 4, height: 4, borderRadius: 2, background: risk.color }} />
+                              <div style={{
+                                fontSize: 8.5, fontWeight: 600, letterSpacing: 0.8,
+                                color: risk.color,
+                              }}>RISK · {risk.label}</div>
+                            </div>
+                          );
+                          return tipText && typeof TRTooltip !== 'undefined'
+                            ? <TRTooltip text={tipText}>{chip}</TRTooltip>
+                            : chip;
+                        })()}
                       </div>
                     </div>
 

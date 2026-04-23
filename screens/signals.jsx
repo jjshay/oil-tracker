@@ -216,6 +216,7 @@ function SignalsScreen({ onNav }) {
       id: 'fed',
       label: 'Fed & Rates',
       desc: 'Cost of capital · liquidity · USD',
+      explain: 'signals-lane-fed',
       accent: T.oil,
       signals: [
         { label: 'Fed Funds Target', value: '4.50%', delta: '-25bp · FOMC Jan', dir: 'down', impact: ['BTC', 'SPX'], spark: seededSpark(11, 28, -0.3), status: 'Next decision Apr 22', statusColor: T.signal, hot: true },
@@ -230,6 +231,7 @@ function SignalsScreen({ onNav }) {
       id: 'equity',
       label: 'Equities',
       desc: 'S&P earnings · VIX · mega-cap',
+      explain: 'signals-lane-equity',
       accent: T.spx,
       signals: [
         { label: 'S&P 500', value: '5,847', delta: '+0.4% · today', dir: 'up', impact: ['SPX'], spark: seededSpark(21, 28, 0.3), status: 'ATH within 0.8%' },
@@ -244,6 +246,7 @@ function SignalsScreen({ onNav }) {
       id: 'crypto',
       label: 'Crypto Flows',
       desc: 'ETFs · on-chain · funding · cycle',
+      explain: 'signals-lane-crypto',
       accent: T.btc,
       signals: [
         { label: 'BTC Spot', value: '$88,420', delta: '+2.4% · today', dir: 'up', impact: ['BTC'], spark: seededSpark(31, 28, 0.4), status: '12% below all-time high' },
@@ -260,6 +263,7 @@ function SignalsScreen({ onNav }) {
       id: 'reg',
       label: 'Regulation',
       desc: 'CLARITY Act · SEC · Treasury · state',
+      explain: 'signals-lane-reg',
       accent: '#5FC9C2',
       signals: [
         { label: 'CLARITY Act · Senate', value: '68% pass', delta: '+11 · last month', dir: 'up', impact: ['BTC'], spark: seededSpark(41, 28, 0.5), status: 'Vote Apr 24 · Polymarket', statusColor: T.signal, hot: true },
@@ -274,6 +278,7 @@ function SignalsScreen({ onNav }) {
       id: 'geo',
       label: 'Geopolitics & Negotiations',
       desc: 'Diplomatic flashpoints · trade talks',
+      explain: 'signals-lane-geo',
       accent: '#D96B6B',
       signals: [
         { label: 'Iran Nuclear Talks', value: 'Stalling', delta: 'deadline Apr 27', dir: 'down', impact: ['OIL', 'SPX'], spark: seededSpark(51, 28, -0.4), status: 'Hormuz risk rising', statusColor: T.bear, hot: true },
@@ -288,6 +293,7 @@ function SignalsScreen({ onNav }) {
       id: 'china',
       label: 'China',
       desc: 'Stimulus · CNY · tariff posture',
+      explain: 'signals-lane-china',
       accent: '#B07BE6',
       signals: [
         { label: 'China GDP · Q1', value: '+4.8% YoY', delta: '+0.2 vs est', dir: 'up', impact: ['OIL', 'SPX'], spark: seededSpark(61, 28, 0.3), status: 'Property drag easing' },
@@ -302,6 +308,7 @@ function SignalsScreen({ onNav }) {
       id: 'oil',
       label: 'Oil & Commodities',
       desc: 'Supply · demand · inventory · OPEC',
+      explain: 'signals-lane-oil',
       accent: T.oil,
       signals: [
         { label: 'WTI Crude', value: '$78.42', delta: '+1.2% · today', dir: 'up', impact: ['OIL'], spark: seededSpark(71, 28, 0.3), status: 'Testing $80 resistance' },
@@ -460,11 +467,11 @@ function SignalsScreen({ onNav }) {
   const spxScore = assetScore('SPX');
 
   const composite = [
-    { label: 'BTC Signal',  asset: 'BTC', score: btcScore, color: T.btc, sub: scoreToLabel(btcScore) },
-    { label: 'SPX Signal',  asset: 'SPX', score: spxScore, color: T.spx, sub: scoreToLabel(spxScore) },
-    { label: 'OIL Signal',  asset: 'OIL', score: oilScore, color: T.oil, sub: scoreToLabel(oilScore) },
+    { label: 'BTC Signal',  asset: 'BTC', score: btcScore, color: T.btc, sub: scoreToLabel(btcScore), explain: 'signals-composite' },
+    { label: 'SPX Signal',  asset: 'SPX', score: spxScore, color: T.spx, sub: scoreToLabel(spxScore), explain: 'signals-composite' },
+    { label: 'OIL Signal',  asset: 'OIL', score: oilScore, color: T.oil, sub: scoreToLabel(oilScore), explain: 'signals-composite' },
     { label: 'Macro Tilt',  asset: null,  score: Math.round((btcScore + spxScore) / 2), color: T.signal,
-      sub: scoreToLabel(Math.round((btcScore + spxScore) / 2)) },
+      sub: scoreToLabel(Math.round((btcScore + spxScore) / 2)), explain: 'signals-macro-tilt' },
   ];
 
   return (
@@ -492,8 +499,11 @@ function SignalsScreen({ onNav }) {
               width: 6, height: 6, borderRadius: 3, background: T.bull,
               boxShadow: `0 0 8px ${T.bull}`,
             }} />
-            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.textMid, letterSpacing: 0.4 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.textMid, letterSpacing: 0.4, display: 'flex', alignItems: 'center' }}>
               LIVE · 43 SIGNALS
+              {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['signals-live-count'] && (
+                <TRInfoIcon text={window.TR_EXPLAIN['signals-live-count']} size={9} />
+              )}
             </div>
           </div>
           <div style={{
@@ -545,7 +555,15 @@ function SignalsScreen({ onNav }) {
                 <div style={{
                   fontSize: 9, letterSpacing: 0.9, color: T.textDim,
                   textTransform: 'uppercase', fontWeight: 500,
-                }}>{c.label}</div>
+                  display: 'flex', alignItems: 'center',
+                }}>
+                  {c.label}
+                  {c.explain && typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN[c.explain] && (
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <TRInfoIcon text={window.TR_EXPLAIN[c.explain]} size={9} />
+                    </span>
+                  )}
+                </div>
                 <div style={{
                   marginLeft: 'auto', fontFamily: T.mono, fontSize: 9.5,
                   fontWeight: 600, color: sc, letterSpacing: 0.4,
@@ -624,7 +642,15 @@ function SignalsScreen({ onNav }) {
               }} />
               <div style={{
                 fontSize: 12, fontWeight: 500, color: T.text, letterSpacing: -0.1,
-              }}>{lane.label}</div>
+                display: 'flex', alignItems: 'center',
+              }}>
+                {lane.label}
+                {lane.explain && typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN[lane.explain] && (
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <TRInfoIcon text={window.TR_EXPLAIN[lane.explain]} size={10} />
+                  </span>
+                )}
+              </div>
               <div style={{
                 fontSize: 10, color: T.textDim, letterSpacing: 0.2,
               }}>{lane.desc}</div>

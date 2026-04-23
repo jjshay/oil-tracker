@@ -41,6 +41,42 @@ window.TR_EXPLAIN = {
   // ─── Generic concepts ───
   'signal-arrow': 'Tile direction arrow: ↑ supports long exposure · ↓ supports short · ↔ neutral. Computed from current value vs threshold (see tile tooltip for specific rule).',
   'consensus-chip':'Column consensus: BULL (all 5 tiles long) · LEAN BULL (>60% long) · MIXED (split) · LEAN BEAR · BEAR. High-conviction trades take the all-aligned direction. Mixed = patience.',
+
+  // ─── Signals page ───
+  'signals-composite': 'Composite signal — weighted score across every tile that tags this asset. Each ↑ adds +1, ↓ subtracts 1, HOT tiles count 1.5×. Scaled to 0-100 (50 = neutral). BULLISH ≥65 · LEAN BULL 55-64 · NEUTRAL 45-55 · LEAN BEAR 36-44 · BEARISH ≤35. Click the chip for LLM rationale.',
+  'signals-macro-tilt':'Macro Tilt — average of BTC + SPX scores. Read: is the overall risk regime risk-on or risk-off right now? Independent of oil, which often moves counter-cyclically.',
+  'signals-live-count':'Total live signal tiles across all 7 lanes. Each tile is either a live API read (Finnhub / CoinGecko) or a curated mock until the API key is wired. LIVE dot pulses when any feed is currently refreshing.',
+  'signals-lane-fed':  'Fed & Rates lane — policy rate, cut odds, Treasury curve, DXY, credit spreads. Defines cost of capital for everything else. Bullish when rates falling + DXY weakening + spreads tight.',
+  'signals-lane-equity':'Equities lane — S&P level, forward P/E, VIX, single-name mega-caps (NVDA, MSTR). Driver of SPX score + secondary read on BTC via MSTR proxy.',
+  'signals-lane-crypto':'Crypto Flows lane — on-chain cost basis, ETF flows, funding rates, halving cycle position, MSTR holdings. The core BTC fundamental stack.',
+  'signals-lane-reg':   'Regulation lane — CLARITY Act progress, SEC ETF decisions, state BTC reserves, stablecoin bills, FASB accounting. Event-driven; single vote can move BTC 10%+.',
+  'signals-lane-geo':   'Geopolitics lane — Iran talks, Ukraine ceasefire, Israel/Gaza, Red Sea attacks, Russia sanctions, Taiwan. Primarily oil-driver; SPX secondary via risk-off spillover.',
+  'signals-lane-china': 'China lane — GDP, PBoC policy, USD/CNH, tariffs, oil imports. CNH weakening = BTC bid (capital flight). Stronger China demand = oil bid.',
+  'signals-lane-oil':   'Oil & Commodities lane — WTI, Brent, OPEC production, SPR refill, EIA inventories, gold. Primary oil-driver stack; gold doubles as BTC correlate (both safe-haven).',
+
+  // ─── News page ───
+  'news-risk-high':   'HIGH risk — article contains keywords suggesting imminent market impact (Fed decision, war, major data surprise, regulatory action). Expect near-term volatility; size down or wait.',
+  'news-risk-medium': 'MEDIUM risk — relevant news that will influence price over days, not minutes. Worth reading for context; not a trigger on its own.',
+  'news-risk-low':    'LOW risk — informational / secondary. Useful for mental model building; don\'t change positioning based on this alone.',
+  'news-category':    'Source category: Crypto · Oil · Macro · Geopolitics · Policy. Color-coded so you can filter to the lane you trade.',
+
+  // ─── Prices page ───
+  'price-spot':       'Live spot price. Crypto = Coinbase/Binance last trade · equities/futures = Finnhub/Stooq delayed 15-20min during market hours, realtime at close.',
+  'price-change':     '24-hour % change vs same time yesterday. Color: bull green = up · bear red = down. Not intraday — compare to your entry, not today\'s open.',
+  'price-52w':        '52-week high / low range. Where we are in the range (e.g., 85% = near highs) informs risk: mean-reversion trades favored near extremes, momentum near breakouts.',
+  'price-options':    'Options chain with bid/ask/volume/open interest by strike. Wide spreads (bid-ask > 5%) = illiquid, skip. Volume > OI = fresh positioning today · OI > volume = existing positions.',
+  'price-watchlist':  'Click the star to save a ticker/option contract to your persistent watchlist (tr_watchlist in localStorage). Survives refresh.',
+
+  // ─── Flights page ───
+  'flight-opensky':   'OpenSky Network — free community ADS-B receivers, global coverage, ~30 sec latency. Best for spotting known military callsigns (RCH, HAVEN, BAT, CNV, SPAR) in bulk.',
+  'flight-adsbex':    'ADS-B Exchange — no-filter receivers (military aircraft visible, even ones blocked elsewhere). Complementary to OpenSky; cross-reference for confirmation.',
+  'flight-callsign':  'Callsign prefix decoded: RCH = Reach (cargo) · HAVEN = Hospital · BAT = AWACS/ISR · CNV = Navy transport · SPAR = VIP · ELF = refueling. Refuelers + ISR buildup = elevated operational tempo.',
+  'flight-bbox':      'CENTCOM bounding box (Iran/Gulf/Iraq/Arabian Peninsula). Traffic density here is the Hormuz escalation tell — sustained > 10 military aircraft = oil risk premium.',
+
+  // ─── Impact page ───
+  'impact-from-oil':  'BTC price modeled from WTI crude, using historical correlation (~-0.35). Useful to see implied BTC if oil is the dominant macro force. Divergence from live BTC = other factors dominating.',
+  'impact-live-model':'Live model — timestamp shows when the calculation last ran (refreshes on each page load). Model uses the latest WTI print + stored correlation, not a forecast.',
+  'impact-correlation':'Rolling correlation coefficient. -1 = perfect inverse · 0 = uncorrelated · +1 = moves together. BTC-Oil typically -0.2 to -0.4 (loose inverse). Check whether the relationship is currently holding before trading it.',
 };
 
 // The tooltip component. Shows on hover with 150ms delay.

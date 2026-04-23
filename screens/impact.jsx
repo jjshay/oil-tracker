@@ -488,8 +488,11 @@ function ImpactScreen({ onNav }) {
               </div>
               <div style={{ color: T.textDim, fontFamily: T.mono }}>→</div>
               <div>
-                <div style={{ fontSize: 9, color: T.signal, fontFamily: T.mono, letterSpacing: 0.5, marginBottom: 2 }}>
+                <div style={{ fontSize: 9, color: T.signal, fontFamily: T.mono, letterSpacing: 0.5, marginBottom: 2, display: 'flex', alignItems: 'center' }}>
                   BTC FROM OIL
+                  {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['impact-from-oil'] && (
+                    <TRInfoIcon text={window.TR_EXPLAIN['impact-from-oil']} size={9} />
+                  )}
                 </div>
                 <div style={{ fontFamily: T.mono, fontSize: 18, color: T.btc, fontWeight: 500 }}>
                   ${Math.round(btcMath.projectedBtc).toLocaleString()}
@@ -516,8 +519,12 @@ function ImpactScreen({ onNav }) {
                 <div style={{
                   fontFamily: T.mono, fontSize: 9.5, color: T.textDim,
                   letterSpacing: 0.3, fontStyle: 'normal',
+                  display: 'flex', alignItems: 'center', gap: 4,
                 }}>
-                  {new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ET · live model
+                  <span>{new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ET · live model</span>
+                  {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['impact-live-model'] && (
+                    <TRInfoIcon text={window.TR_EXPLAIN['impact-live-model']} size={9} />
+                  )}
                 </div>
               </div>
             </div>

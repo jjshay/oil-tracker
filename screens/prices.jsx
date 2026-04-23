@@ -281,13 +281,18 @@ function PriceDetailModal({ open, onClose, ticker }) {
             padding: '12px 14px', marginBottom: 14,
           }}>
             {[
-              { k: 'LAST', v: stats.last != null ? '$' + stats.last.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—' },
-              { k: '1Y %',   v: (stats.ytdPct >= 0 ? '+' : '') + stats.ytdPct.toFixed(1) + '%', c: stats.ytdPct >= 0 ? T.bull : T.bear },
-              { k: '52W HI', v: '$' + stats.hi52.toLocaleString('en-US', { maximumFractionDigits: 2 }) },
-              { k: '52W LO', v: '$' + stats.lo52.toLocaleString('en-US', { maximumFractionDigits: 2 }) },
+              { k: 'LAST', explain: 'price-spot', v: stats.last != null ? '$' + stats.last.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—' },
+              { k: '1Y %',   explain: 'price-change', v: (stats.ytdPct >= 0 ? '+' : '') + stats.ytdPct.toFixed(1) + '%', c: stats.ytdPct >= 0 ? T.bull : T.bear },
+              { k: '52W HI', explain: 'price-52w', v: '$' + stats.hi52.toLocaleString('en-US', { maximumFractionDigits: 2 }) },
+              { k: '52W LO', explain: 'price-52w', v: '$' + stats.lo52.toLocaleString('en-US', { maximumFractionDigits: 2 }) },
             ].map(s => (
               <div key={s.k}>
-                <div style={{ fontSize: 9, letterSpacing: 0.9, color: T.textDim, textTransform: 'uppercase', fontWeight: 500, marginBottom: 3 }}>{s.k}</div>
+                <div style={{ fontSize: 9, letterSpacing: 0.9, color: T.textDim, textTransform: 'uppercase', fontWeight: 500, marginBottom: 3, display: 'flex', alignItems: 'center' }}>
+                  {s.k}
+                  {s.explain && typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN[s.explain] && (
+                    <TRInfoIcon text={window.TR_EXPLAIN[s.explain]} size={9} />
+                  )}
+                </div>
                 <div style={{ fontFamily: T.mono, fontSize: 15, fontWeight: 500, color: s.c || T.text, letterSpacing: -0.2 }}>{s.v}</div>
               </div>
             ))}
@@ -314,8 +319,11 @@ function PriceDetailModal({ open, onClose, ticker }) {
             display: 'flex', alignItems: 'center', gap: 10, paddingTop: 14,
             borderTop: `1px solid ${T.edge}`,
           }}>
-            <div style={{ fontSize: 11.5, color: T.textMid }}>
+            <div style={{ fontSize: 11.5, color: T.textMid, display: 'flex', alignItems: 'center' }}>
               Options chain: strikes × expirations with bid/ask/volume/OI spread
+              {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['price-options'] && (
+                <TRInfoIcon text={window.TR_EXPLAIN['price-options']} size={10} />
+              )}
             </div>
             <div
               onClick={() => { onClose(); setTimeout(() => window.openTROptions && window.openTROptions(ticker.sym), 80); }}
@@ -528,7 +536,12 @@ function PricesScreen({ onNav }) {
               <div style={{
                 color: T.signal, fontSize: 16, lineHeight: 1,
               }}>★</div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: T.text, letterSpacing: -0.1 }}>My Watchlist</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: T.text, letterSpacing: -0.1, display: 'flex', alignItems: 'center' }}>
+                My Watchlist
+                {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['price-watchlist'] && (
+                  <TRInfoIcon text={window.TR_EXPLAIN['price-watchlist']} size={10} />
+                )}
+              </div>
               <div style={{ fontSize: 10, color: T.textDim, letterSpacing: 0.2 }}>
                 saved locally · persists across reloads
               </div>

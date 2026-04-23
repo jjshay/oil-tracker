@@ -293,8 +293,11 @@ function FlightsScreen({ onNav }) {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           {typeof TRLiveStripInline !== 'undefined' && <TRLiveStripInline />}
           {typeof TRGearInline !== 'undefined' && <TRGearInline />}
-          <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4, display: 'flex', alignItems: 'center' }}>
             <span style={{ color: T.signal }}>●</span>&nbsp; OPENSKY · CENTCOM
+            {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['flight-opensky'] && (
+              <TRInfoIcon text={window.TR_EXPLAIN['flight-opensky']} size={10} />
+            )}
           </div>
         </div>
       </div>
@@ -341,7 +344,12 @@ function FlightsScreen({ onNav }) {
           <>
             <div style={{ width: 1, height: 22, background: T.edge }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ fontSize: 9.5, letterSpacing: 0.8, color: T.textDim, textTransform: 'uppercase', fontWeight: 600 }}>US MIL</div>
+              <div style={{ fontSize: 9.5, letterSpacing: 0.8, color: T.textDim, textTransform: 'uppercase', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                US MIL
+                {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['flight-callsign'] && (
+                  <TRInfoIcon text={window.TR_EXPLAIN['flight-callsign']} size={9} />
+                )}
+              </div>
               <div style={{
                 fontFamily: T.mono, fontSize: 14, fontWeight: 600,
                 color: data.usMilCount > 8 ? T.bear : data.usMilCount > 3 ? T.signal : T.bull,
@@ -402,7 +410,12 @@ function FlightsScreen({ onNav }) {
             border: '0.5px solid rgba(255,255,255,0.12)',
             fontFamily: T.mono, fontSize: 9.5, color: T.textMid, letterSpacing: 0.3,
           }}>
-            ADSBExchange · {period === 'now' ? 'live' : `${period.toUpperCase()} replay · military only`}
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              ADSBExchange · {period === 'now' ? 'live' : `${period.toUpperCase()} replay · military only`}
+              {typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN['flight-adsbex'] && (
+                <TRInfoIcon text={window.TR_EXPLAIN['flight-adsbex']} size={9} />
+              )}
+            </span>
           </div>
         </div>
 
