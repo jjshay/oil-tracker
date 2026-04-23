@@ -8,25 +8,14 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
+// Keep in sync with window.TR_TABS_META in tr-header-extras.jsx.
+// Default landing tab is 'drivers' (the first entry); every other tab is
+// exercised by clicking its nav entry.
+const DEFAULT_TAB = 'drivers';
 const TABS = [
-  'summary', 'historical', 'projected', 'impact', 'recommend',
+  'drivers', 'summary', 'historical', 'projected', 'impact', 'recommend',
   'news', 'calendar', 'signals', 'prices', 'flights',
 ];
-
-// Label (case-insensitive) used to click the tab. The TR header renders each
-// tab as a <div> containing the capitalized label, so we click by text.
-const TAB_LABEL = {
-  summary:    'Summary',
-  historical: 'Historical',
-  projected:  'Projected',
-  impact:     'Impact',
-  recommend:  'Recommend',
-  news:       'News',
-  calendar:   'Calendar',
-  signals:    'Signals',
-  prices:     'Prices',
-  flights:    'Flights',
-};
 
 // Regexes for known network noise we DO NOT want to fail the test on:
 // 401 / 403 / 429 from upstream market/news APIs are expected when keys
@@ -108,13 +97,12 @@ for (const tab of TABS) {
       // The app boots via Babel-standalone — give React a beat to mount the shell.
       await page.waitForSelector('.tr-shell', { timeout: 15_000 });
 
-      // Navigate to the requested tab. Summary is the default; for every other
-      // tab, click its label in the TR header nav bar.
-      if (tab !== 'summary') {
-        const label = TAB_LABEL[tab];
-        // Multiple headers may exist (some screens render their own), so pick
-        // the first visible match.
-        const navTarget = page.getByText(label, { exact: true }).first();
+      // Navigate to the requested tab. The default tab renders on load;
+      // for every other tab, click its nav entry via the stable data-tab
+      // attribute (visible-text matching collides with the "N." numeric
+      // prefix rendered inside each tab div).
+      if (tab !== DEFAULT_TAB) {
+        const navTarget = page.locator(`[data-tab="${tab}"]`).first();
         await navTarget.waitFor({ state: 'visible', timeout: 10_000 });
         await navTarget.click();
       }

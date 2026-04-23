@@ -941,6 +941,7 @@ function TRTabBar({ current, onNav }) {
         const active = t.key === current;
         return (
           <div key={t.key}
+            data-tab={t.key}
             onClick={() => !active && onNav && onNav(t.key)}
             onMouseEnter={(e) => {
               if (active) return;
