@@ -64,6 +64,18 @@
       desc: 'Kalshi + Polymarket live odds (politics)',
       keywords: 'prediction kalshi polymarket politics election bet fed odds',
       opener: 'openTRPrediction' },
+    { key: 'sizing',     category: 'Tools',    icon: '🧮', name: 'Position Sizing',
+      desc: 'Stock · options · crypto risk calc',
+      keywords: 'sizing risk position calculator stop loss leverage shares contracts kelly',
+      opener: 'openTRSizing' },
+    { key: 'correlation',category: 'Tools',    icon: '🔗', name: 'Correlation Matrix',
+      desc: 'BTC · SPY · QQQ · GLD · DXY · TLT (30d)',
+      keywords: 'correlation matrix heatmap btc spy qqq gold dxy tlt pearson risk-on risk-off',
+      opener: 'openTRCorrelation' },
+    { key: 'scenarios',  category: 'Tools',    icon: '🎬', name: 'Scenario Playbook',
+      desc: 'If/then pre-computed catalyst impacts',
+      keywords: 'scenarios playbook if then hormuz fed cpi opec taiwan catalyst',
+      opener: 'openTRScenarios' },
 
     // ────── Macro ──────
     { key: 'fred',       category: 'Macro',    icon: '📉', name: 'FRED Macro',

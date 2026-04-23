@@ -1,0 +1,19 @@
+{
+  "name": "traderadar-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TradeRadar automation scripts — daily LLM-consensus email briefing.",
+  "main": "daily-briefing.js",
+  "scripts": {
+    "briefing": "node daily-briefing.js",
+    "test": "node --check daily-briefing.js && echo syntax-ok"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^6.9.13"
+  }
+}

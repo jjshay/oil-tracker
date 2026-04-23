@@ -1,20 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    TradeRadar daily briefing — launchd agent.
+    TradeRadar daily briefing — macOS launchd agent.
+    Fires at 06:00 America/New_York, Monday through Friday.
 
-    Install:
+    ── Install (one-time) ──────────────────────────────────────────────────
+        # 1. Create the log directory (launchd will fail silently without it)
         mkdir -p /Users/johnshay/TradeWatch/logs
+
+        # 2. Copy the template to LaunchAgents, DROPPING the `.example` suffix
         cp /Users/johnshay/TradeWatch/scripts/com.traderadar.briefing.plist.example \
            ~/Library/LaunchAgents/com.traderadar.briefing.plist
-        launchctl load  ~/Library/LaunchAgents/com.traderadar.briefing.plist
-        launchctl start com.traderadar.briefing       # fires immediately for a test send
 
-    Unload / reload:
+        # 3. Verify your node binary path matches the <string> below
+        which node
+        # common results:
+        #   /usr/local/bin/node        (Intel Homebrew)
+        #   /opt/homebrew/bin/node     (Apple Silicon Homebrew)
+        #   /Users/johnshay/.nvm/versions/node/<ver>/bin/node   (nvm)
+        # If it differs, edit the plist BEFORE loading it.
+
+        # 4. Load the agent into launchd (it will auto-load on every future login)
+        launchctl load ~/Library/LaunchAgents/com.traderadar.briefing.plist
+
+        # 5. Smoke-test the schedule immediately (doesn't wait for 06:00)
+        launchctl start com.traderadar.briefing
+        tail -f /Users/johnshay/TradeWatch/logs/briefing.log
+
+    ── Reschedule / uninstall ──────────────────────────────────────────────
         launchctl unload ~/Library/LaunchAgents/com.traderadar.briefing.plist
+        # edit the plist, then:
+        launchctl load   ~/Library/LaunchAgents/com.traderadar.briefing.plist
 
-    Before loading, verify the node path matches your machine:
-        which node        # common: /usr/local/bin/node  or  /opt/homebrew/bin/node  or  ~/.nvm/versions/node/<ver>/bin/node
-    Then update the <string> below if needed.
+    ── Time zone note ──────────────────────────────────────────────────────
+        launchd's StartCalendarInterval uses the Mac's LOCAL time. This plist
+        targets 06:00 local; JJ's laptop is set to America/New_York, so that
+        IS 06:00 ET. If you travel and change the system TZ, the fire-time
+        follows the system clock — set the TZ back or edit the <Hour> value.
+
+    ── Caveat: sleep / lid-closed ──────────────────────────────────────────
+        launchd does NOT wake the Mac for scheduled jobs. If the laptop is
+        asleep at 06:00, the job runs at the next wake. For guaranteed daily
+        delivery, either leave the lid open on power, enable "Wake for network
+        access" in System Settings → Battery, or port the script to a GitHub
+        Action running on cron in the cloud.
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -37,14 +65,41 @@
         <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
     </dict>
 
-    <!-- Runs every day at 07:00 local time. -->
+    <!--
+        Schedule: 06:00 local time on weekdays (Mon=1 … Fri=5).
+        StartCalendarInterval accepts an ARRAY of dicts when you need multiple
+        discrete fire times — launchd ORs them together.
+    -->
     <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key><integer>7</integer>
-        <key>Minute</key><integer>0</integer>
-    </dict>
+    <array>
+        <dict>
+            <key>Weekday</key><integer>1</integer>
+            <key>Hour</key><integer>6</integer>
+            <key>Minute</key><integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>2</integer>
+            <key>Hour</key><integer>6</integer>
+            <key>Minute</key><integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>3</integer>
+            <key>Hour</key><integer>6</integer>
+            <key>Minute</key><integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>4</integer>
+            <key>Hour</key><integer>6</integer>
+            <key>Minute</key><integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>5</integer>
+            <key>Hour</key><integer>6</integer>
+            <key>Minute</key><integer>0</integer>
+        </dict>
+    </array>
 
-    <!-- If the Mac was asleep at the scheduled time, run as soon as it wakes. -->
+    <!-- Don't fire on launchctl load — scheduled times only. -->
     <key>RunAtLoad</key>
     <false/>
 

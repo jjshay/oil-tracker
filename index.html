@@ -115,6 +115,10 @@
 <script type="text/babel" src="tr-defi-panel.jsx"></script>
 <script type="text/babel" src="tr-eth-staking-panel.jsx"></script>
 <script type="text/babel" src="tr-alt-panel.jsx"></script>
+<!-- Trader utilities: sizing · correlation · scenario playbook -->
+<script type="text/babel" src="tr-sizing-panel.jsx"></script>
+<script type="text/babel" src="tr-correlation-panel.jsx"></script>
+<script type="text/babel" src="tr-scenarios-panel.jsx"></script>
 <!-- Porsche polish: shared UI kit, mobile nav, panel launcher, trade journal -->
 <script type="text/babel" src="tr-explain.jsx"></script>
 <script type="text/babel" src="tr-selftest.jsx"></script>
@@ -359,6 +363,9 @@ function TradeRadarApp() {
       ['alt',        'openTRAlt',         null],
       ['launcher',   'openTRPanelLauncher', 'tr:open-launcher'],
       ['journal',    'openTRJournal',       null],
+      ['sizing',     'openTRSizing',        'tr:open-sizing'],
+      ['correlation','openTRCorrelation',   'tr:open-correlation'],
+      ['scenarios',  'openTRScenarios',     'tr:open-scenarios'],
     ];
     PANEL_REG.forEach(([k, globalName]) => { window[globalName] = () => openPanel(k); });
 
@@ -478,6 +485,9 @@ function TradeRadarApp() {
         ['alt',        'TRAltPanel'],
         ['launcher',   'TRPanelLauncher'],
         ['journal',    'TRJournalPanel'],
+        ['sizing',     'TRSizingPanel'],
+        ['correlation','TRCorrelationPanel'],
+        ['scenarios',  'TRScenariosPanel'],
       ].map(([k, Cmp]) => {
         const C = window[Cmp];
         return C ? <C key={k} open={panels[k]} onClose={() => closePanel(k)} /> : null;
