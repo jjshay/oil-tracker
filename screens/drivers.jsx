@@ -16,6 +16,48 @@ const drT = {
 function arrow(sig) { return sig === 'long' ? '↑' : sig === 'short' ? '↓' : '↔'; }
 function sigColor(T, sig) { return sig === 'long' ? T.bull : sig === 'short' ? T.bear : T.neutral; }
 
+// Finnhub quote → { price, changePct, pc }. Used for ETF proxies of
+// macro indices that Finnhub free tier doesn't support directly
+// (^VIX, DX-Y.NYB, ^TNX all return zeros). Instead we proxy:
+//   DXY → UUP · VIX → VXX · 10Y yield → IEF (inverse)
+const _finnCache = {};
+async function finnhubQuote(sym) {
+  if (_finnCache[sym] && Date.now() - _finnCache[sym].t < 60_000) return _finnCache[sym].v;
+  const k = window.TR_SETTINGS?.keys?.finnhub;
+  if (!k) return null;
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${k}`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (!j || typeof j.c !== 'number' || j.c === 0) return null;
+    const v = { price: j.c, changePct: j.dp, change: j.d, prevClose: j.pc };
+    _finnCache[sym] = { t: Date.now(), v };
+    return v;
+  } catch { return null; }
+}
+
+// FRED daily series → { value, changePct, date }. Requires a FRED API
+// key (free at fred.stlouisfed.org/docs/api/api_key.html) since FRED's
+// no-key CSV endpoint is blocked by browser CORS. If no key, returns null
+// and the tile shows "Add FRED key".
+const _fredCache = {};
+async function fredLatest(seriesId) {
+  if (_fredCache[seriesId] && Date.now() - _fredCache[seriesId].t < 120_000) return _fredCache[seriesId].v;
+  if (typeof window.FREDData === 'undefined') return null;
+  try {
+    const rows = await window.FREDData.getSeries(seriesId, 10);
+    if (!rows || !rows.length) return null;
+    const vals = rows.filter(r => r.value != null);
+    if (!vals.length) return null;
+    const latest = vals[0].value;
+    const prev   = vals[1]?.value;
+    const changePct = prev != null && prev !== 0 ? ((latest - prev) / prev) * 100 : null;
+    const v = { value: latest, prevValue: prev, changePct, date: vals[0].date };
+    _fredCache[seriesId] = { t: Date.now(), v };
+    return v;
+  } catch { return null; }
+}
+
 // Driver tile — self-contained cell. `loader` returns { value, delta, signal, note }.
 function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey }) {
   const [state, setState] = React.useState({ loading: true });
@@ -113,36 +155,30 @@ function DriversScreen({ onNav }) {
   const DRIVERS = [
     // ─── REGIME ───
     {
-      id: 'regime-dxy', explain: 'dxy', group: 'regime', label: 'DXY · Dollar Index', kicker: 'Strong USD = headwind for BTC/oil',
+      id: 'regime-dxy', explain: 'dxy', group: 'regime', label: 'UUP · DXY Proxy', kicker: 'Strong USD = headwind for BTC/oil',
       onOpen: () => window.openTRFRED && window.openTRFRED(),
       load: async () => {
-        const k = window.TR_SETTINGS?.keys?.finnhub;
-        if (!k) return { value: '—', note: 'Add Finnhub key' };
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent('DX-Y.NYB')}&token=${k}`);
-        const j = await r.json();
-        if (!j?.c) return {};
+        const q = await finnhubQuote('UUP');
+        if (!q) return { value: '—', note: 'Add Finnhub key in ⚙ Settings' };
         return {
-          value: j.c.toFixed(2),
-          delta: fpct(j.dp),
-          signal: j.dp > 0.3 ? 'short' : j.dp < -0.3 ? 'long' : 'neutral', // strong USD = bad for risk
-          note: 'Rising DXY compresses risk-asset prices',
+          value: '$' + q.price.toFixed(2),
+          delta: fpct(q.changePct),
+          signal: q.changePct > 0.2 ? 'short' : q.changePct < -0.2 ? 'long' : 'neutral',
+          note: 'UUP tracks DXY · Rising = risk-asset headwind',
         };
       },
     },
     {
-      id: 'regime-vix', explain: 'vix', group: 'regime', label: 'VIX · Equity Fear', kicker: 'VIX >20 = risk-off',
+      id: 'regime-vix', explain: 'vix', group: 'regime', label: 'VXX · VIX Proxy', kicker: 'Spike = risk-off',
       onOpen: () => onNav && onNav('signals'),
       load: async () => {
-        const k = window.TR_SETTINGS?.keys?.finnhub;
-        if (!k) return { value: '—', note: 'Add Finnhub key' };
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent('^VIX')}&token=${k}`);
-        const j = await r.json();
-        if (!j?.c) return {};
+        const q = await finnhubQuote('VXX');
+        if (!q) return { value: '—', note: 'Add Finnhub key in ⚙ Settings' };
         return {
-          value: j.c.toFixed(2),
-          delta: fpct(j.dp),
-          signal: j.c < 15 ? 'long' : j.c > 22 ? 'short' : 'neutral',
-          note: 'Calm VIX supports risk-on rallies',
+          value: '$' + q.price.toFixed(2),
+          delta: fpct(q.changePct),
+          signal: q.changePct > 3 ? 'short' : q.changePct < -2 ? 'long' : 'neutral',
+          note: 'VXX tracks VIX futures · Spikes = fear regime',
         };
       },
     },
@@ -168,10 +204,13 @@ function DriversScreen({ onNav }) {
       load: async () => {
         if (typeof GDELTData === 'undefined') return {};
         try {
-          const rows = await GDELTData.search('', { timespan: '1d', limit: 50 });
+          // GDELT's free endpoint requires a non-empty query. Cast a wide net
+          // across oil/crypto/Fed/inflation/geopolitics keywords.
+          const rows = await GDELTData.search('oil OR bitcoin OR inflation OR "federal reserve" OR iran OR ukraine', { timespan: '1d', limit: 50 });
           if (!rows?.length) return {};
           const tones = rows.map(r => Number(r.tone || 0)).filter(n => isFinite(n));
-          const avg = tones.reduce((a, b) => a + b, 0) / (tones.length || 1);
+          if (!tones.length) return {};
+          const avg = tones.reduce((a, b) => a + b, 0) / tones.length;
           return {
             value: avg.toFixed(2),
             delta: `${rows.length} articles`,
@@ -317,19 +356,16 @@ function DriversScreen({ onNav }) {
       },
     },
     {
-      id: 'oil-dxy', explain: 'oil-dxy', group: 'wti', label: 'DXY (inverse)', kicker: 'Stronger $ = oil headwind',
+      id: 'oil-dxy', explain: 'oil-dxy', group: 'wti', label: 'UUP (inverse)', kicker: 'Stronger $ = oil headwind',
       onOpen: () => window.openTRFRED && window.openTRFRED(),
       load: async () => {
-        const k = window.TR_SETTINGS?.keys?.finnhub;
-        if (!k) return {};
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent('DX-Y.NYB')}&token=${k}`);
-        const j = await r.json();
-        if (!j?.c) return {};
+        const q = await finnhubQuote('UUP');
+        if (!q) return {};
         return {
-          value: j.c.toFixed(2),
-          delta: fpct(j.dp),
-          signal: j.dp > 0.3 ? 'short' : j.dp < -0.3 ? 'long' : 'neutral',
-          note: 'Inverse to oil — see DXY tile in Regime',
+          value: '$' + q.price.toFixed(2),
+          delta: fpct(q.changePct),
+          signal: q.changePct > 0.2 ? 'short' : q.changePct < -0.2 ? 'long' : 'neutral',
+          note: 'UUP up = DXY up = oil bearish',
         };
       },
     },
@@ -376,20 +412,19 @@ function DriversScreen({ onNav }) {
 
     // ═══ SPX ═══
     {
-      id: 'spx-10y', explain: 'spx-10y', group: 'spx', label: '10Y Treasury', kicker: 'Discount rate for multiples',
+      id: 'spx-10y', explain: 'spx-10y', group: 'spx', label: 'IEF · 10Y Bonds Proxy', kicker: 'Rising IEF = falling yields = long SPX',
       onOpen: () => window.openTRTreasury && window.openTRTreasury(),
       load: async () => {
-        const k = window.TR_SETTINGS?.keys?.finnhub;
-        if (!k) return {};
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent('^TNX')}&token=${k}`);
-        const j = await r.json();
-        if (!j?.c) return {};
-        const yld = j.c / 10;
+        // IEF tracks 7-10Y Treasury bond prices. Price INVERSE to yield:
+        // IEF up = yields down = multiple-expansion tailwind for equities.
+        const q = await finnhubQuote('IEF');
+        if (!q) return { value: '—', note: 'Add Finnhub key in ⚙ Settings' };
         return {
-          value: yld.toFixed(2) + '%',
-          delta: fpct(j.dp),
-          signal: yld > 4.5 ? 'short' : yld < 3.8 ? 'long' : 'neutral',
-          note: 'Falling 10Y = multiple expansion tailwind',
+          value: '$' + q.price.toFixed(2),
+          delta: fpct(q.changePct),
+          // IEF rising = yields falling = bullish for SPX multiples
+          signal: q.changePct > 0.15 ? 'long' : q.changePct < -0.15 ? 'short' : 'neutral',
+          note: 'Bond price up = yield down = tailwind for equity multiples',
         };
       },
     },
@@ -436,19 +471,16 @@ function DriversScreen({ onNav }) {
       },
     },
     {
-      id: 'spx-vix', explain: 'spx-vix', group: 'spx', label: 'VIX', kicker: 'Fear regime',
+      id: 'spx-vix', explain: 'spx-vix', group: 'spx', label: 'VXX · VIX Proxy', kicker: 'Fear regime',
       onOpen: () => onNav && onNav('signals'),
       load: async () => {
-        const k = window.TR_SETTINGS?.keys?.finnhub;
-        if (!k) return {};
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent('^VIX')}&token=${k}`);
-        const j = await r.json();
-        if (!j?.c) return {};
+        const q = await finnhubQuote('VXX');
+        if (!q) return {};
         return {
-          value: j.c.toFixed(2),
-          delta: fpct(j.dp),
-          signal: j.c < 15 ? 'long' : j.c > 22 ? 'short' : 'neutral',
-          note: 'Calm VIX = dip-buying works',
+          value: '$' + q.price.toFixed(2),
+          delta: fpct(q.changePct),
+          signal: q.changePct > 3 ? 'short' : q.changePct < -2 ? 'long' : 'neutral',
+          note: 'VXX spike = fear · VXX drop = calm risk-on',
         };
       },
     },
