@@ -1,7 +1,8 @@
-// FlightsScreen — Tab 9: Live CENTCOM flight tracker with 7-day accumulation.
-// Pulls OpenSky ADS-B state vectors every 2min. Accumulates history in
-// localStorage so a trail builds over time. AI commentary panel to the right
-// summarizes what the aircraft mix implies geopolitically.
+// FlightsScreen — Tab 9: Live Iran / Gulf military flight tracker with 7-day accumulation.
+// Visible map is an embedded ADSBExchange globe (military-only, centered on Iran).
+// A hidden Leaflet instance polls OpenSky ADS-B state vectors every 2min so history
+// accumulates in localStorage. AI commentary panel to the right summarizes what the
+// aircraft mix implies geopolitically.
 
 const flT = {
   ink000: '#07090C', ink100: '#0B0E13', ink200: '#10141B', ink300: '#171C24', ink400: '#1E2430',
@@ -100,7 +101,8 @@ function FlightsScreen({ onNav }) {
     markerLayerRef.current = L.layerGroup().addTo(map);
     trailLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
-    // Bbox rectangle for CENTCOM
+    // Legacy Iran/Gulf bbox outline — kept for the hidden Leaflet container
+    // so existing map effects don't blow up. Visible map is the ADSBExchange iframe.
     L.rectangle([[15, 30], [40, 65]], {
       color: '#c9a227', weight: 1, fillOpacity: 0.03, dashArray: '4 4',
     }).addTo(map);
@@ -360,6 +362,7 @@ function FlightsScreen({ onNav }) {
                   background: on ? T.signal : 'transparent',
                   borderRadius: 6, letterSpacing: 0.2, cursor: on ? 'default' : 'pointer',
                   fontFamily: T.mono,
+                  transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), color 120ms cubic-bezier(0.2,0.7,0.2,1)',
                 }}>{p.label}</div>
             );
           })}

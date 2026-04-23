@@ -348,6 +348,7 @@ function CalendarScreen({ onNav }) {
                   background: active ? T.signal : 'transparent',
                   borderRadius: 6, letterSpacing: 0.2,
                   cursor: active ? 'default' : 'pointer',
+                  transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), color 120ms cubic-bezier(0.2,0.7,0.2,1)',
                 }}>{label}</div>
             );
           })}
@@ -369,12 +370,12 @@ function CalendarScreen({ onNav }) {
                 onClick={() => toggleCat(c.label)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '4px 8px',
+                  padding: '4px 10px',
                   background: on ? T.ink200 : T.ink100,
                   border: `1px solid ${on ? T.edge : 'transparent'}`,
                   borderRadius: 6,
                   opacity: on ? 1 : 0.4, cursor: 'pointer',
-                  transition: 'opacity 120ms cubic-bezier(0.2,0.7,0.2,1)',
+                  transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1), opacity 120ms cubic-bezier(0.2,0.7,0.2,1)',
                 }}>
                 <div style={{ width: 5, height: 5, borderRadius: 2.5, background: c.c }} />
                 <div style={{ fontSize: 11, color: T.textMid, fontWeight: 500 }}>{c.label}</div>
@@ -539,9 +540,9 @@ function CalendarScreen({ onNav }) {
             {!selected && (
               <div style={{
                 background: T.ink200, border: `1px solid ${T.edge}`,
-                borderRadius: 12, padding: '22px 18px',
-                fontSize: 12, color: T.textMid, letterSpacing: 0.2,
-              }}>No scheduled events on this day. Click a day with an event dot to preview.</div>
+                borderRadius: 12, padding: '18px 18px',
+                fontSize: 12, color: T.textMid, letterSpacing: 0.2, lineHeight: 1.5,
+              }}>Nothing scheduled. Pick a day with a dot.</div>
             )}
 
             {selected && <div style={{
@@ -635,10 +636,15 @@ function CalendarScreen({ onNav }) {
 
           {/* Upcoming this week */}
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <div style={{
-              fontSize: 10, letterSpacing: 1, color: T.textDim,
-              textTransform: 'uppercase', fontWeight: 500, marginBottom: 10,
-            }}>This Week · 5 Events</div>
+            {(() => {
+              const weekCount = events.filter(e => { const du = daysUntil(e.date); return du >= 0 && du <= 7; }).length;
+              return (
+                <div style={{
+                  fontSize: 10, letterSpacing: 1, color: T.textDim,
+                  textTransform: 'uppercase', fontWeight: 500, marginBottom: 10,
+                }}>Next 7 Days · {weekCount} {weekCount === 1 ? 'Event' : 'Events'}</div>
+              );
+            })()}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {events

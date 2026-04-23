@@ -126,10 +126,11 @@ function TRTooltip({ text, children, side = 'top', maxWidth = 280 }) {
           boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 0.5px 0 rgba(255,255,255,0.05)',
           padding: '10px 13px', borderRadius: 8,
           fontSize: 11, lineHeight: 1.55, color: 'rgba(235,238,244,0.95)',
-          fontFamily: 'InterTight, system-ui, sans-serif',
+          fontFamily: '"Inter Tight", InterTight, system-ui, sans-serif',
           letterSpacing: 0.1, textAlign: 'left',
           zIndex: 10000, pointerEvents: 'none',
-          animation: 'trFadeIn 160ms ease-out',
+          animation: 'trFadeIn 140ms cubic-bezier(0.2,0.7,0.2,1)',
+          willChange: 'opacity',
         },
       },
       text
@@ -166,10 +167,12 @@ window.TRInfoIcon = TRInfoIcon;
   if (document.getElementById('tr-explain-styles')) return;
   const s = document.createElement('style');
   s.id = 'tr-explain-styles';
+  // Pure opacity fade — the container handles positioning/transform itself
+  // (varies by `side` prop), so keyframes stay transform-agnostic.
   s.textContent = `
     @keyframes trFadeIn {
-      from { opacity: 0; transform: translateY(-100%) translateY(4px); }
-      to   { opacity: 1; transform: translateY(-100%); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
   `;
   document.head.appendChild(s);

@@ -603,6 +603,7 @@ function NewsScreen({ onNav }) {
                       background: active ? T.signal : 'transparent',
                       borderRadius: 5, letterSpacing: 0.2,
                       cursor: active ? 'default' : 'pointer',
+                      transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), color 120ms cubic-bezier(0.2,0.7,0.2,1)',
                     }}>{s.label}</div>
                 );
               })}
@@ -642,7 +643,7 @@ function NewsScreen({ onNav }) {
                   }} />
                   <div style={{
                     fontSize: 9, fontWeight: 600, color: T.signal, letterSpacing: 0.6,
-                  }}>HOT · CATALYST PENDING</div>
+                  }}>CATALYST PENDING</div>
                 </div>
               )}
             </div>
@@ -695,9 +696,16 @@ function NewsScreen({ onNav }) {
                 textTransform: 'uppercase', fontWeight: 500,
               }}>Articles · {sortedItems.length} · {sortMode === 'impact' ? 'By impact' : 'Newest first'}</div>
               <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: 9.5, color: T.textDim, letterSpacing: 0.4 }}>
-                SCROLL → · DOUBLE-CLICK TO OPEN
+                DOUBLE-CLICK TO OPEN
               </div>
             </div>
+
+            {sortedItems.length === 0 && (
+              <div style={{
+                background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 10,
+                padding: '22px 20px', fontSize: 12, color: T.textMid, letterSpacing: 0.2,
+              }}>No articles in this bucket yet. New items will land here as they publish.</div>
+            )}
 
             <div style={{
               display: 'flex', gap: 14,
@@ -717,7 +725,7 @@ function NewsScreen({ onNav }) {
                       borderRadius: 10, padding: '14px 14px 12px',
                       display: 'flex', flexDirection: 'column', gap: 10,
                       cursor: 'pointer', userSelect: 'none',
-                      transition: 'border-color 120ms cubic-bezier(0.2,0.7,0.2,1), transform 120ms cubic-bezier(0.2,0.7,0.2,1)',
+                      transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1), transform 120ms cubic-bezier(0.2,0.7,0.2,1)',
                     }}>
                     {/* Top row: date/source · risk badge */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

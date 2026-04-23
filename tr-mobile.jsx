@@ -190,7 +190,7 @@
         filter: isActive ? 'drop-shadow(0 0 4px rgba(201,162,39,0.55))' : 'none',
         opacity: isActive ? 1 : 0.85,
         transform: isActive ? 'translateY(-1px)' : 'none',
-        transition: 'transform 120ms ease, opacity 120ms ease'
+        transition: 'transform 160ms cubic-bezier(0.2,0.7,0.2,1), opacity 160ms cubic-bezier(0.2,0.7,0.2,1), filter 160ms cubic-bezier(0.2,0.7,0.2,1)'
       };
     };
 
@@ -206,7 +206,8 @@
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        maxWidth: '100%'
+        maxWidth: '100%',
+        transition: 'color 160ms cubic-bezier(0.2,0.7,0.2,1)'
       };
     };
 
@@ -404,7 +405,8 @@
       cursor: 'pointer',
       boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
       WebkitTapHighlightColor: 'transparent',
-      padding: 0
+      padding: 0,
+      transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1)'
     };
 
     function mkBtn(key, label, glyph, handler) {

@@ -50,6 +50,7 @@
       '@keyframes tr-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }',
       '@keyframes tr-dot-fade { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }',
       '@keyframes tr-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }',
+      '@keyframes tr-row-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }',
     ].join('\n');
     document.head.appendChild(el);
   }
@@ -256,7 +257,7 @@
         borderRadius: 14,
         boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px ' + T.edgeTop + ' inset',
         overflow: 'hidden',
-        animation: 'tr-fade-in 180ms ease-out',
+        animation: 'tr-fade-in 180ms cubic-bezier(0.2,0.7,0.2,1)',
         fontFamily: T.sans, color: T.text,
       },
     }, header, body);
@@ -369,7 +370,7 @@
         border: '1px solid ' + T.edge,
         borderRadius: 8,
         cursor: clickable ? 'pointer' : 'default',
-        transition: 'border-color 140ms ease, background 140ms ease',
+        transition: 'border-color 160ms cubic-bezier(0.2,0.7,0.2,1), background 160ms cubic-bezier(0.2,0.7,0.2,1)',
         fontFamily: T.sans, color: T.text,
         minWidth: 0,
       }, props.style || {}),
@@ -426,6 +427,7 @@
             fontFamily: T.mono, fontSize: 11, fontWeight: 600,
             letterSpacing: 0.5, textTransform: 'uppercase',
             cursor: 'pointer', lineHeight: 1.2,
+            transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1)',
           },
           hover: { background: '#d9b437', borderColor: '#d9b437' },
         };
@@ -438,6 +440,7 @@
             fontFamily: T.mono, fontSize: 11, fontWeight: 600,
             letterSpacing: 0.5, textTransform: 'uppercase',
             cursor: 'pointer', lineHeight: 1.2,
+            transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1)',
           },
           hover: { background: 'rgba(217,107,107,0.22)' },
         };
@@ -450,6 +453,7 @@
             borderRadius: 6, cursor: 'pointer',
             fontFamily: T.mono, fontSize: 12,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1)',
           },
           hover: { background: T.ink300, color: T.text },
         };
@@ -463,6 +467,7 @@
             fontFamily: T.mono, fontSize: 11, fontWeight: 500,
             letterSpacing: 0.5, textTransform: 'uppercase',
             cursor: 'pointer', lineHeight: 1.2,
+            transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1)',
           },
           hover: { background: T.ink200, color: T.text, borderColor: 'rgba(255,255,255,0.18)' },
         };

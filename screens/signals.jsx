@@ -73,7 +73,7 @@ function SignalTile({ sig, onOpen }) {
       display: 'flex', flexDirection: 'column', gap: 8,
       position: 'relative', overflow: 'hidden',
       cursor: onOpen ? 'pointer' : 'default',
-      transition: 'border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+      transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
     }}>
       {sig.hot && (
         <div style={{
@@ -599,7 +599,7 @@ function SignalsScreen({ onNav }) {
         overflowY: 'auto', overflowX: 'hidden',
         display: 'flex', flexDirection: 'column', gap: 14,
       }}>
-        {/* Asset filter pills */}
+        {/* Asset filter pills — unified pill style shared across Signals/News/Calendar/Prices */}
         <div style={{ display: 'flex', gap: 6, marginBottom: -4 }}>
           {[{ k: null, label: 'All' }, { k: 'BTC', label: 'BTC' }, { k: 'OIL', label: 'OIL' }, { k: 'SPX', label: 'SPX' }].map(p => {
             const on = assetFilter === p.k;
@@ -607,18 +607,19 @@ function SignalsScreen({ onNav }) {
               <div key={p.label}
                 onClick={() => setAssetFilter(p.k)}
                 style={{
-                  padding: '4px 10px', fontSize: 10.5, letterSpacing: 0.3,
+                  padding: '4px 12px', fontSize: 10.5, letterSpacing: 0.3,
                   fontFamily: T.mono, fontWeight: 600,
                   background: on ? T.signal : T.ink200,
                   color: on ? T.ink000 : T.textMid,
                   border: `1px solid ${on ? T.signal : T.edge}`, borderRadius: 6,
                   cursor: on ? 'default' : 'pointer',
+                  transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1), color 120ms cubic-bezier(0.2,0.7,0.2,1)',
                 }}>{p.label}</div>
             );
           })}
           {assetFilter && (
             <div style={{ fontFamily: T.mono, fontSize: 10, color: T.textDim, alignSelf: 'center', marginLeft: 6 }}>
-              filtering · {lanes.reduce((n, l) => n + l.signals.filter(filterSig).length, 0)} signals
+              {lanes.reduce((n, l) => n + l.signals.filter(filterSig).length, 0)} matching
             </div>
           )}
         </div>

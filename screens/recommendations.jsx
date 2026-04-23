@@ -260,7 +260,7 @@ function RecommendationsScreen({ onNav }) {
             textTransform: 'uppercase', fontWeight: 500, marginBottom: 4,
           }}>Recommendations</div>
           <div style={{
-            fontSize: 18, fontWeight: 500, color: T.text,
+            fontSize: 15, fontWeight: 500, color: T.text,
             letterSpacing: -0.2, marginBottom: 14,
           }}>What the models think you should do</div>
 
@@ -268,7 +268,7 @@ function RecommendationsScreen({ onNav }) {
           <div style={{
             background: 'linear-gradient(180deg, rgba(232,184,74,0.08) 0%, rgba(232,184,74,0.02) 100%)',
             border: `1px solid rgba(232,184,74,0.3)`,
-            borderRadius: 12, padding: '16px 18px 18px', marginBottom: 16,
+            borderRadius: 10, padding: '14px 18px 16px', marginBottom: 14,
             position: 'relative', overflow: 'hidden',
           }}>
             <div style={{
@@ -435,6 +435,7 @@ function AccordionCard({ T, brand, brandName, open, onToggle, rec, live }) {
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '12px 16px', cursor: 'pointer',
           borderBottom: open ? `0.5px solid ${T.edge}` : 'none',
+          transition: 'background 140ms ease',
         }}>
         <div style={{
           width: 24, height: 24, borderRadius: 6,

@@ -391,8 +391,8 @@ function ProjectedScreen({ onNav }) {
             }}>DRAG · ← → · SHIFT ±10</div>
           </div>
           <div style={{
-            fontSize: 14, fontWeight: 500, color: T.text,
-            letterSpacing: -0.2, marginBottom: 12,
+            fontSize: 15, fontWeight: 500, color: T.text,
+            letterSpacing: -0.2, marginBottom: 14,
           }}>7 drivers · news-implied scores</div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, paddingBottom: 16, overflowY: 'auto', flex: 1 }}>
@@ -408,7 +408,7 @@ function ProjectedScreen({ onNav }) {
                   style={{
                     background: active ? T.ink300 : T.ink200,
                     border: `1px solid ${active ? T.edgeHi : T.edge}`,
-                    borderRadius: 9, padding: '9px 11px 10px',
+                    borderRadius: 10, padding: '10px 12px 11px',
                     boxShadow: active ? `inset 0 0.5px 0 rgba(255,255,255,0.08)` : 'none',
                     cursor: 'pointer',
                     transition: 'background 140ms ease, border-color 140ms ease',

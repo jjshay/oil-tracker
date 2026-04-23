@@ -411,6 +411,7 @@ function HistoricalScreen({ onNav }) {
             background: T.ink200, border: `1px solid ${T.edge}`,
             borderRadius: 8, cursor: 'pointer', color: T.textMid,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
           }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M13.5 3.5v3h-3"/>

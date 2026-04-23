@@ -90,7 +90,7 @@ function PriceTile({ sym, name, price, change, unit, spark, color, loading, erro
         padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8,
         position: 'relative', overflow: 'hidden', minHeight: 110,
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+        transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
       }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ width: 6, height: 6, borderRadius: 3, background: color || T.textMid }} />
@@ -543,7 +543,7 @@ function PricesScreen({ onNav }) {
                 )}
               </div>
               <div style={{ fontSize: 10, color: T.textDim, letterSpacing: 0.2 }}>
-                saved locally · persists across reloads
+                saved locally
               </div>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, fontFamily: T.mono, fontSize: 9.5, color: T.textDim, letterSpacing: 0.3 }}>
                 <span>{wl.watchlist.tickers.length} tickers</span>

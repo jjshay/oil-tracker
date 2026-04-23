@@ -45,7 +45,7 @@ function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey })
       cursor: onClick ? 'pointer' : 'default',
       display: 'flex', flexDirection: 'column', gap: 4,
       minHeight: 78,
-      transition: 'border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+      transition: 'border-color 140ms cubic-bezier(0.2,0.7,0.2,1), background 140ms cubic-bezier(0.2,0.7,0.2,1), transform 140ms cubic-bezier(0.2,0.7,0.2,1)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{
@@ -59,6 +59,7 @@ function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey })
         <div style={{
           fontFamily: T.mono, fontSize: 14, fontWeight: 700,
           color: col, lineHeight: 1,
+          transition: 'color 140ms cubic-bezier(0.2,0.7,0.2,1)',
         }}>{arrow(sig)}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -520,8 +521,9 @@ function DriversScreen({ onNav }) {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           {typeof TRLiveStripInline !== 'undefined' && <TRLiveStripInline />}
           {typeof TRGearInline !== 'undefined' && <TRGearInline />}
-          <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4 }}>
-            <span style={{ color: T.signal }}>●</span>&nbsp; KEY DRIVERS
+          <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textMid, letterSpacing: 0.4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: T.signal }}>●</span>
+            <span>KEY DRIVERS</span>
           </div>
         </div>
       </div>
@@ -534,7 +536,7 @@ function DriversScreen({ onNav }) {
         {/* Regime strip */}
         <div>
           <div style={{
-            fontSize: 10, letterSpacing: 1.2, color: T.signal,
+            fontSize: 9, letterSpacing: 1.2, color: T.signal,
             textTransform: 'uppercase', fontWeight: 600, marginBottom: 8,
           }}>Regime · top-of-book</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
@@ -553,7 +555,7 @@ function DriversScreen({ onNav }) {
             return (
               <div key={col.k} style={{
                 background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 12,
-                padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', gap: 10,
+                padding: '14px 14px 14px', display: 'flex', flexDirection: 'column', gap: 10,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
@@ -565,6 +567,7 @@ function DriversScreen({ onNav }) {
                     border: `0.5px solid ${verdictColor(cons)}55`,
                     fontFamily: T.mono, fontSize: 9.5, fontWeight: 600,
                     color: verdictColor(cons), letterSpacing: 0.6,
+                    transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1)',
                   }}>{cons.label}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -576,11 +579,10 @@ function DriversScreen({ onNav }) {
         </div>
 
         <div style={{
-          fontSize: 10.5, color: T.textDim, letterSpacing: 0.2, lineHeight: 1.55, paddingTop: 4,
+          fontSize: 10, color: T.textDim, letterSpacing: 0.3, lineHeight: 1.5, paddingTop: 4,
+          fontFamily: T.mono,
         }}>
-          Click any tile to open its deep panel. Auto-refresh every 2min. Signal arrows:
-          ↑ supports long · ↓ supports short · ↔ neutral. Consensus labels reflect the net of
-          each column's tiles.
+          Click a tile to open its panel · auto-refresh 2min · ↑ long · ↓ short · ↔ neutral
         </div>
       </div>
     </div>

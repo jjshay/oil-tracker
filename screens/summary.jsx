@@ -129,8 +129,8 @@ function PredictionCard({ brand, brandName, rec, prev, T }) {
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <div style={{ width: 7, height: 7, borderRadius: 4, background: brand }} />
-          <div style={{ fontSize: 13, fontWeight: 500, color: T.text }}>{brandName}</div>
+          <div style={{ width: 7, height: 7, borderRadius: 4, background: brand, opacity: 0.5 }} />
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.textMid }}>{brandName}</div>
           {rec && rec._error && (
             <div style={{
               marginLeft: 'auto', padding: '2px 7px',
@@ -142,10 +142,16 @@ function PredictionCard({ brand, brandName, rec, prev, T }) {
         </div>
         <div style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
-          gap: 8, padding: '0 8px',
+          gap: 10, padding: '0 10px',
         }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%',
+            border: `1px dashed ${toneColor}66`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: T.mono, fontSize: 13, color: toneColor, opacity: 0.8,
+          }}>·</div>
           <div style={{ fontSize: 12, color: T.text, fontWeight: 500, textAlign: 'center' }}>{msg.title}</div>
-          <div style={{ fontFamily: T.mono, fontSize: 10, color: toneColor, letterSpacing: 0.3, textAlign: 'center', wordBreak: 'break-word' }}>
+          <div style={{ fontFamily: T.mono, fontSize: 10, color: toneColor, letterSpacing: 0.3, textAlign: 'center', wordBreak: 'break-word', opacity: 0.85 }}>
             {msg.body}
           </div>
         </div>
@@ -160,6 +166,7 @@ function PredictionCard({ brand, brandName, rec, prev, T }) {
       background: T.ink200, border: `1px solid ${brand}44`, borderRadius: 10,
       padding: '16px 18px', display: 'flex', flexDirection: 'column',
       boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.05), 0 0 0 0.5px ${brand}18`,
+      transition: 'border-color 140ms cubic-bezier(0.2,0.7,0.2,1), box-shadow 140ms cubic-bezier(0.2,0.7,0.2,1)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <div style={{ width: 7, height: 7, borderRadius: 4, background: brand }} />
@@ -354,6 +361,7 @@ function SummaryScreen({ onNav }) {
                 border: `0.5px solid ${T.bear}55`,
                 borderRadius: 6, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                 cursor: 'pointer', fontFamily: T.mono,
+                transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
               }}>⚡ TEST</div>
           )}
           <div
@@ -363,6 +371,7 @@ function SummaryScreen({ onNav }) {
               borderRadius: 6, fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
               cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.5 : 1,
               fontFamily: T.mono,
+              transition: 'opacity 160ms cubic-bezier(0.2,0.7,0.2,1)',
             }}>{loading ? 'REFRESHING…' : '↻ REFRESH'}</div>
         </div>
       </div>
@@ -376,7 +385,7 @@ function SummaryScreen({ onNav }) {
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
           background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 10,
-          padding: '12px 18px',
+          padding: '14px 18px',
         }}>
           <div>
             <div style={{ fontSize: 9, letterSpacing: 1.2, color: T.textDim, textTransform: 'uppercase', fontWeight: 600, marginBottom: 3 }}>BTC · live</div>
@@ -424,9 +433,9 @@ function SummaryScreen({ onNav }) {
           {/* LEFT: headlines */}
           <div style={{
             background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 10,
-            padding: '14px 16px', overflow: 'auto',
+            padding: '16px 18px', overflow: 'auto',
           }}>
-            <div style={{ fontSize: 10, letterSpacing: 1.2, color: T.signal, textTransform: 'uppercase', fontWeight: 600, marginBottom: 10 }}>
+            <div style={{ fontSize: 9, letterSpacing: 1.2, color: T.signal, textTransform: 'uppercase', fontWeight: 600, marginBottom: 10 }}>
               Today's catalysts · {headlines.length}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -436,14 +445,19 @@ function SummaryScreen({ onNav }) {
                     padding: '8px 10px', background: T.ink200,
                     border: `0.5px solid ${T.edge}`, borderRadius: 6,
                     textDecoration: 'none',
+                    transition: 'border-color 120ms cubic-bezier(0.2,0.7,0.2,1), background 120ms cubic-bezier(0.2,0.7,0.2,1)',
                   }}>
                   <div style={{ fontSize: 11, fontWeight: 500, color: T.text, lineHeight: 1.4, marginBottom: 3 }}>{h.title}</div>
                   <div style={{ fontFamily: T.mono, fontSize: 9, color: T.textDim, letterSpacing: 0.3 }}>{h.source}</div>
                 </a>
               ))}
               {!headlines.length && (
-                <div style={{ fontSize: 11, color: T.textDim, textAlign: 'center', padding: '20px 0' }}>
-                  {loading ? 'Pulling feeds…' : 'No headlines loaded.'}
+                <div style={{
+                  fontSize: 11, color: T.textDim, textAlign: 'center',
+                  padding: '28px 10px', border: `0.5px dashed ${T.edge}`, borderRadius: 6,
+                  fontFamily: T.mono, letterSpacing: 0.3,
+                }}>
+                  {loading ? 'Pulling feeds…' : 'No catalysts yet'}
                 </div>
               )}
             </div>
@@ -476,8 +490,8 @@ function SummaryScreen({ onNav }) {
                   </div>
                   <div style={{
                     padding: '2px 8px',
-                    background: consensus.aligned ? 'rgba(111,207,142,0.18)' : 'rgba(217,107,107,0.18)',
-                    border: `0.5px solid ${consensus.aligned ? 'rgba(111,207,142,0.5)' : 'rgba(217,107,107,0.5)'}`,
+                    background: `${consensus.aligned ? T.bull : T.bear}22`,
+                    border: `0.5px solid ${consensus.aligned ? T.bull : T.bear}55`,
                     borderRadius: 4, fontFamily: T.mono, fontSize: 9, fontWeight: 600, letterSpacing: 0.6,
                     color: consensus.aligned ? T.bull : T.bear, textTransform: 'uppercase',
                   }}>{consensus.aligned ? 'ALIGNED' : 'DIVERGENT'} · {consensus.sentiment}</div>

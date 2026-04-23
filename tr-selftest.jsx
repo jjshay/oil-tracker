@@ -188,6 +188,25 @@ async function trAskLLMReview(results) {
   }
 }
 
+// Inject keyframes once for row fade-in.
+(function () {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById('tr-selftest-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'tr-selftest-styles';
+  s.textContent = `
+    @keyframes trSelfTestRowIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes trSelfTestFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(s);
+})();
+
 function TRSelfTestModal({ open, onClose }) {
   const T = {
     ink000: '#07090C', ink100: '#0B0E13', ink200: '#10141B', ink300: '#171C24',
@@ -195,7 +214,7 @@ function TRSelfTestModal({ open, onClose }) {
     text: '#ffffff', textMid: 'rgba(180,188,200,0.75)', textDim: 'rgba(130,138,150,0.55)',
     signal: '#c9a227', bull: '#6FCF8E', bear: '#D96B6B', warn: '#E8B84A',
     mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
-    ui: 'InterTight, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+    ui: '"Inter Tight", InterTight, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
   };
   const [running, setRunning] = React.useState(false);
   const [results, setResults] = React.useState([]);
@@ -235,6 +254,7 @@ function TRSelfTestModal({ open, onClose }) {
         width: 720, maxHeight: '86%', display: 'flex', flexDirection: 'column',
         background: T.ink100, border: `1px solid ${T.edgeHi}`, borderRadius: 14,
         boxShadow: '0 24px 80px rgba(0,0,0,0.6)', overflow: 'hidden',
+        animation: 'trSelfTestFadeIn 180ms cubic-bezier(0.2,0.7,0.2,1)',
       }}>
         <div style={{
           padding: '18px 24px', borderBottom: `1px solid ${T.edge}`,
@@ -257,12 +277,17 @@ function TRSelfTestModal({ open, onClose }) {
               borderRadius: 6, fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
               cursor: running ? 'default' : 'pointer', opacity: running ? 0.5 : 1,
               fontFamily: T.mono,
+              transition: 'opacity 160ms cubic-bezier(0.2,0.7,0.2,1), background 160ms cubic-bezier(0.2,0.7,0.2,1)',
             }}>{running ? 'TESTING…' : '↻ RE-RUN'}</div>
             <div onClick={onClose} style={{
               width: 28, height: 28, borderRadius: 7, background: T.ink300,
               border: `1px solid ${T.edge}`, display: 'flex', alignItems: 'center',
               justifyContent: 'center', cursor: 'pointer', color: T.textMid, fontSize: 13,
-            }}>✕</div>
+              transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1)',
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#1E2430'; e.currentTarget.style.color = T.text; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = T.ink300;   e.currentTarget.style.color = T.textMid; }}
+            >✕</div>
           </div>
         </div>
 
@@ -303,6 +328,9 @@ function TRSelfTestModal({ open, onClose }) {
                 gap: 10, padding: '7px 14px', fontFamily: T.mono, fontSize: 11,
                 borderBottom: i < results.length - 1 ? `0.5px solid ${T.edge}` : 'none',
                 alignItems: 'center',
+                animation: r.status === 'running'
+                  ? 'none'
+                  : `trSelfTestRowIn 180ms cubic-bezier(0.2,0.7,0.2,1) both`,
               }}>
                 <div style={{
                   color: colorFor(r.status), fontWeight: 700, letterSpacing: 0.5,

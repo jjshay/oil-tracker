@@ -235,8 +235,8 @@ function ImpactScreen({ onNav }) {
           }}>Oil Drivers · 7 · Weighted Consensus</div>
           <div style={{
             fontSize: 15, fontWeight: 500, color: T.text,
-            letterSpacing: -0.2, marginBottom: 16,
-          }}>Weighted $/bbl impact sums to projected WTI</div>
+            letterSpacing: -0.2, marginBottom: 14,
+          }}>Weighted $/bbl sums to projected WTI</div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 20, overflowY: 'auto', flex: 1 }}>
             {drivers.map((d, idx) => {
@@ -255,6 +255,7 @@ function ImpactScreen({ onNav }) {
                     borderRadius: 10, padding: '10px 14px 12px',
                     boxShadow: active ? `inset 0 0.5px 0 rgba(255,255,255,0.08)` : 'none',
                     cursor: 'pointer',
+                    transition: 'background 140ms ease, border-color 140ms ease',
                   }}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 500, color: T.text }}>{d.name}</div>
@@ -343,8 +344,8 @@ function ImpactScreen({ onNav }) {
         }}>
           {/* Stage 1 — Oil price projection */}
           <div style={{
-            background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 12,
-            padding: '16px 20px 18px', marginBottom: 12,
+            background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 10,
+            padding: '14px 18px 16px', marginBottom: 12,
           }}>
             <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 8 }}>
               <div style={{
@@ -429,8 +430,8 @@ function ImpactScreen({ onNav }) {
 
           {/* Stage 2 — BTC headwind */}
           <div style={{
-            background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 12,
-            padding: '16px 20px 18px', marginBottom: 12,
+            background: T.ink100, border: `1px solid ${T.edge}`, borderRadius: 10,
+            padding: '14px 18px 16px', marginBottom: 12,
           }}>
             <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 10 }}>
               <div style={{
@@ -533,7 +534,7 @@ function ImpactScreen({ onNav }) {
           {/* Active driver news */}
           <div style={{
             background: T.ink100, border: `1px solid ${T.edge}`,
-            borderRadius: 12, padding: '14px 18px 16px', flex: 1,
+            borderRadius: 10, padding: '14px 18px 16px', flex: 1,
             display: 'flex', flexDirection: 'column', minHeight: 0,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
@@ -582,6 +583,7 @@ function ImpactScreen({ onNav }) {
                       background: T.ink200,
                       border: `0.5px solid ${T.edge}`,
                       borderRadius: 8, cursor: 'pointer', userSelect: 'none',
+                      transition: 'background 140ms ease, border-color 140ms ease',
                     }}>
                     <div style={{ fontFamily: T.mono, fontSize: 10, color: T.textDim, letterSpacing: 0.3 }}>
                       {n.date.slice(5)}

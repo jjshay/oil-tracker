@@ -57,7 +57,7 @@ function TRLiveStripInline() {
                  :                  '#D96B6B';  // very stale
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: T.mono, fontSize: 11 }}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: T.mono, fontSize: 11, letterSpacing: 0.2 }}
       title={lastUpdate ? 'BTC updated ' + new Date(lastUpdate).toLocaleTimeString() : ''}>
       {btc && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -87,18 +87,31 @@ function TRLiveStripInline() {
 }
 
 function TRGearInline() {
+  const EASE = 'cubic-bezier(0.2,0.7,0.2,1)';
+  const onEnter = (e) => {
+    e.currentTarget.style.background = '#171C24';
+    e.currentTarget.style.color = '#ffffff';
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)';
+  };
+  const onLeave = (e) => {
+    e.currentTarget.style.background = '#10141B';
+    e.currentTarget.style.color = 'rgba(180,188,200,0.75)';
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+  };
   const btn = (icon, title, onClick, fs) => (
     <div onClick={onClick} title={title}
+      onMouseEnter={onEnter} onMouseLeave={onLeave}
       style={{
         width: 28, height: 28, borderRadius: 7,
         background: '#10141B', border: '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', color: 'rgba(180,188,200,0.75)', fontSize: fs || 13,
         fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontWeight: 600,
+        transition: `background 160ms ${EASE}, color 160ms ${EASE}, border-color 160ms ${EASE}`,
       }}>{icon}</div>
   );
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
       {btn('⬚',  'Panel launcher (⌘⇧P)',         () => window.openTRPanelLauncher && window.openTRPanelLauncher(), 14)}
       {btn('⌘K', 'Command palette (⌘K or /)',    () => window.openTRCmdK    && window.openTRCmdK(),    10)}
       {btn('📘', 'Trade journal (J)',             () => window.openTRJournal && window.openTRJournal(),  12)}
@@ -929,6 +942,16 @@ function TRTabBar({ current, onNav }) {
         return (
           <div key={t.key}
             onClick={() => !active && onNav && onNav(t.key)}
+            onMouseEnter={(e) => {
+              if (active) return;
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+              e.currentTarget.style.color = T.text;
+            }}
+            onMouseLeave={(e) => {
+              if (active) return;
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = T.textMid;
+            }}
             style={{
               padding: '0 10px', height: 28, display: 'flex', alignItems: 'center', gap: 5,
               fontSize: 11.5, fontWeight: 500, borderRadius: 7,
@@ -936,11 +959,13 @@ function TRTabBar({ current, onNav }) {
               color: active ? T.text : T.textMid,
               boxShadow: active ? 'inset 0 0.5px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.4)' : 'none',
               cursor: active ? 'default' : 'pointer',
-              transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), color 120ms cubic-bezier(0.2,0.7,0.2,1)',
+              transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1), box-shadow 160ms cubic-bezier(0.2,0.7,0.2,1)',
+              userSelect: 'none',
             }}>
             <span style={{
               fontFamily: T.mono, fontSize: 9, color: active ? T.signal : T.textDim,
               fontWeight: 600, letterSpacing: 0.3,
+              transition: 'color 160ms cubic-bezier(0.2,0.7,0.2,1)',
             }}>{idx + 1}.</span>
             {t.label}
           </div>

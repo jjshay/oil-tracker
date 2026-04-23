@@ -305,9 +305,12 @@
           cursor: 'pointer',
           transform: lift,
           boxShadow: glow,
-          transition: 'transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, background 120ms ease',
+          transition: 'transform 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1), box-shadow 160ms cubic-bezier(0.2,0.7,0.2,1), background 160ms cubic-bezier(0.2,0.7,0.2,1)',
           minHeight: 104,
+          outline: 'none',
         }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = T.signal; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = active ? T.signal : T.edgeHi; }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
           <div style={{
@@ -366,8 +369,18 @@
                 border: `1px solid ${sel ? T.signal : T.edge}`,
                 color: sel ? T.signal : T.textMid,
                 fontFamily: T.ui, fontSize: 11.5, fontWeight: 500,
-                letterSpacing: 0.3, cursor: 'pointer',
-                transition: 'background 120ms ease, border-color 120ms ease, color 120ms ease',
+                letterSpacing: 0.3, cursor: 'pointer', userSelect: 'none',
+                transition: 'background 160ms cubic-bezier(0.2,0.7,0.2,1), border-color 160ms cubic-bezier(0.2,0.7,0.2,1), color 160ms cubic-bezier(0.2,0.7,0.2,1)',
+              }}
+              onMouseEnter={(e) => {
+                if (sel) return;
+                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                e.currentTarget.style.color = T.text;
+              }}
+              onMouseLeave={(e) => {
+                if (sel) return;
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = T.textMid;
               }}>
               {cat}
             </div>
@@ -544,10 +557,13 @@
               onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
               onKeyDown={handleKeyDown}
               placeholder="Search 27 intelligence panels…"
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(201,162,39,0.45)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = T.edge; }}
               style={{
                 flex: 1, height: 32, padding: '0 10px',
                 background: T.ink200, border: `1px solid ${T.edge}`, borderRadius: 8,
                 color: T.text, fontFamily: T.ui, fontSize: 14, outline: 'none',
+                transition: 'border-color 160ms cubic-bezier(0.2,0.7,0.2,1)',
               }}
             />
             <span style={{
