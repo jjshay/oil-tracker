@@ -82,6 +82,26 @@
     var st_load   = React.useState(false);
     var st_noKey  = React.useState(false);
     var st_bwSpread = React.useState(null); // { brent, wti, spread }
+    var st_news   = React.useState([]);    // [{ title, url, date, source }]
+
+    // Free, no-key OPEC-focused news — filtered from window.NewsFeed if available.
+    React.useEffect(function () {
+      if (!open) return;
+      if (typeof window.NewsFeed === 'undefined' || !window.NewsFeed.fetchAll) return;
+      var active = true;
+      (async function () {
+        try {
+          var arts = await window.NewsFeed.fetchAll();
+          if (!active || !Array.isArray(arts)) return;
+          var re = /opec|crude|brent|wti|saudi|aramco|spr|rig(s|\s|$)/i;
+          var filtered = arts.filter(function (a) {
+            return a && a.title && re.test(a.title);
+          }).slice(0, 8);
+          st_news[1](filtered);
+        } catch (_) {}
+      })();
+      return function () { active = false; };
+    }, [open]);
 
     // Free, no-key Brent−WTI spread (always loaded; works key or not).
     React.useEffect(function () {
@@ -201,17 +221,52 @@
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
             {noKey && (
               <div style={{
-                padding: 14, background: T.ink200,
-                border: '1px dashed rgba(201,162,39,0.4)', borderRadius: 6,
-                marginBottom: 20, fontSize: 12, color: T.textMid, lineHeight: 1.5,
+                background: 'linear-gradient(180deg, rgba(201,162,39,0.10) 0%, rgba(201,162,39,0.04) 100%)',
+                border: '1px solid rgba(201,162,39,0.35)',
+                borderRadius: 10, padding: '18px 20px', marginBottom: 22,
               }}>
-                <div style={{ color: T.signal, fontSize: 10, fontFamily: T.mono,
-                              letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
-                  EIA API key required
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8,
+                }}>
+                  <span style={{ fontSize: 14 }}>🔐</span>
+                  <span style={{
+                    padding: '3px 8px', borderRadius: 999,
+                    fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.8,
+                    textTransform: 'uppercase', color: T.signal,
+                    background: 'rgba(201,162,39,0.10)',
+                    border: '1px solid rgba(201,162,39,0.35)',
+                    lineHeight: 1,
+                  }}>Key needed</span>
+                  <span style={{
+                    fontSize: 14, fontWeight: 600, color: T.text,
+                  }}>Unlock live OPEC+ production data</span>
                 </div>
-                Set <code style={{ color: T.text }}>window.TR_SETTINGS.keys.eia</code> or
-                {' '}<code style={{ color: T.text }}>window.EIA_API_KEY</code>. Get one free at
-                {' '}<a href="https://www.eia.gov/opendata/register.php" target="_blank" rel="noopener noreferrer" style={{ color: T.signal }}>eia.gov/opendata</a>.
+                <div style={{
+                  fontSize: 12, color: T.textMid, lineHeight: 1.5, marginBottom: 14,
+                  maxWidth: 640,
+                }}>
+                  Get a free API key from <strong style={{ color: T.text }}>EIA</strong> (30 seconds,
+                  no credit card) to see monthly country production, Strategic Petroleum
+                  Reserve level, and US rig count. We&rsquo;re showing free fallback data
+                  (Brent&minus;WTI spread + OPEC news) below in the meantime.
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <a href="https://www.eia.gov/opendata/register.php"
+                     target="_blank" rel="noopener noreferrer" style={{
+                    padding: '7px 14px', fontFamily: T.mono, fontSize: 10.5, fontWeight: 700,
+                    color: T.ink000, background: T.signal,
+                    borderRadius: 6, textDecoration: 'none', letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}>Get free key →</a>
+                  <button onClick={function () {
+                    try { window.dispatchEvent(new CustomEvent('tr:open-settings')); } catch (_) {}
+                  }} style={{
+                    padding: '7px 14px', fontFamily: T.mono, fontSize: 10.5, fontWeight: 500,
+                    color: T.textMid, background: 'transparent',
+                    border: '1px solid ' + T.edgeHi, borderRadius: 6,
+                    cursor: 'pointer', letterSpacing: 0.5, textTransform: 'uppercase',
+                  }}>Paste into Settings ⚙</button>
+                </div>
               </div>
             )}
 
@@ -339,26 +394,75 @@
               </div>
 
               <div style={{
-                background: T.ink200, border: '1px solid ' + T.edge,
+                background: T.ink200, border: '1px solid ' + (st_bwSpread[0] && st_bwSpread[0].spread > 4 ? 'rgba(201,162,39,0.45)' : T.edge),
                 borderRadius: 6, padding: 14, flex: 1, minWidth: 240,
               }}>
                 <div style={{
                   fontSize: 9.5, fontFamily: T.mono, color: T.oil,
                   letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6,
-                }}>Brent – WTI spread</div>
-                <div style={{ fontSize: 13, color: T.textMid, lineHeight: 1.5 }}>
-                  Live front-month spread pulls via <code style={{ color: T.text }}>window.Markets</code>
-                  if available. A wider Brent-WTI (&gt;$5) typically signals
-                  global-supply tightness vs US domestic; a compressed spread
-                  (&lt;$2) signals US export arbitrage friction.
-                </div>
+                }}>Brent − WTI spread · live</div>
+                {st_bwSpread[0] ? (
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 600, color: st_bwSpread[0].spread > 4 ? T.signal : T.text }}>
+                      ${st_bwSpread[0].spread.toFixed(2)}
+                      {st_bwSpread[0].spread > 4 && (
+                        <span style={{
+                          marginLeft: 8, padding: '2px 7px', borderRadius: 4,
+                          fontSize: 9, fontFamily: T.mono, letterSpacing: 0.8,
+                          color: T.signal, background: 'rgba(201,162,39,0.12)',
+                          border: '1px solid rgba(201,162,39,0.35)',
+                          textTransform: 'uppercase', verticalAlign: 'middle',
+                        }}>Tight supply</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 10.5, fontFamily: T.mono, color: T.textMid, marginTop: 3 }}>
+                      Brent ${st_bwSpread[0].brent.toFixed(2)} · WTI ${st_bwSpread[0].wti.toFixed(2)}
+                    </div>
+                    <div style={{ fontSize: 10.5, color: T.textDim, marginTop: 6, lineHeight: 1.45 }}>
+                      Spread &gt; $4 typically signals global-supply tightness vs US domestic.
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: T.textDim }}>Loading Stooq front-month…</div>
+                )}
               </div>
             </div>
+
+            {/* OPEC-focused news — works with or without EIA key */}
+            {st_news[0] && st_news[0].length > 0 && (
+              <div style={{ marginTop: 22 }}>
+                <div style={{
+                  fontSize: 10, letterSpacing: 1.2, color: T.signal,
+                  textTransform: 'uppercase', fontWeight: 600, marginBottom: 10,
+                }}>OPEC · crude · supply headlines</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {st_news[0].map(function (n, i) {
+                    return (
+                      <a key={i} href={n.url || '#'} target="_blank" rel="noopener noreferrer" style={{
+                        padding: '8px 12px', background: T.ink200,
+                        border: '1px solid ' + T.edge, borderRadius: 6,
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        textDecoration: 'none',
+                      }}>
+                        <span style={{
+                          fontFamily: T.mono, fontSize: 9.5, color: T.oil,
+                          letterSpacing: 0.5, minWidth: 90, flexShrink: 0,
+                        }}>{(n.source || '').toUpperCase()}</span>
+                        <span style={{
+                          fontSize: 12, color: T.text, flex: 1, minWidth: 0,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{n.title}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div style={{
               marginTop: 22, fontSize: 10.5, fontFamily: T.mono, color: T.textDim,
             }}>
-              Source: EIA Open Data v2 · monthly international production + weekly petroleum series.
+              Source: EIA Open Data v2 · Stooq front-month · RSS aggregators.
             </div>
           </div>
         </div>

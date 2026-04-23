@@ -1,0 +1,73 @@
+name: Parse check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install @babel/parser
+        run: |
+          npm init -y > /dev/null
+          npm install @babel/parser --no-save --no-audit --no-fund
+
+      - name: Parse every .jsx and .js source file
+        run: |
+          set -e
+          shopt -s nullglob
+
+          FILES=()
+
+          # Top-level tr-*.jsx and tr-*.js (app shell, hooks, panels)
+          for f in tr-*.jsx tr-*.js; do
+            [ -f "$f" ] && FILES+=("$f")
+          done
+
+          # screens/ (tab components)
+          for f in screens/*.jsx screens/*.js; do
+            [ -f "$f" ] && FILES+=("$f")
+          done
+
+          # engine/ (data + AI layer)
+          for f in engine/*.js engine/*.jsx; do
+            [ -f "$f" ] && FILES+=("$f")
+          done
+
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No source files found to parse — failing loud." >&2
+            exit 1
+          fi
+
+          FAILED=0
+          for f in "${FILES[@]}"; do
+            case "$f" in
+              *.jsx)
+                node -e "require('@babel/parser').parse(require('fs').readFileSync('$f','utf8'),{sourceType:'script',plugins:['jsx']})" \
+                  && echo "ok  $f" \
+                  || { echo "FAIL $f"; FAILED=1; }
+                ;;
+              *.js)
+                node --check "$f" \
+                  && echo "ok  $f" \
+                  || { echo "FAIL $f"; FAILED=1; }
+                ;;
+            esac
+          done
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo "One or more files failed to parse." >&2
+            exit 1
+          fi
+          echo "All ${#FILES[@]} files parsed cleanly."

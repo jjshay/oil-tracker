@@ -1,3 +1,6 @@
+![CI](https://github.com/jjshay/TradeWatch/actions/workflows/smoke.yml/badge.svg)
+![Parse check](https://github.com/jjshay/TradeWatch/actions/workflows/parse-check.yml/badge.svg)
+
 # TradeRadar
 
 A local-first trading dashboard that fuses live crypto + macro data with multi-LLM consensus analysis. Built for traders who want to see **cause before price** — macro events, geopolitical signals, and policy shifts that move BTC / WTI / SPX before the chart shows it.
@@ -86,6 +89,29 @@ index.html  (React 18 + Babel standalone, no build)
 
 See [TECHNICAL.md](TECHNICAL.md) for the full architecture, data flows, and component internals.
 See [STRATEGY.md](STRATEGY.md) for the trading thesis and how each tab operationalizes it.
+
+---
+
+## Testing
+
+Every push and pull request to `master` runs two GitHub Actions workflows:
+
+| Workflow | What it does | Typical run time |
+|---|---|---|
+| [`parse-check.yml`](.github/workflows/parse-check.yml) | Parses every `.jsx` + `.js` file under the repo root, `screens/`, and `engine/` via `@babel/parser` + `node --check`. Catches syntax typos before a browser is even launched. | ~30s |
+| [`smoke.yml`](.github/workflows/smoke.yml) | Serves the repo root via `http-server`, then runs the Playwright suite in [`tests/`](tests/) — loads each of the 10 tabs in headless Chromium, screenshots them, and asserts no unexpected console errors. | ~3-5 min |
+
+On failure, `smoke.yml` uploads the Playwright HTML report, per-tab snapshots, and `tests/report.md` as workflow artifacts (7-day retention).
+
+Run locally:
+
+```bash
+# From repo root
+python3 -m http.server 8000 &
+cd tests && npm install && npx playwright install chromium && npm test
+```
+
+See [`tests/README.md`](tests/README.md) for details.
 
 ---
 

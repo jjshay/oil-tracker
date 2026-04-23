@@ -1,3 +1,6 @@
+![CI](https://github.com/jjshay/TradeWatch/actions/workflows/smoke.yml/badge.svg)
+![Parse check](https://github.com/jjshay/TradeWatch/actions/workflows/parse-check.yml/badge.svg)
+
 # TradeRadar — Playwright Smoke Tests
 
 Lightweight smoke suite that loads each of the 10 TradeRadar tabs, screenshots them, and asserts no unexpected console errors.

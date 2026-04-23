@@ -217,7 +217,8 @@
 
     if (!open) return null;
 
-    const hasKey = !!(window.FREDData && window.FREDData.hasKey && window.FREDData.hasKey());
+    // FRED CSV endpoint works without a key — panel loads out-of-the-box.
+    // If a key is present we still prefer the JSON endpoint inside FREDData.
     const recessions = (window.RecessionData && window.RecessionData.HISTORICAL_RECESSIONS) || [];
 
     return (
@@ -263,17 +264,6 @@
           {/* Body */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
 
-            {!hasKey && (
-              <div style={{
-                padding: '10px 14px', marginBottom: 18,
-                background: 'rgba(217,107,107,0.08)',
-                border: '1px solid rgba(217,107,107,0.3)',
-                borderRadius: 6, fontSize: 11.5, color: T.bear,
-              }}>
-                FRED API key not set. Add it in Settings to populate these charts.
-              </div>
-            )}
-
             <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
               <Gauge score={comp && comp.score} label={comp && comp.label} />
               <div style={{ flex: 1, minWidth: 280 }}>
@@ -304,7 +294,7 @@
                 ))}
                 {(!comp || !comp.components || !comp.components.length) && (
                   <div style={{ fontFamily: T.mono, fontSize: 11, color: T.textDim }}>
-                    {loading ? 'Computing…' : 'No components available — check FRED key.'}
+                    {loading ? 'Computing…' : 'No components available — FRED upstream offline.'}
                   </div>
                 )}
               </div>

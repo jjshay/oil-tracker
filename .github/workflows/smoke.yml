@@ -1,0 +1,69 @@
+name: Smoke tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Install Playwright test deps
+      - name: Install test dependencies
+        working-directory: tests
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        working-directory: tests
+        run: npx playwright install --with-deps chromium
+
+      # Start a lightweight static server for the repo root.
+      # The playwright config has baseURL=http://localhost:8000 and does not
+      # self-manage a webServer, so we launch http-server here in the background.
+      - name: Start static server
+        run: npx --yes http-server . -p 8000 -s &
+        env:
+          NODE_ENV: test
+
+      - name: Wait for static server
+        run: npx --yes wait-on http://localhost:8000 -t 30000
+
+      # Run the smoke suite
+      - name: Run Playwright smoke tests
+        working-directory: tests
+        run: npx playwright test --reporter=github
+
+      # Upload screenshots + report on failure
+      - name: Upload snapshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-snapshots
+          path: tests/snapshots
+          retention-days: 7
+
+      - name: Upload Playwright HTML report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/playwright-report
+          retention-days: 7
+
+      - name: Upload smoke report.md on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report-md
+          path: tests/report.md
+          retention-days: 7

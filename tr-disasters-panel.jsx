@@ -325,7 +325,16 @@
               <span style={{ color: T.quake }}>● M4.5+</span>
               <span style={{ color: T.fire }}>● Wildfire (VIIRS)</span>
               <span style={{ color: T.gdacs }}>○ GDACS</span>
-              {!firesHasKey && <span style={{ color: T.textDim }}>· add nasa_firms key for fires</span>}
+              {!firesHasKey && (
+                <span style={{
+                  padding: '2px 7px', borderRadius: 999,
+                  fontFamily: T.mono, fontSize: 8.5, letterSpacing: 0.8,
+                  textTransform: 'uppercase', color: T.fire,
+                  background: 'rgba(243,138,50,0.10)',
+                  border: '1px solid rgba(243,138,50,0.35)',
+                  lineHeight: 1,
+                }}>🔐 Unlock FIRMS</span>
+              )}
             </div>
           </div>
 
@@ -339,12 +348,57 @@
               }}>
                 {filtered.length} events · {category.toUpperCase()} · {REGION_OPTS.find(r => r.key === region).label}
               </div>
+
+              {/* Wildfire unlock hero — surfaces inside the list ONLY for Wildfire view / All */}
+              {!firesHasKey && (category === 'Wildfire' || category === 'All') && (
+                <div style={{
+                  margin: '8px 16px 12px',
+                  background: 'linear-gradient(180deg, rgba(243,138,50,0.10) 0%, rgba(243,138,50,0.03) 100%)',
+                  border: '1px solid rgba(243,138,50,0.35)',
+                  borderRadius: 10, padding: '14px 16px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 13 }}>🔐</span>
+                    <span style={{
+                      padding: '3px 8px', borderRadius: 999,
+                      fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.8,
+                      textTransform: 'uppercase', color: T.fire,
+                      background: 'rgba(243,138,50,0.10)',
+                      border: '1px solid rgba(243,138,50,0.35)',
+                      lineHeight: 1,
+                    }}>Key needed</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>
+                      Unlock NASA FIRMS wildfire hotspots
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: T.textMid, lineHeight: 1.5, marginBottom: 12 }}>
+                    Get a free MAP_KEY from <strong style={{ color: T.text }}>NASA FIRMS</strong> (30
+                    seconds, no credit card) to see live VIIRS/MODIS fire hotspots worldwide.
+                    Earthquakes + GDACS alerts are already loaded without a key.
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <a href="https://firms.modaps.eosdis.nasa.gov/api/map_key/"
+                       target="_blank" rel="noopener noreferrer" style={{
+                      padding: '7px 12px', fontFamily: T.mono, fontSize: 10.5, fontWeight: 700,
+                      color: T.ink000, background: T.fire,
+                      borderRadius: 6, textDecoration: 'none', letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                    }}>Get free key →</a>
+                    <button onClick={() => {
+                      try { window.dispatchEvent(new CustomEvent('tr:open-settings')); } catch (_) {}
+                    }} style={{
+                      padding: '7px 12px', fontFamily: T.mono, fontSize: 10.5, fontWeight: 500,
+                      color: T.textMid, background: 'transparent',
+                      border: `1px solid ${T.edgeHi}`, borderRadius: 6,
+                      cursor: 'pointer', letterSpacing: 0.5, textTransform: 'uppercase',
+                    }}>Paste into Settings ⚙</button>
+                  </div>
+                </div>
+              )}
+
               {filtered.length === 0 && (
                 <div style={{ padding: '18px', fontSize: 11, color: T.textDim }}>
-                  {loading ? 'Loading disaster feeds…'
-                           : (category === 'Wildfire' && !firesHasKey
-                               ? 'Add a free nasa_firms MAP_KEY in Settings to see wildfire hotspots.'
-                               : 'No events matched for this filter.')}
+                  {loading ? 'Loading disaster feeds…' : 'No events matched for this filter.'}
                 </div>
               )}
               {filtered.slice(0, 200).map((row, i) => (

@@ -208,48 +208,69 @@
     }
     return React.createElement('div', {
       style: {
-        padding: '18px 20px', marginBottom: 14,
+        padding: '16px 18px', marginBottom: 14,
         background: 'rgba(201,162,39,0.06)', border: '1px solid rgba(201,162,39,0.25)',
-        borderRadius: 8,
+        borderRadius: 10,
+        display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap',
       },
     },
-      React.createElement('div', {
-        style: { fontSize: 10, letterSpacing: 1, color: T.signal, fontWeight: 700,
-                 textTransform: 'uppercase', marginBottom: 6 },
-      }, 'FRED API key required'),
-      React.createElement('div', {
-        style: { fontSize: 11, color: T.textMid, lineHeight: 1.5, marginBottom: 10 },
-      },
-        'Get a free key at ',
-        React.createElement('a', {
-          href: 'https://fred.stlouisfed.org/docs/api/api_key.html',
-          target: '_blank', rel: 'noopener noreferrer',
-          style: { color: T.signal, textDecoration: 'underline' },
-        }, 'fred.stlouisfed.org/docs/api/api_key.html'),
-        ' — paste the 32-char key below. Stored locally only.'
+      React.createElement('div', { style: { flex: '1 1 280px', minWidth: 260 } },
+        React.createElement('div', {
+          style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 },
+        },
+          React.createElement('span', { style: { fontSize: 12 } }, '\u{1F513}'),
+          React.createElement('div', {
+            style: { fontSize: 10, letterSpacing: 1.1, color: T.signal, fontWeight: 700, textTransform: 'uppercase' },
+          }, 'Unlock faster FRED refreshes')
+        ),
+        React.createElement('div', {
+          style: { fontSize: 11.5, color: T.textMid, lineHeight: 1.5, marginBottom: 10 },
+        },
+          'Tiles above are already pulling the public CSV endpoint — no key required. ',
+          'Add a free API key from ',
+          React.createElement('a', {
+            href: 'https://fred.stlouisfed.org/docs/api/api_key.html',
+            target: '_blank', rel: 'noopener noreferrer',
+            style: { color: T.signal, textDecoration: 'underline' },
+          }, 'fred.stlouisfed.org'),
+          ' (30 seconds, no credit card) for faster JSON refresh + higher rate limits.'
+        )
       ),
-      React.createElement('div', { style: { display: 'flex', gap: 8 } },
+      React.createElement('div', {
+        style: { display: 'flex', gap: 8, flex: '1 1 320px', minWidth: 280, flexWrap: 'wrap' },
+      },
         React.createElement('input', {
-          type: 'text', value: val, placeholder: '32-char lowercase alphanumeric key',
+          type: 'text', value: val, placeholder: '32-char key',
           onChange: function (e) { setVal(e.target.value); setErr(null); },
           style: {
             flex: 1, padding: '8px 10px', fontFamily: T.mono, fontSize: 11,
             color: T.text, background: T.ink100,
             border: '1px solid ' + T.edge, borderRadius: 5, outline: 'none',
-            letterSpacing: 0.4,
+            letterSpacing: 0.4, minWidth: 160,
           },
         }),
+        React.createElement('a', {
+          href: 'https://fred.stlouisfed.org/docs/api/api_key.html',
+          target: '_blank', rel: 'noopener noreferrer',
+          style: {
+            padding: '8px 12px', fontFamily: T.mono, fontSize: 10.5, fontWeight: 600,
+            color: T.ink000, background: T.signal, borderRadius: 5,
+            letterSpacing: 0.5, textDecoration: 'none', textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          },
+        }, 'Get free key \u2192'),
         React.createElement('div', {
           onClick: submit,
           style: {
-            padding: '8px 14px', fontFamily: T.mono, fontSize: 11, fontWeight: 700,
-            color: T.ink000, background: T.signal,
-            borderRadius: 5, cursor: 'pointer', letterSpacing: 0.5,
+            padding: '8px 14px', fontFamily: T.mono, fontSize: 10.5, fontWeight: 600,
+            color: T.textMid, background: 'transparent',
+            border: '1px solid ' + T.edgeHi, borderRadius: 5, cursor: 'pointer',
+            letterSpacing: 0.5, textTransform: 'uppercase',
           },
-        }, 'SAVE')
+        }, 'Save')
       ),
       err ? React.createElement('div', {
-        style: { marginTop: 8, fontFamily: T.mono, fontSize: 10, color: T.bear },
+        style: { marginTop: 8, fontFamily: T.mono, fontSize: 10, color: T.bear, flexBasis: '100%' },
       }, err) : null
     );
   }
@@ -270,20 +291,21 @@
 
     var refresh = React.useCallback(async function (force) {
       if (!window.FREDData) { setErr('FREDData engine missing'); return; }
-      if (!window.FREDData.hasKey()) { setHaveKey(false); return; }
-      setHaveKey(true);
+      // CSV endpoint works without a key. Still track whether a personal key
+      // is configured (faster JSON + higher limits), but don't gate the UI.
+      setHaveKey(!!(window.FREDData.hasKey && window.FREDData.hasKey()));
       setLoading(true); setErr(null);
       try {
         if (force) { try { window.FREDData.clearCache(); } catch (_) {} }
         var b = await window.FREDData.getBundle();
         setBundle(b || {});
         setUpdatedAt(Date.now());
-        // If every series is null, likely a bad key.
+        // If every series is null, upstream is offline.
         var allNull = true;
         for (var k in (b || {})) {
           if (Object.prototype.hasOwnProperty.call(b, k) && b[k]) { allNull = false; break; }
         }
-        if (allNull) setErr('no data returned — verify API key');
+        if (allNull) setErr('no data returned — upstream offline');
       } catch (e) {
         setErr((e && e.message) ? e.message : 'fetch failed');
       } finally { setLoading(false); }
@@ -292,21 +314,13 @@
     React.useEffect(function () {
       if (!open) return;
       if (!window.FREDData) { setErr('FREDData engine missing'); return; }
-      if (window.FREDData.hasKey()) {
-        setHaveKey(true);
-        refresh(false);
-      } else {
-        setHaveKey(false);
-      }
-      var iv = setInterval(function () {
-        if (window.FREDData && window.FREDData.hasKey()) refresh(false);
-      }, 15 * 60 * 1000);
-      // Listen for settings changes → re-check key.
+      setHaveKey(!!(window.FREDData.hasKey && window.FREDData.hasKey()));
+      refresh(false);
+      var iv = setInterval(function () { refresh(false); }, 15 * 60 * 1000);
+      // Listen for settings changes → re-check key + refresh.
       function onSettings() {
-        if (window.FREDData && window.FREDData.hasKey()) {
-          setHaveKey(true);
-          refresh(true);
-        }
+        setHaveKey(!!(window.FREDData && window.FREDData.hasKey && window.FREDData.hasKey()));
+        refresh(true);
       }
       window.addEventListener('tr:settings-changed', onSettings);
       return function () {
@@ -353,18 +367,16 @@
             style: {
               padding: '2px 8px', fontFamily: T.mono, fontSize: 9.5, fontWeight: 600,
               letterSpacing: 0.6,
-              color: !haveKey ? T.signal : loading ? T.signal : (err ? T.bear : T.bull),
-              background: !haveKey ? 'rgba(201,162,39,0.10)'
-                        : loading ? 'rgba(201,162,39,0.10)'
+              color: loading ? T.signal : (err ? T.bear : T.bull),
+              background: loading ? 'rgba(201,162,39,0.10)'
                         : err ? 'rgba(217,107,107,0.10)'
                         : 'rgba(111,207,142,0.10)',
               borderRadius: 4,
-              border: '0.5px solid ' + (!haveKey ? 'rgba(201,162,39,0.4)'
-                                        : loading ? 'rgba(201,162,39,0.4)'
+              border: '0.5px solid ' + (loading ? 'rgba(201,162,39,0.4)'
                                         : err ? 'rgba(217,107,107,0.4)'
                                         : 'rgba(111,207,142,0.4)'),
             },
-          }, !haveKey ? 'NO KEY' : loading ? 'LOADING' : err ? 'OFFLINE' : 'LIVE'),
+          }, loading ? 'LOADING' : err ? 'OFFLINE' : 'LIVE'),
           React.createElement('div', {
             style: { fontFamily: T.mono, fontSize: 9.5, color: T.textDim, letterSpacing: 0.4 },
           }, 'UPDATED · ' + lastUpdated),
@@ -391,13 +403,13 @@
           )
         ),
 
-        // Key prompt
+        // Optional upgrade-with-key card — CSV works without, JSON is faster with a key.
         !haveKey ? React.createElement(KeyPrompt, {
           onSave: function () { setHaveKey(true); refresh(true); },
         }) : null,
 
         // Error banner
-        err && haveKey ? React.createElement('div', {
+        err ? React.createElement('div', {
           style: {
             padding: '9px 12px', marginBottom: 12,
             background: 'rgba(217,107,107,0.08)', border: '1px solid rgba(217,107,107,0.3)',
