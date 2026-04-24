@@ -108,7 +108,13 @@
     return rows;
   }
 
-  // ---------- fetch: CSV first, JSON fallback ----------
+  // CORS proxy — FRED serves no Access-Control-Allow-Origin headers on
+  // either the CSV graph endpoint or the keyed JSON API, so direct
+  // browser fetches fail. corsproxy.io transparently adds the headers.
+  var CORS_PROXY = 'https://corsproxy.io/?';
+  function viaProxy(url) { return CORS_PROXY + encodeURIComponent(url); }
+
+  // ---------- fetch: keyed JSON first (if key present), CSV fallback ----------
   async function getSeries(seriesId, limit) {
     if (!seriesId) return null;
     var lim = Math.max(1, Math.min(500, limit || 30));
@@ -118,15 +124,40 @@
 
     var scale = (SERIES[seriesId] && SERIES[seriesId].scale) || 1;
 
-    // Attempt 1 — public CSV endpoint, no key required.
+    // Attempt 1 — keyed JSON (authoritative, structured) via CORS proxy.
+    if (hasKey()) {
+      var key = resolveKey();
+      var jsonUrl = JSON_BASE
+        + '?series_id=' + encodeURIComponent(seriesId)
+        + '&api_key=' + encodeURIComponent(key)
+        + '&file_type=json&sort_order=desc&limit=' + lim;
+      try {
+        var r2 = await fetch(viaProxy(jsonUrl), { method: 'GET' });
+        if (r2 && r2.ok) {
+          var json = await r2.json();
+          if (json && Array.isArray(json.observations)) {
+            var rows = json.observations.map(function (o) {
+              var v = o.value;
+              if (v == null || v === '' || v === '.') return { date: o.date, value: null };
+              var n = parseFloat(v);
+              if (!isFinite(n)) return { date: o.date, value: null };
+              return { date: o.date, value: n * scale };
+            });
+            cacheSet(cacheKey, rows);
+            return rows;
+          }
+        }
+      } catch (_) { /* fall through to CSV */ }
+    }
+
+    // Attempt 2 — public CSV endpoint via CORS proxy, no key required.
     try {
       var csvUrl = CSV_BASE + '?id=' + encodeURIComponent(seriesId);
-      var resp = await fetch(csvUrl, { method: 'GET' });
+      var resp = await fetch(viaProxy(csvUrl), { method: 'GET' });
       if (resp && resp.ok) {
         var text = await resp.text();
         var parsed = parseCSV(text, seriesId);
         if (parsed && parsed.length) {
-          // CSV is oldest-first; reverse to newest-first and cap to `lim`.
           parsed.reverse();
           var trimmed = parsed.slice(0, lim).map(function (r) {
             return { date: r.date, value: r.value == null ? null : r.value * scale };
@@ -135,31 +166,7 @@
           return trimmed;
         }
       }
-    } catch (_) { /* fall through to keyed JSON */ }
-
-    // Attempt 2 — keyed JSON endpoint (only if user has supplied a valid key).
-    if (hasKey()) {
-      var key = resolveKey();
-      var url = JSON_BASE
-        + '?series_id=' + encodeURIComponent(seriesId)
-        + '&api_key=' + encodeURIComponent(key)
-        + '&file_type=json&sort_order=desc&limit=' + lim;
-      try {
-        var r2 = await fetch(url, { method: 'GET' });
-        if (!r2.ok) return null;
-        var json = await r2.json();
-        if (!json || !Array.isArray(json.observations)) return null;
-        var rows = json.observations.map(function (o) {
-          var v = o.value;
-          if (v == null || v === '' || v === '.') return { date: o.date, value: null };
-          var n = parseFloat(v);
-          if (!isFinite(n)) return { date: o.date, value: null };
-          return { date: o.date, value: n * scale };
-        });
-        cacheSet(cacheKey, rows);
-        return rows;
-      } catch (_) { return null; }
-    }
+    } catch (_) { /* nothing else to try */ }
 
     return null;
   }

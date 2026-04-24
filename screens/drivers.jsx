@@ -412,19 +412,17 @@ function DriversScreen({ onNav }) {
 
     // ═══ SPX ═══
     {
-      id: 'spx-10y', explain: 'spx-10y', group: 'spx', label: 'IEF · 10Y Bonds Proxy', kicker: 'Rising IEF = falling yields = long SPX',
+      id: 'spx-10y', explain: 'spx-10y', group: 'spx', label: '10Y Treasury Yield', kicker: 'Discount rate for multiples',
       onOpen: () => window.openTRTreasury && window.openTRTreasury(),
       load: async () => {
-        // IEF tracks 7-10Y Treasury bond prices. Price INVERSE to yield:
-        // IEF up = yields down = multiple-expansion tailwind for equities.
-        const q = await finnhubQuote('IEF');
-        if (!q) return { value: '—', note: 'Add Finnhub key in ⚙ Settings' };
+        const q = await fredLatest('DGS10');
+        if (!q) return { value: '—', note: 'FRED key missing · ⚙ Settings' };
+        const dBp = q.changePct != null && q.prevValue != null ? (q.value - q.prevValue) * 100 : null;
         return {
-          value: '$' + q.price.toFixed(2),
-          delta: fpct(q.changePct),
-          // IEF rising = yields falling = bullish for SPX multiples
-          signal: q.changePct > 0.15 ? 'long' : q.changePct < -0.15 ? 'short' : 'neutral',
-          note: 'Bond price up = yield down = tailwind for equity multiples',
+          value: q.value.toFixed(2) + '%',
+          delta: dBp != null ? ((dBp >= 0 ? '+' : '') + dBp.toFixed(0) + ' bp') : q.date,
+          signal: q.value > 4.5 ? 'short' : q.value < 3.8 ? 'long' : 'neutral',
+          note: 'Falling 10Y = multiple expansion tailwind · FRED DGS10',
         };
       },
     },
