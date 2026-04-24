@@ -174,6 +174,12 @@
 <script type="text/babel" src="tr-selftest.jsx"></script>
 <script type="text/babel" src="tr-walkthrough.jsx"></script>
 <script type="text/babel" src="tr-walkthrough-content.jsx"></script>
+<!-- New: what's new · trade of day · stars · prep · shortcuts -->
+<script type="text/babel" src="tr-whats-new.jsx"></script>
+<script type="text/babel" src="tr-trade-of-day.jsx"></script>
+<script type="text/babel" src="tr-starred-signals.jsx"></script>
+<script type="text/babel" src="tr-prep-for-open.jsx"></script>
+<script type="text/babel" src="tr-keyboard-shortcuts.jsx"></script>
 <script type="text/babel" src="tr-ui.jsx"></script>
 <script type="text/babel" src="tr-mobile.jsx"></script>
 <script type="text/babel" src="tr-panel-launcher.jsx"></script>
@@ -183,12 +189,10 @@
 <script src="keys.local.js"></script>
 <script type="text/babel" src="screens/drivers.jsx"></script>
 <script type="text/babel" src="screens/summary.jsx"></script>
-<script type="text/babel" src="screens/historical.jsx"></script>
-<script type="text/babel" src="screens/projected.jsx"></script>
-<script type="text/babel" src="screens/impact.jsx"></script>
+<script type="text/babel" src="screens/model.jsx"></script>
+<script type="text/babel" src="screens/context.jsx"></script>
 <script type="text/babel" src="screens/recommendations.jsx"></script>
 <script type="text/babel" src="screens/news.jsx"></script>
-<script type="text/babel" src="screens/calendar.jsx"></script>
 <script type="text/babel" src="screens/signals.jsx"></script>
 <script type="text/babel" src="screens/prices.jsx"></script>
 <script type="text/babel" src="screens/flights.jsx"></script>
@@ -209,12 +213,10 @@ const TR_TOKENS = {
 const TR_TABS = [
   { key: 'drivers',     label: 'Drivers'     },
   { key: 'summary',     label: 'Summary'     },
-  { key: 'historical',  label: 'Historical'  },
-  { key: 'projected',   label: 'Projected'   },
-  { key: 'impact',      label: 'Impact'      },
+  { key: 'model',       label: 'Model'       },
+  { key: 'context',     label: 'Context'     },
   { key: 'recommend',   label: 'Recommend'   },
   { key: 'news',        label: 'News'        },
-  { key: 'calendar',    label: 'Calendar'    },
   { key: 'signals',     label: 'Signals'     },
   { key: 'prices',      label: 'Prices'      },
   { key: 'flights',     label: 'Flights'     },
@@ -361,7 +363,14 @@ function TradeRadarApp() {
       window.dispatchEvent(new CustomEvent('tr:tab-changed', { detail: { tab: t } }));
     } catch (_) {}
   }, []);
-  React.useEffect(() => { window.TR_CURRENT_TAB = tab; }, []);
+  React.useEffect(() => { window.TR_CURRENT_TAB = tab; window.trSetTab = setTab; }, [setTab]);
+
+  // Keyboard shortcut bridge — 'tr:nav' event from tr-keyboard-shortcuts.jsx
+  React.useEffect(() => {
+    const onNav = (e) => { if (e.detail && e.detail.tab) setTab(e.detail.tab); };
+    window.addEventListener('tr:nav', onNav);
+    return () => window.removeEventListener('tr:nav', onNav);
+  }, [setTab]);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [optionsOpen, setOptionsOpen] = React.useState(false);
   const [optionsInitialSymbol, setOptionsInitialSymbol] = React.useState(null);
@@ -482,13 +491,11 @@ function TradeRadarApp() {
   // Screens that render their own TR header via onNav
   if (tab === 'drivers')         screen = <DriversScreen          onNav={setTab} />;
   else if (tab === 'summary')    screen = <SummaryScreen          onNav={setTab} />;
-  else if (tab === 'historical') screen = <HistoricalScreen       onNav={setTab} />;
-  else if (tab === 'projected')  screen = <ProjectedScreen        onNav={setTab} />;
-  else if (tab === 'impact')     screen = <ImpactScreen           onNav={setTab} />;
+  else if (tab === 'model')      screen = <ModelScreen            onNav={setTab} />;
+  else if (tab === 'context')    screen = <ContextScreen          onNav={setTab} />;
   else if (tab === 'recommend')  screen = <RecommendationsScreen  onNav={setTab} />;
-  // News/Calendar/Signals now render their own 7-tab header + onNav — no TRWrap
+  // News/Signals render their own 9-tab header + onNav — no TRWrap
   else if (tab === 'news')     screen = <NewsScreen     onNav={setTab} />;
-  else if (tab === 'calendar') screen = <CalendarScreen onNav={setTab} />;
   else if (tab === 'signals')  screen = <SignalsScreen  onNav={setTab} />;
   else if (tab === 'prices')   screen = <PricesScreen   onNav={setTab} />;
   else if (tab === 'flights')  screen = <FlightsScreen  onNav={setTab} />;

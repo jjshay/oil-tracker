@@ -59,14 +59,17 @@ async function fredLatest(seriesId) {
 }
 
 // Driver tile — self-contained cell. `loader` returns { value, delta, signal, note }.
-function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey }) {
+function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey, tileId, onReport }) {
   const [state, setState] = React.useState({ loading: true });
   React.useEffect(() => {
     let active = true;
     const go = async () => {
       try {
         const res = await loader();
-        if (active) setState({ loading: false, ...(res || {}) });
+        if (active) {
+          setState({ loading: false, ...(res || {}) });
+          if (tileId && onReport && res) onReport(tileId, { ...res, label });
+        }
       } catch (e) {
         if (active) setState({ loading: false, error: (e && e.message) || '—' });
       }
@@ -78,6 +81,12 @@ function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey })
 
   const sig = state.signal || 'neutral';
   const col = sigColor(T, sig);
+  // What's New diff
+  const diff = tileId && window.TRWhatsNew
+    ? window.TRWhatsNew.getDiff(tileId, { signal: sig, value: state.value })
+    : null;
+  const newRingStyle = diff && window.TRWhatsNew && window.TRWhatsNew.NewRing
+    ? window.TRWhatsNew.NewRing() : {};
 
   return (
     <div onClick={onClick} title={state.note || ''} style={{
@@ -86,8 +95,9 @@ function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey })
       borderRadius: 9, padding: '10px 12px',
       cursor: onClick ? 'pointer' : 'default',
       display: 'flex', flexDirection: 'column', gap: 4,
-      minHeight: 78,
+      minHeight: 78, position: 'relative',
       transition: 'border-color 140ms cubic-bezier(0.2,0.7,0.2,1), background 140ms cubic-bezier(0.2,0.7,0.2,1), transform 140ms cubic-bezier(0.2,0.7,0.2,1)',
+      ...newRingStyle,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <div style={{
@@ -95,6 +105,14 @@ function DriverTile({ label, kicker, loader, onClick, T, bgAccent, explainKey })
           fontWeight: 500, lineHeight: 1.3, flex: 1, display: 'flex', alignItems: 'center',
         }}>
           {label}
+          {tileId && window.TRStars && window.TRStars.StarButton && (
+            <window.TRStars.StarButton tileId={tileId} label={label} T={T} size={11} />
+          )}
+          {diff && window.TRWhatsNew && window.TRWhatsNew.Badge && (
+            <span style={{ marginLeft: 4 }}>
+              <window.TRWhatsNew.Badge diff={diff} T={T} />
+            </span>
+          )}
           {explainKey && typeof TRInfoIcon !== 'undefined' && window.TR_EXPLAIN && window.TR_EXPLAIN[explainKey] &&
             <TRInfoIcon text={window.TR_EXPLAIN[explainKey]} size={10} />}
         </div>
@@ -140,9 +158,32 @@ function DriversScreen({ onNav }) {
   const T = drT;
   const W = 1280, H = 820;
   const [tileSigs, setTileSigs] = React.useState({}); // id -> signal
+  const [tileStates, setTileStates] = React.useState({}); // id -> { value, signal, label }
   const reportSig = React.useCallback((id, sig) => {
     setTileSigs(prev => (prev[id] === sig ? prev : { ...prev, [id]: sig }));
   }, []);
+  const reportTile = React.useCallback((id, data) => {
+    setTileStates(prev => ({ ...prev, [id]: data }));
+    if (window.TRWhatsNew && data) {
+      window.TRWhatsNew.recordTileState(id, { signal: data.signal, value: data.value });
+    }
+  }, []);
+
+  // Starred tiles → live data for MyRadar strip
+  const [starsVersion, setStarsVersion] = React.useState(0);
+  React.useEffect(() => {
+    const on = () => setStarsVersion(v => v + 1);
+    window.addEventListener('tr:stars-changed', on);
+    if (window.TRWhatsNew && window.TRWhatsNew.bumpVisit) window.TRWhatsNew.bumpVisit();
+    return () => window.removeEventListener('tr:stars-changed', on);
+  }, []);
+  const starredTiles = React.useMemo(() => {
+    if (!window.TRStars || !window.TRStars.getAll) return [];
+    return window.TRStars.getAll().map(s => {
+      const st = tileStates[s.tileId] || {};
+      return { id: s.tileId, label: s.label, value: st.value, signal: st.signal };
+    });
+  }, [tileStates, starsVersion]);
 
   // ═════════════════════════ DRIVER DEFINITIONS ═════════════════════════
   // Each: { id, label, group, kicker, load, onOpen }
@@ -518,12 +559,14 @@ function DriversScreen({ onNav }) {
   const ReportingTile = (d) => (
     <DriverTile
       key={d.id}
+      tileId={d.id}
       T={T}
       label={d.label}
       kicker={d.kicker}
       explainKey={d.explain}
       onClick={d.onOpen}
       bgAccent
+      onReport={reportTile}
       loader={async () => {
         const r = await d.load();
         reportSig(d.id, r?.signal || 'neutral');
@@ -563,6 +606,13 @@ function DriversScreen({ onNav }) {
         height: H - 52, padding: '16px 20px', overflowY: 'auto',
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
+        {/* Trade of the day — LLM-generated top-of-page directive */}
+        {typeof window.TRTradeOfDay === 'function' && <window.TRTradeOfDay T={T} />}
+
+        {/* My Radar — starred tiles curated by user */}
+        {typeof window.TRStars !== 'undefined' && window.TRStars.MyRadar &&
+          <window.TRStars.MyRadar tiles={starredTiles} T={T} />}
+
         {/* Regime strip */}
         <div>
           <div style={{

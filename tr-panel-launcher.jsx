@@ -197,6 +197,10 @@
   const CATEGORIES = ['All', 'Macro', 'Crypto', 'OSINT', 'Equities', 'Tools'];
   const HISTORY_KEY = 'tr_panel_history';
   const HISTORY_LIMIT = 8;
+  const USAGE_KEY = 'tr_panel_usage_v1';
+  const USAGE_TOP_N = 8;
+  const USAGE_TTL_MS = 365 * 24 * 60 * 60 * 1000; // 1-year rolling
+  const DEFAULT_TOP8 = ['options', 'settings', 'correlation', 'scenarios', 'sizing', 'journal', 'trade', 'alerts'];
 
   // ------------------------------------------------------------------
   // History helpers (localStorage)
@@ -218,6 +222,76 @@
       localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
     } catch (_) {}
   }
+
+  // ------------------------------------------------------------------
+  // Usage tracking helpers (localStorage)
+  //   Shape: { [panelKey]: { count: number, lastOpenedAt: epochMs } }
+  // ------------------------------------------------------------------
+  function loadUsage() {
+    try {
+      const raw = localStorage.getItem(USAGE_KEY);
+      if (!raw) return {};
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') return {};
+      // 1-year rolling: drop zero-count entries older than TTL. Keep live counts.
+      const now = Date.now();
+      const cleaned = {};
+      Object.keys(obj).forEach(k => {
+        const v = obj[k];
+        if (!v || typeof v !== 'object') return;
+        const count = Number(v.count) || 0;
+        const last  = Number(v.lastOpenedAt) || 0;
+        if (count <= 0 && last && (now - last) > USAGE_TTL_MS) return;
+        cleaned[k] = { count, lastOpenedAt: last };
+      });
+      return cleaned;
+    } catch (_) { return {}; }
+  }
+  function recordUsage(key) {
+    if (!key || typeof key !== 'string') return;
+    try {
+      const usage = loadUsage();
+      const prev = usage[key] || { count: 0, lastOpenedAt: 0 };
+      usage[key] = {
+        count: (Number(prev.count) || 0) + 1,
+        lastOpenedAt: Date.now(),
+      };
+      localStorage.setItem(USAGE_KEY, JSON.stringify(usage));
+    } catch (_) {}
+  }
+  function computeTop8(usage) {
+    const entries = Object.keys(usage || {})
+      .map(k => ({ key: k, count: Number((usage[k] || {}).count) || 0 }))
+      .filter(e => e.count > 0)
+      .sort((a, b) => b.count - a.count);
+    if (entries.length >= USAGE_TOP_N) {
+      return entries.slice(0, USAGE_TOP_N).map(e => ({ key: e.key, count: e.count }));
+    }
+    // Fallback: merge real usage with default list (real counts first, then defaults)
+    const seen = new Set(entries.map(e => e.key));
+    const out = entries.map(e => ({ key: e.key, count: e.count }));
+    for (const dk of DEFAULT_TOP8) {
+      if (out.length >= USAGE_TOP_N) break;
+      if (seen.has(dk)) continue;
+      out.push({ key: dk, count: (usage && usage[dk] && Number(usage[dk].count)) || 0 });
+      seen.add(dk);
+    }
+    return out.slice(0, USAGE_TOP_N);
+  }
+
+  // Global subscriber: any part of the app can emit `tr:panel-opened`
+  // and we'll bump the counter. Installs once per page.
+  try {
+    if (typeof window !== 'undefined' && !window.__TR_PANEL_USAGE_WIRED__) {
+      window.addEventListener('tr:panel-opened', (ev) => {
+        try {
+          const k = ev && ev.detail && ev.detail.key;
+          if (k) recordUsage(k);
+        } catch (_) {}
+      });
+      window.__TR_PANEL_USAGE_WIRED__ = true;
+    }
+  } catch (_) {}
 
   // ------------------------------------------------------------------
   // Status resolver — returns { kind: 'live'|'needs_key'|'unknown', label }.
@@ -428,6 +502,7 @@
     const [category, setCategory] = React.useState('All');
     const [activeIdx, setActiveIdx] = React.useState(0);
     const [history, setHistory] = React.useState(loadHistory());
+    const [usage, setUsage] = React.useState(loadUsage());
     const inputRef = React.useRef(null);
     const gridRef = React.useRef(null);
     const cols = useColumns();
@@ -439,11 +514,19 @@
         setCategory('All');
         setActiveIdx(0);
         setHistory(loadHistory());
+        setUsage(loadUsage());
         setTimeout(() => {
           if (inputRef.current) { try { inputRef.current.focus(); } catch (_) {} }
         }, 10);
       }
     }, [open]);
+
+    // Live-refresh usage whenever any panel opens (from this launcher OR elsewhere).
+    React.useEffect(() => {
+      const onPanelOpened = () => setUsage(loadUsage());
+      window.addEventListener('tr:panel-opened', onPanelOpened);
+      return () => window.removeEventListener('tr:panel-opened', onPanelOpened);
+    }, []);
 
     // Compute recents (history keys → panel objects, in order).
     const recents = React.useMemo(() => {
@@ -451,6 +534,15 @@
       PANELS.forEach(p => { byKey[p.key] = p; });
       return history.map(k => byKey[k]).filter(Boolean);
     }, [history]);
+
+    // Compute top-8 quick access (usage → panel objects, with count).
+    const top8 = React.useMemo(() => {
+      const byKey = {};
+      PANELS.forEach(p => { byKey[p.key] = p; });
+      return computeTop8(usage)
+        .map(e => byKey[e.key] ? { panel: byKey[e.key], count: e.count } : null)
+        .filter(Boolean);
+    }, [usage]);
 
     // Filtered + sorted panels for the main grid.
     const filtered = React.useMemo(() => {
@@ -479,6 +571,12 @@
       } catch (_) {}
       pushHistory(panel.key);
       setHistory(loadHistory());
+      // Notify the rest of the app + bump usage via the global subscriber.
+      try {
+        window.dispatchEvent(new CustomEvent('tr:panel-opened', { detail: { key: panel.key } }));
+      } catch (_) {}
+      // Also refresh locally (in case subscriber races with this component's unmount).
+      setUsage(loadUsage());
       onClose && onClose();
     }
 
@@ -590,6 +688,74 @@
           <div ref={gridRef} style={{
             flex: 1, overflow: 'auto',
           }}>
+            {/* QUICK ACCESS · TOP 8 strip */}
+            {top8.length > 0 && !query.trim() && category === 'All' && (
+              <div style={{
+                margin: '14px 18px 16px',
+                padding: '10px 14px',
+                background: 'rgba(201,162,39,0.05)',
+                borderRadius: 10,
+                border: `1px solid ${T.edge}`,
+              }}>
+                <div style={{
+                  fontFamily: T.mono, fontSize: 9, color: T.signal,
+                  letterSpacing: 0.8, textTransform: 'uppercase',
+                  marginBottom: 8,
+                }}>⚡ Quick Access · Top 8</div>
+                <div style={{
+                  display: 'flex', flexWrap: 'nowrap', gap: 8,
+                  overflowX: 'auto',
+                }}>
+                  {top8.map(({ panel, count }) => (
+                    <div
+                      key={'top8-' + panel.key}
+                      role="button"
+                      tabIndex={0}
+                      title={panel.name + (count > 0 ? ' · opened ' + count + 'x' : '')}
+                      onClick={() => openPanel(panel)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = T.edgeHi;
+                        e.currentTarget.style.transform = 'scale(1.03)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = T.edge;
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      style={{
+                        flexShrink: 0,
+                        width: 82, height: 40,
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '0 8px',
+                        background: T.ink200,
+                        border: `1px solid ${T.edge}`,
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        transition: 'border-color 140ms cubic-bezier(0.2,0.7,0.2,1), transform 140ms cubic-bezier(0.2,0.7,0.2,1)',
+                        outline: 'none',
+                      }}>
+                      <span style={{ fontSize: 13, lineHeight: 1 }}>{panel.icon}</span>
+                      <span style={{
+                        flex: 1, minWidth: 0,
+                        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                      }}>
+                        <span style={{
+                          fontFamily: T.ui, fontSize: 10.5, fontWeight: 600,
+                          color: T.text, lineHeight: 1.1,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{panel.name}</span>
+                        {count > 0 && (
+                          <span style={{
+                            fontFamily: T.mono, fontSize: 9, color: T.textDim,
+                            lineHeight: 1.1, letterSpacing: 0.3,
+                          }}>{count}x</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Recently used */}
             {recents.length > 0 && !query.trim() && category === 'All' && (
               <div>

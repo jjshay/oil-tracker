@@ -382,6 +382,9 @@ function SummaryScreen({ onNav }) {
                 transition: 'background 120ms cubic-bezier(0.2,0.7,0.2,1), border-color 120ms cubic-bezier(0.2,0.7,0.2,1)',
               }}>⚡ TEST</div>
           )}
+          {typeof window.TRPrepForOpen !== 'undefined' && window.TRPrepForOpen.Button && (
+            <window.TRPrepForOpen.Button T={T} />
+          )}
           <div
             data-walk="summary-refresh"
             onClick={runBriefing}
