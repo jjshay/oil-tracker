@@ -33,10 +33,16 @@ const PORTFOLIO_SUGGESTED = [
 ];
 
 // Seed positions written on FIRST LOAD only (when tr_positions_v1 is absent).
+// Real book as of 2026-04-24:
+//   BTC direct      ~$1,076.48 current value
+//   COIN Dec 18 2026 $340C x 2 @ $1,525/contract = $3,050
+//   Cash            $4,621
+//   ─────────────────────────
+//   Total           ~$8,747
 const DEFAULT_POSITIONS = [
-  { id: 'p_btc_seed',    type: 'crypto', sym: 'BTC',  qty: 0.011, basis: 98818, label: 'Direct BTC' },
-  { id: 'p_coin_seed',   type: 'option', sym: 'COIN', right: 'call', strike: 240, expiry: '2026-12-18', contracts: 2, premium: 1525, label: 'COIN Dec 2026 $240C' },
-  { id: 'p_cash_seed',   type: 'cash',   amount: 4350, label: 'Cash' },
+  { id: 'p_btc_seed',    type: 'crypto', sym: 'BTC',  qty: 0.01089, basis: 98848, label: 'Direct BTC' },
+  { id: 'p_coin_seed',   type: 'option', sym: 'COIN', right: 'call', strike: 340, expiry: '2026-12-18', contracts: 2, premium: 1525, label: 'COIN Dec 2026 $340C' },
+  { id: 'p_cash_seed',   type: 'cash',   amount: 4621, label: 'Cash' },
 ];
 
 // Ticker → CoinGecko id map for the crypto quote leg.
