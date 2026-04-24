@@ -1,28 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    TradeRadar daily briefing — macOS launchd agent.
-    Fires at 06:00 America/New_York, Monday through Friday.
+    TradeRadar Morning Brief — macOS launchd agent.
+    Fires at 06:00 LOCAL time, Monday through Friday.
+
+    ── Time zone (PICK ONE based on your Mac's system clock) ───────────────
+        JJ's target is 06:00 PACIFIC (PST/PDT). launchd's
+        StartCalendarInterval uses the Mac's LOCAL time, so the <Hour>
+        you want depends on your system TZ:
+
+            • Mac set to America/Los_Angeles (PT) → Hour = 6   (this file's default)
+            • Mac set to America/New_York    (ET) → Hour = 9
+            • Mac set to America/Chicago     (CT) → Hour = 8
+            • Mac set to America/Denver      (MT) → Hour = 7
+            • Mac set to UTC                      → Hour = 13 (PST) / 14 (PDT) — drift across DST
+
+        Check your TZ with:    sudo systemsetup -gettimezone
+        If you change your Mac's TZ (travel), edit the <Hour> fields below
+        and `launchctl unload` + `load` to apply.
+
+    ── Cloud-cron alternative (laptop-independent) ─────────────────────────
+        launchd does NOT wake a sleeping Mac — if the lid is closed at 06:00
+        the job runs at next wake. For guaranteed delivery, run on GitHub
+        Actions with:
+
+            on:
+              schedule:
+                - cron: '0 14 * * 1-5'    # 14:00 UTC = 7 AM EDT / 6 AM PDT (DST)
+                - cron: '0 15 * * 1-5'    # 15:00 UTC = 7 AM EST / 6 AM PST (standard)
+
+        Two schedules cover both DST and standard time. Or use one cron and
+        accept a ±1h drift twice a year. GitHub's cron granularity is ~5 min
+        and can skip under load — not a hard guarantee, but more reliable
+        than a sleeping MacBook.
 
     ── Install (one-time) ──────────────────────────────────────────────────
-        # 1. Create the log directory (launchd will fail silently without it)
+        # 1. Create the log directory (launchd fails silently without it)
         mkdir -p /Users/johnshay/TradeWatch/logs
 
-        # 2. Copy the template to LaunchAgents, DROPPING the `.example` suffix
+        # 2. Copy to LaunchAgents, DROPPING the `.example` suffix
         cp /Users/johnshay/TradeWatch/scripts/com.traderadar.briefing.plist.example \
            ~/Library/LaunchAgents/com.traderadar.briefing.plist
 
-        # 3. Verify your node binary path matches the <string> below
+        # 3. Verify node binary path matches the <string> below
         which node
-        # common results:
-        #   /usr/local/bin/node        (Intel Homebrew)
-        #   /opt/homebrew/bin/node     (Apple Silicon Homebrew)
+        #   /usr/local/bin/node       (Intel Homebrew)
+        #   /opt/homebrew/bin/node    (Apple Silicon Homebrew)
         #   /Users/johnshay/.nvm/versions/node/<ver>/bin/node   (nvm)
-        # If it differs, edit the plist BEFORE loading it.
+        # Edit the plist before loading if it differs.
 
-        # 4. Load the agent into launchd (it will auto-load on every future login)
+        # 4. Load the agent (auto-loads on every future login)
         launchctl load ~/Library/LaunchAgents/com.traderadar.briefing.plist
 
-        # 5. Smoke-test the schedule immediately (doesn't wait for 06:00)
+        # 5. Smoke-test immediately (does NOT wait for 06:00)
         launchctl start com.traderadar.briefing
         tail -f /Users/johnshay/TradeWatch/logs/briefing.log
 
@@ -30,19 +59,6 @@
         launchctl unload ~/Library/LaunchAgents/com.traderadar.briefing.plist
         # edit the plist, then:
         launchctl load   ~/Library/LaunchAgents/com.traderadar.briefing.plist
-
-    ── Time zone note ──────────────────────────────────────────────────────
-        launchd's StartCalendarInterval uses the Mac's LOCAL time. This plist
-        targets 06:00 local; JJ's laptop is set to America/New_York, so that
-        IS 06:00 ET. If you travel and change the system TZ, the fire-time
-        follows the system clock — set the TZ back or edit the <Hour> value.
-
-    ── Caveat: sleep / lid-closed ──────────────────────────────────────────
-        launchd does NOT wake the Mac for scheduled jobs. If the laptop is
-        asleep at 06:00, the job runs at the next wake. For guaranteed daily
-        delivery, either leave the lid open on power, enable "Wake for network
-        access" in System Settings → Battery, or port the script to a GitHub
-        Action running on cron in the cloud.
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -66,9 +82,9 @@
     </dict>
 
     <!--
-        Schedule: 06:00 local time on weekdays (Mon=1 … Fri=5).
-        StartCalendarInterval accepts an ARRAY of dicts when you need multiple
-        discrete fire times — launchd ORs them together.
+        Schedule: 06:00 LOCAL (= 6 AM PT if your Mac is on America/Los_Angeles).
+        Weekday 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri.
+        StartCalendarInterval accepts an array of dicts — launchd ORs them.
     -->
     <key>StartCalendarInterval</key>
     <array>
