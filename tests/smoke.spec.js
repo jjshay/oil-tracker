@@ -13,8 +13,8 @@ const path = require('path');
 // exercised by clicking its nav entry.
 const DEFAULT_TAB = 'drivers';
 const TABS = [
-  'drivers', 'summary', 'historical', 'projected', 'impact', 'recommend',
-  'news', 'calendar', 'signals', 'prices', 'flights',
+  'drivers', 'summary', 'model', 'context', 'recommend',
+  'news', 'signals', 'prices', 'flights',
 ];
 
 // Regexes for known network noise we DO NOT want to fail the test on:
@@ -119,7 +119,10 @@ for (const tab of TABS) {
       if (tab !== DEFAULT_TAB) {
         const navTarget = page.locator(`[data-tab="${tab}"]`).first();
         await navTarget.waitFor({ state: 'visible', timeout: 10_000 });
-        await navTarget.click();
+        // Use force-click — the tab pills have onMouseEnter/onMouseLeave
+        // inline-style mutations that make Playwright's stability check
+        // bounce on chromium, producing spurious 10s click timeouts.
+        await navTarget.click({ force: true, timeout: 10_000 });
       }
 
       // Allow the screen to render its header + first paint.
